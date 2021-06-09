@@ -4,7 +4,20 @@ This is an ardupilot/chibios app for building the firmware that serves
 as the heart of a Rice Creek UAV autopilot.
 
 This README has not been fully updated for the ardupilot/chibios port,
-so much of it is probably wrong or terribly out dated.
+so much of it is probably wrong or terribly out dated.  The code is
+also just at a checkpoint state ... still very much a work in
+progress.
+
+Some major bullet point todo list items:
+
+* decide how best to detect and choose when multiple imu and compass
+  are available.
+* do a round of file renaming, or figure out how to orgainize code in
+  subdirs or some of both.
+* sort out how I really want to organize classes vs. singletons
+  vs. global instances vs. namespace vs. cross-wired interdependencies
+  between everything.  I have some messy mixes of these due to deep
+  dive, sprint development dynamics.
 
 Rc-fmu turns an inexpensive teensy board into a sensor collector,
 attitude determination system, communications hub, and servo
