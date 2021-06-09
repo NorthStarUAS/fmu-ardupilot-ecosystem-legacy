@@ -166,13 +166,13 @@ void loop() {
             if ( the_imu.gyros_calibrated == 2 ) {
                 // write_pilot_in_ascii();
                 // write_actuator_out_ascii();
-                // comms.write_gps_ascii();
+                comms.write_gps_ascii();
                 // if ( config.ekf.select != message::enum_nav::none ) {
                 //     comms.write_nav_ascii();
                 // }
                 // comms.write_airdata_ascii();
                 // write_status_info_ascii();
-                comms.write_imu_ascii();
+                // comms.write_imu_ascii();
             }
         }
 

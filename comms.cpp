@@ -274,26 +274,22 @@ int comms_t::write_gps_bin()
 }
 
 void comms_t::write_gps_ascii() {
-#if 0
+    const Location &loc = the_gps.gps.location();
     console->printf("GPS:");
-    console->printf(" Lat: %.7f", (double)the_gps.gps_data.lat / 10000000.0);
+    console->printf(" Lat: %.7f", (double)loc.lat / 10000000.0);
     //console->print(the_gps.gps_data.lat);
-    console->printf(" Lon: %.7f", (double)the_gps.gps_data.lon / 10000000.0);
+    console->printf(" Lon: %.7f", (double)loc.lng / 10000000.0);
     //console->print(the_gps.gps_data.lon);
-    console->printf(" Alt: %.1f", (float)the_gps.gps_data.hMSL / 1000.0);
+    console->printf(" Alt: %.1f", (float)loc.alt / 100.0);
+    const Vector3f vel = the_gps.gps.velocity();
     console->printf(" Vel: %.1f %.1f %.1f",
-                    the_gps.gps_data.velN / 1000.0,
-                    the_gps.gps_data.velE / 1000.0,
-                    the_gps.gps_data.velD / 1000.0);
-    console->printf(" GSP:");
-    console->print(the_gps.gps_data.gSpeed, DEC);
-    console->print(" COG:");
-    console->print(the_gps.gps_data.heading, DEC);
-    console->print(" SAT:");
-    console->print(the_gps.gps_data.numSV, DEC);
-    console->print(" FIX:");
-    console->print(the_gps.gps_data.fixType, DEC);
-    console->print(" TIM:");
+                    vel.x, vel.y, vel.z);
+    console->printf(" GSP: %.1f", the_gps.gps.ground_speed());
+    console->printf(" COG: %.1f", the_gps.gps.ground_course());
+    console->printf(" SAT: %d", the_gps.gps.num_sats());
+    console->printf(" FIX: %d", the_gps.gps.status());
+#if 0
+    console->printf(" TIM:");
     console->print(the_gps.gps_data.hour); console->print(':');
     console->print(the_gps.gps_data.min); console->print(':');
     console->print(the_gps.gps_data.sec);
@@ -301,8 +297,8 @@ void comms_t::write_gps_ascii() {
     console->print(the_gps.gps_data.month); console->print('/');
     console->print(the_gps.gps_data.day); console->print('/');
     console->print(the_gps.gps_data.year);
-    console->println();
 #endif
+    console->printf("\n");
 }
 
 // output a binary representation of the Nav data
@@ -482,18 +478,12 @@ int comms_t::write_status_info_bin()
 
 void comms_t::write_status_info_ascii()
 {
-#if 0
     // This info is static so we don't need to send it at a high rate ... once every 10 seconds (?)
     // with an immediate message at the start.
-    console->print("SN: ");
-    console->print(config.read_serial_number());
-    console->print(" Firmware: ");
-    console->print(FIRMWARE_REV);
-    console->print(" Main loop hz: ");
-    console->print( MASTER_HZ);
-    console->print(" Baud: ");
-    console->println(DEFAULT_BAUD);
-#endif
+    console->printf("SN: %d", config.read_serial_number());
+    console->printf(" Firmware: %d", FIRMWARE_REV);
+    console->printf(" Main loop hz: %d", MASTER_HZ);
+    console->printf(" Baud: %d\n", DEFAULT_BAUD);
 }
 
 void comms_t::read_commands() {

@@ -20,6 +20,7 @@ Some major bullet point todo list items:
   dive, sprint development dynamics.
 * look carefully at what is in setup_board.h and where this is
   #included all about
+* the_gps and the_imu are not great names.
 
 Rc-fmu turns an inexpensive teensy board into a sensor collector,
 attitude determination system, communications hub, and servo

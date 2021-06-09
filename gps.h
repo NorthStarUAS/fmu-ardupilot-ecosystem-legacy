@@ -16,8 +16,13 @@
 #include "eigen3/Eigen/Geometry"
 #pragma pop_macro("_GLIBCXX_USE_C99_STDIO")
 
+#include <AP_GPS/AP_GPS.h>
+
 class gps_t {
+    
 public:
+    AP_GPS gps;
+    
     uint32_t last_message_ms = 0;
     uint32_t gps_millis = 0;
     bool gps_acquired = false;
