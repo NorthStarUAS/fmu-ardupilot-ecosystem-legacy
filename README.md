@@ -18,6 +18,8 @@ Some major bullet point todo list items:
   vs. global instances vs. namespace vs. cross-wired interdependencies
   between everything.  I have some messy mixes of these due to deep
   dive, sprint development dynamics.
+* look carefully at what is in setup_board.h and where this is
+  #included all about
 
 Rc-fmu turns an inexpensive teensy board into a sensor collector,
 attitude determination system, communications hub, and servo

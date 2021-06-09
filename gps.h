@@ -2,21 +2,30 @@
 
 #pragma once
 
-// #include "sensors/UBLOX8/UBLOX8.h"
+#define ALLOW_DOUBLE_MATH_FUNCTIONS
+#include <AP_HAL/AP_HAL.h>
 
+#if HAL_OS_POSIX_IO
+#include <stdio.h>
+#endif
+
+#pragma push_macro("_GLIBCXX_USE_C99_STDIO")
+#undef _GLIBCXX_USE_C99_STDIO
 #include <math.h>
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Geometry"
+#pragma pop_macro("_GLIBCXX_USE_C99_STDIO")
 
 class gps_t {
 public:
-    unsigned long gps_millis = 0;
+    uint32_t last_message_ms = 0;
+    uint32_t gps_millis = 0;
     bool gps_acquired = false;
-    // elapsedMillis gps_settle_timer = 0;
+    uint32_t gps_settle_timer = 0;
     // ublox8_nav_pvt_t gps_data;
     double unix_sec;
     float magvar_rad;
-    // Vector3f mag_ned;
+    Eigen::Vector3f mag_ned;
 
     void setup();
     void update();
@@ -27,4 +36,4 @@ private:
     void update_magvar();
 };
 
-extern gps_t gps;
+extern gps_t the_gps;

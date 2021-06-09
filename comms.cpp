@@ -259,12 +259,12 @@ void comms_t::write_imu_ascii()
 // output a binary representation of the GPS data
 int comms_t::write_gps_bin()
 {
-    if ( gps.gps_millis > gps_last_millis ) {
+    if ( the_gps.gps_millis != gps_last_millis ) {
 #if 0 // fixme
-        gps_last_millis = gps.gps_millis;
+        gps_last_millis = the_gps.gps_millis;
         return serial.write_packet( message::aura_nav_pvt_id,
-                                    (uint8_t *)(&(gps.gps_data)),
-                                    sizeof(gps.gps_data) );
+                                    (uint8_t *)(&(the_gps.gps_data)),
+                                    sizeof(the_gps.gps_data) );
 #else
         return 0;
 #endif
@@ -276,31 +276,31 @@ int comms_t::write_gps_bin()
 void comms_t::write_gps_ascii() {
 #if 0
     console->printf("GPS:");
-    console->printf(" Lat: %.7f", (double)gps.gps_data.lat / 10000000.0);
-    //console->print(gps.gps_data.lat);
-    console->printf(" Lon: %.7f", (double)gps.gps_data.lon / 10000000.0);
-    //console->print(gps.gps_data.lon);
-    console->printf(" Alt: %.1f", (float)gps.gps_data.hMSL / 1000.0);
+    console->printf(" Lat: %.7f", (double)the_gps.gps_data.lat / 10000000.0);
+    //console->print(the_gps.gps_data.lat);
+    console->printf(" Lon: %.7f", (double)the_gps.gps_data.lon / 10000000.0);
+    //console->print(the_gps.gps_data.lon);
+    console->printf(" Alt: %.1f", (float)the_gps.gps_data.hMSL / 1000.0);
     console->printf(" Vel: %.1f %.1f %.1f",
-                    gps.gps_data.velN / 1000.0,
-                    gps.gps_data.velE / 1000.0,
-                    gps.gps_data.velD / 1000.0);
+                    the_gps.gps_data.velN / 1000.0,
+                    the_gps.gps_data.velE / 1000.0,
+                    the_gps.gps_data.velD / 1000.0);
     console->printf(" GSP:");
-    console->print(gps.gps_data.gSpeed, DEC);
+    console->print(the_gps.gps_data.gSpeed, DEC);
     console->print(" COG:");
-    console->print(gps.gps_data.heading, DEC);
+    console->print(the_gps.gps_data.heading, DEC);
     console->print(" SAT:");
-    console->print(gps.gps_data.numSV, DEC);
+    console->print(the_gps.gps_data.numSV, DEC);
     console->print(" FIX:");
-    console->print(gps.gps_data.fixType, DEC);
+    console->print(the_gps.gps_data.fixType, DEC);
     console->print(" TIM:");
-    console->print(gps.gps_data.hour); console->print(':');
-    console->print(gps.gps_data.min); console->print(':');
-    console->print(gps.gps_data.sec);
+    console->print(the_gps.gps_data.hour); console->print(':');
+    console->print(the_gps.gps_data.min); console->print(':');
+    console->print(the_gps.gps_data.sec);
     console->print(" DATE:");
-    console->print(gps.gps_data.month); console->print('/');
-    console->print(gps.gps_data.day); console->print('/');
-    console->print(gps.gps_data.year);
+    console->print(the_gps.gps_data.month); console->print('/');
+    console->print(the_gps.gps_data.day); console->print('/');
+    console->print(the_gps.gps_data.year);
     console->println();
 #endif
 }

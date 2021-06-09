@@ -22,7 +22,7 @@ AP_HAL::UARTDriver *console = hal.console;
 #include "comms.h"
 #include "config.h"
 // #include "src/ekf.h"
-// #include "gps.h"
+#include "gps.h"
 #include "imu.h"
 // #include "led.h"
 // #include "mixer.h"
@@ -83,8 +83,8 @@ void setup() {
 //     // initialize PWM output
 //     pwm.setup(config.board.board);
 
-//     // initialize the gps receiver
-//     gps.setup();
+    // initialize the gps receiver
+    the_gps.setup();
 
 //     // initialize air data (marmot v1)
 //     airdata.setup();
@@ -151,9 +151,9 @@ void loop() {
 //         comms.output_counter += comms.write_imu_bin();
 
         // one second heartbeat output
-        if ( AP_HAL::millis() - hbTimer >= 1000 ) {
+        if ( AP_HAL::millis() - hbTimer >= 5000 ) {
             hbTimer = AP_HAL::millis();
-            console->printf("Hello world! (%ld) %d\n", hbTimer, the_imu.gyros_calibrated);
+            // console->printf("Hello world! (%ld) %d\n", hbTimer, the_imu.gyros_calibrated);
             if ( the_imu.gyros_calibrated == 2 ) {
                 comms.write_status_info_ascii();
                 comms.write_power_ascii();
@@ -164,14 +164,14 @@ void loop() {
         if ( AP_HAL::millis() - debugTimer >= 100 ) {
             debugTimer = AP_HAL::millis();
             if ( the_imu.gyros_calibrated == 2 ) {
-//             // write_pilot_in_ascii();
-//             // write_actuator_out_ascii();
-//             // comms.write_gps_ascii();
-//             // if ( config.ekf.select != message::enum_nav::none ) {
-//             //     comms.write_nav_ascii();
-//             // }
-//             // comms.write_airdata_ascii();
-//             // write_status_info_ascii();
+                // write_pilot_in_ascii();
+                // write_actuator_out_ascii();
+                // comms.write_gps_ascii();
+                // if ( config.ekf.select != message::enum_nav::none ) {
+                //     comms.write_nav_ascii();
+                // }
+                // comms.write_airdata_ascii();
+                // write_status_info_ascii();
                 comms.write_imu_ascii();
             }
         }
@@ -189,8 +189,8 @@ void loop() {
 //         // read power values
 //         power.update();
 
-//         // suck in any available gps messages
-//         gps.update();
+        // suck in any available gps messages
+        the_gps.update();
     }
     
 //     // keep processing while there is data in the uart buffer
@@ -212,9 +212,9 @@ void loop() {
 //     comms.read_commands();
 
 //     // blink the led on boards that support it
-//     led.update(imu.gyros_calibrated, gps.gps_data.fixType);
+//     led.update(imu.gyros_calibrated, the_gps.gps_data.fixType);
 
-        // hal.scheduler->delay(5000); setup(); // debugging
+    // hal.scheduler->delay(5000); setup(); // debugging
 }
 
 AP_HAL_MAIN();
