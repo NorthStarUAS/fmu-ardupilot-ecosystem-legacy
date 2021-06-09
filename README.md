@@ -1,9 +1,14 @@
 # Rice Creek FMU
 
-This is an Arduino (Teensyduino) sketch for building the heart of a
-UAV autopilot.  Rc-fmu turns an inexpensive teensy board into a sensor
-collector, attitude determination system, communications hub, and
-servo controller.  It is not yet a full fledged autopilot itself, but
+This is an ardupilot/chibios app for building the firmware that serves
+as the heart of a Rice Creek UAV autopilot.
+
+This README has not been fully updated for the ardupilot/chibios port,
+so much of it is probably wrong or terribly out dated.
+
+Rc-fmu turns an inexpensive teensy board into a sensor collector,
+attitude determination system, communications hub, and servo
+controller.  It is not yet a full fledged autopilot itself, but
 designed to pair with a host linux board (such as a beaglebone or
 raspberry pi) for all the higher level autopilot functions.  It
 supports the mpu9250 imu, ublox8 gps, bme280/bmp280 pressure sensors,
