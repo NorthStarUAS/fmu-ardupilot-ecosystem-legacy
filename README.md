@@ -96,3 +96,31 @@ capabilities at a very inexpensive price point.
   control -> effector output.  The higher level navigation would
   remain on the host computer as well as other functions like logging
   and communication with the ground station.
+
+BUILD INSTRUCTIONS
+==================
+
+(rev1 ... sketchy note phase ...)
+
+git pull arduino source tree
+git pull rc-fmu source tree (to an independent location)
+cd .../arduino
+ln -s .../path/to/rc-fmu .
+edit arduino/wscript to include rc-fmu as a program name
+
+edit …/ardupilot/libraries/AP_Vehicle/AP_Vehicle_Type.h to #define
+APM_BUILD_Subdir with a new value (I picked 101 to stay out of the way
+of possible future expansion.) But most likely these changes will live
+only on my own hard drive. Note: the symbol you define uses the subdir
+name, not the common name you picked.
+
+./waf configure --board XYZ
+./waf rc-fmu
+
+
+So Eigen-3.3.9 can compile:
+
+  In /usr/arm-none-eabi/include/c++/10.2.0/bits/basic_string.h
+  - remove std:: from in front of vsnprint() calls
+
+  In ardupilot/Tools/ardupilotwaf comment out -Werror=deprecated-delcarations

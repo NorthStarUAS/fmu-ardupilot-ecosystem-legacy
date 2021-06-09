@@ -1,0 +1,51 @@
+#include <AP_HAL/AP_HAL.h>
+#include <AP_InertialSensor/AP_InertialSensor.h>
+#include <AP_AHRS/AP_AHRS.h>
+#include <AP_Baro/AP_Baro.h>
+#include <AP_ExternalAHRS/AP_ExternalAHRS.h>
+#include <AP_Compass/AP_Compass.h>
+
+#include "setup_board.h"
+#include "imu_raw.h"
+
+static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
+
+static AP_InertialSensor ins;
+static AP_AHRS_DCM ahrs;  // need ...
+static AP_Baro baro; // Compass tries to set magnetic model based on location.
+#if HAL_EXTERNAL_AHRS_ENABLED
+static AP_ExternalAHRS eAHRS;
+#endif // HAL_EXTERNAL_AHRS_ENABLED
+static Compass compass;
+
+// configure the IMU settings and setup the ISR to aquire the data
+void imu_raw_t::setup() {
+    console->printf("AP_InertialSensor startup...\n");
+    hal.scheduler->delay(100);
+    ins.init(100);
+    console->printf("Number of detected accels : %u\n", ins.get_accel_count());
+    console->printf("Number of detected gyros  : %u\n", ins.get_gyro_count());
+
+    ahrs.init();
+    compass.init();
+    console->printf("Number of detected compasses  : %u\n", compass.get_count());
+    hal.scheduler->delay(100);
+}
+
+// query the imu and update the structures
+void imu_raw_t::update() {
+    // static uint8_t accel_count = ins.get_accel_count();
+    // static uint8_t gyro_count = ins.get_gyro_count();
+ 
+    raw_millis = AP_HAL::millis();
+    
+    ins.wait_for_sample();      // wait until we have a sample
+    ins.update();               // read
+
+    // for now just go with the 0'th INS sensor
+    accel = ins.get_accel(0);
+    gyro = ins.get_gyro(0);
+
+    compass.read();
+    mag = compass.get_field(0);
+}

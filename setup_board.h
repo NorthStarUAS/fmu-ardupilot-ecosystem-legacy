@@ -1,10 +1,12 @@
 #pragma once
 
-//////////////////////////////////////////////////////////////////////////
-// Hardware configuration section
-//////////////////////////////////////////////////////////////////////////
+#define ALLOW_DOUBLE_MATH_FUNCTIONS
+#include <AP_HAL/AP_HAL.h>
 
-#include <Arduino.h>
+// Firmware rev (needs to be updated here manually to match release number)
+const int FIRMWARE_REV = 500;
+
+extern AP_HAL::UARTDriver *console;
 
 // automatic configuration
 #if defined(ARDUINO_TEENSY32) || defined(ARDUINO_TEENSY40)
@@ -20,9 +22,6 @@
 #else
 #define AURA_ONBOARD_EKF
 #endif
-
-// Firmware rev (needs to be updated here manually to match release number)
-const int FIRMWARE_REV = 400;
 
 // this is the master loop update rate.
 const int MASTER_HZ = 100;
