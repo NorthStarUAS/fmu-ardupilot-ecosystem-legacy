@@ -98,25 +98,66 @@ inline void handmade_aligned_free(void *ptr)
   if (ptr) std::free(*(reinterpret_cast<void**>(ptr) - 1));
 }
 
+// /** \internal
+//   * \brief Reallocates aligned memory.
+//   * Since we know that our handmade version is based on std::malloc
+//   * we can use std::realloc to implement efficient reallocation.
+//   */
+// inline void* handmade_aligned_realloc(void* ptr, std::size_t size, std::size_t = 0)
+// {
+//   if (ptr == 0) return handmade_aligned_malloc(size);
+//   void *original = *(reinterpret_cast<void**>(ptr) - 1);
+//   std::ptrdiff_t previous_offset = static_cast<char *>(ptr)-static_cast<char *>(original);
+//   original = std::realloc(original,size+EIGEN_DEFAULT_ALIGN_BYTES);
+//   if (original == 0) return 0;
+//   void *aligned = reinterpret_cast<void*>((reinterpret_cast<std::size_t>(original) & ~(std::size_t(EIGEN_DEFAULT_ALIGN_BYTES-1))) + EIGEN_DEFAULT_ALIGN_BYTES);
+//   void *previous_aligned = static_cast<char *>(original)+previous_offset;
+//   if(aligned!=previous_aligned)
+//     std::memmove(aligned, previous_aligned, size);
+  
+//   *(reinterpret_cast<void**>(aligned) - 1) = original;
+//   return aligned;
+// }
+
+/*****************************************************************************
+*** Implementation of generic aligned realloc (when no realloc can be used)***
+*****************************************************************************/
+
+void* aligned_malloc(std::size_t size);
+void  aligned_free(void *ptr);
+
 /** \internal
   * \brief Reallocates aligned memory.
-  * Since we know that our handmade version is based on std::malloc
-  * we can use std::realloc to implement efficient reallocation.
+  * Allows reallocation with aligned ptr types. This implementation will
+  * always create a new memory chunk and copy the old data.
   */
-inline void* handmade_aligned_realloc(void* ptr, std::size_t size, std::size_t = 0)
+inline void* generic_aligned_realloc(void* ptr, size_t size, size_t old_size)
 {
-  if (ptr == 0) return handmade_aligned_malloc(size);
-  void *original = *(reinterpret_cast<void**>(ptr) - 1);
-  std::ptrdiff_t previous_offset = static_cast<char *>(ptr)-static_cast<char *>(original);
-  original = std::realloc(original,size+EIGEN_DEFAULT_ALIGN_BYTES);
-  if (original == 0) return 0;
-  void *aligned = reinterpret_cast<void*>((reinterpret_cast<std::size_t>(original) & ~(std::size_t(EIGEN_DEFAULT_ALIGN_BYTES-1))) + EIGEN_DEFAULT_ALIGN_BYTES);
-  void *previous_aligned = static_cast<char *>(original)+previous_offset;
-  if(aligned!=previous_aligned)
-    std::memmove(aligned, previous_aligned, size);
-  
-  *(reinterpret_cast<void**>(aligned) - 1) = original;
-  return aligned;
+  if (ptr==0)
+    return aligned_malloc(size);
+
+  if (size==0)
+  {
+    aligned_free(ptr);
+    return 0;
+  }
+
+  void* newptr = aligned_malloc(size);
+  if (newptr == 0)
+  {
+    #ifdef EIGEN_HAS_ERRNO
+    errno = ENOMEM; // according to the standard
+    #endif
+    return 0;
+  }
+
+  if (ptr != 0)
+  {
+    std::memcpy(newptr, ptr, (std::min)(size,old_size));
+    aligned_free(ptr);
+  }
+
+  return newptr;
 }
 
 /*****************************************************************************
@@ -193,7 +234,8 @@ inline void* aligned_realloc(void *ptr, std::size_t new_size, std::size_t old_si
 #if (EIGEN_DEFAULT_ALIGN_BYTES==0) || EIGEN_MALLOC_ALREADY_ALIGNED
   result = std::realloc(ptr,new_size);
 #else
-  result = handmade_aligned_realloc(ptr,new_size,old_size);
+  // result = handmade_aligned_realloc(ptr,new_size,old_size);
+  result = generic_aligned_realloc(ptr,new_size,old_size);
 #endif
 
   if (!result && new_size)
@@ -242,7 +284,8 @@ template<bool Align> inline void* conditional_aligned_realloc(void* ptr, std::si
 
 template<> inline void* conditional_aligned_realloc<false>(void* ptr, std::size_t new_size, std::size_t)
 {
-  return std::realloc(ptr, new_size);
+  // return std::realloc(ptr, new_size);
+  return generic_aligned_realloc(ptr,new_size,0);
 }
 
 /*****************************************************************************
