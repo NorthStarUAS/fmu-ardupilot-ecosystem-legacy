@@ -12,8 +12,6 @@ Some major bullet point todo list items:
 
 * decide how best to detect and choose when multiple imu and compass
   are available.
-* do a round of file renaming, or figure out how to orgainize code in
-  subdirs or some of both.
 * sort out how I really want to organize classes vs. singletons
   vs. global instances vs. namespace vs. cross-wired interdependencies
   between everything.  I have some messy mixes of these due to deep
@@ -24,6 +22,8 @@ Some major bullet point todo list items:
   #included all about
 x the_gps and the_imu are not great names. (_mgr is also not great,
   but I've used it before and I hate it less ...)
+x do a round of file renaming, or figure out how to orgainize code in
+  subdirs or some of both.
 
 Rc-fmu turns an inexpensive teensy board into a sensor collector,
 attitude determination system, communications hub, and servo

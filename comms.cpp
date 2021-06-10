@@ -17,7 +17,6 @@
 #include "power.h"
 #include "pwm.h"
 #include "nav_constants.h"
-#include "sbus.h"
 #include "serial_link.h"
 #include "aura4_messages.h"
 #include "setup_board.h"
@@ -155,7 +154,7 @@ int comms_t::write_pilot_in_bin()
 {
     static message::pilot_t pilot1;
 
-    if (message::sbus_channels > SBUS_CHANNELS) {
+    if (message::sbus_channels > MAX_RC_CHANNELS) {
         return 0;
     }
     
@@ -165,16 +164,16 @@ int comms_t::write_pilot_in_bin()
     }
 
     // flags
-    pilot1.flags = sbus.receiver_flags;
+    pilot1.flags = pilot.failsafe;
     
     pilot1.pack();
     return serial.write_packet( pilot1.id, pilot1.payload, pilot1.len);
 }
 
-void write_pilot_in_ascii()
+void comms_t::write_pilot_in_ascii()
 {
     // pilot (receiver) input data
-    if ( sbus.receiver_flags & SBUS_FAILSAFE ) {
+    if ( pilot.failsafe ) {
         console->printf("FAILSAFE! ");
     }
     if ( pilot.ap_enabled() ) {

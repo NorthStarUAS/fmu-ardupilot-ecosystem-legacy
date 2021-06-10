@@ -1,15 +1,28 @@
 #pragma once
 
 #include "aura4_messages.h"
-#include "sbus.h"
+
+const uint8_t MAX_RC_CHANNELS = 16;
 
 class pilot_t {
+private:
+    // define if a channel is symmetrical or not (i.e. mapped to [0,1] for
+    // throttle, flaps, spoilers; [-1,1] for aileron, elevator, rudder
+    static const uint16_t pwm_symmetrical = (1 << 0) | (1 << 1) | (1 << 2);
+    
+    float pwm2norm(uint16_t pwm_val, uint8_t i);
+
+    uint32_t last_input = 0;
+
 public:
-    float manual_inputs[SBUS_CHANNELS]; // normalized
-    float ap_inputs[SBUS_CHANNELS];    // normalized
+    uint16_t pwm_inputs[MAX_RC_CHANNELS]; // AP delivers pwm units
+    float manual_inputs[MAX_RC_CHANNELS]; // normalized
+    float ap_inputs[MAX_RC_CHANNELS];     // normalized
+    bool failsafe = true;
     
     void setup();
-    void update_manual();
+    void update();
+    
     void update_ap( message::command_inceptors_t *inceptors );
 
     // convenience

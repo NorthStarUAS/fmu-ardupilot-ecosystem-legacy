@@ -1,8 +1,6 @@
 #pragma once
 
 #include "serial_link.h"
-// #include "sensors/sbus/sbus.h"
-// #include "sensors/UBLOX8/UBLOX8.h"
 
 class comms_t {
 public:
@@ -15,6 +13,7 @@ public:
     void setup();
     int write_ack_bin( uint8_t command_id, uint8_t subcommand_id );
     int write_pilot_in_bin();
+    void write_pilot_in_ascii();
     int write_imu_bin();
     void write_imu_ascii();
     int write_gps_bin();

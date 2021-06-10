@@ -24,13 +24,12 @@ AP_HAL::UARTDriver *console = hal.console;
 // #include "led.h"
 // #include "mixer.h"
 #include "nav_mgr.h"
-// #include "pilot.h"
+#include "pilot.h"
 // #include "power.h"
 // #include "pwm.h"
-// #include "src/sensors/sbus/sbus.h"
 
 
-// // Controls and Actuators
+// Controls and Actuators
 // uint8_t test_pwm_channel = -1;
 
 void setup() {
@@ -72,8 +71,8 @@ void setup() {
     // initialize the IMU
     imu_mgr.setup();
 
-//     // initialize the SBUS receiver
-//     sbus.setup();
+    // initialize the pilot interface (RC)
+    pilot.setup();
 
 //     // initialize mixer (before actuators/pwm)
 //     mixer.setup();
@@ -163,14 +162,14 @@ void loop() {
         if ( AP_HAL::millis() - debugTimer >= 100 ) {
             debugTimer = AP_HAL::millis();
             if ( imu_mgr.gyros_calibrated == 2 ) {
-                // write_pilot_in_ascii();
-                // write_actuator_out_ascii();
+                comms.write_pilot_in_ascii();
+                // comms.write_actuator_out_ascii();
                 // comms.write_gps_ascii();
-                if ( config.ekf_cfg.select != message::enum_nav::none ) {
-                    comms.write_nav_ascii();
-                }
+                // if ( config.ekf_cfg.select != message::enum_nav::none ) {
+                //     comms.write_nav_ascii();
+                // }
                 // comms.write_airdata_ascii();
-                // write_status_info_ascii();
+                // comms.write_status_info_ascii();
                 // comms.write_imu_ascii();
             }
         }
@@ -191,7 +190,8 @@ void loop() {
         // suck in any available gps messages
         gps_mgr.update();
     }
-    
+
+    pilot.update();
 //     // keep processing while there is data in the uart buffer
 //     while ( sbus.process() ) {
 //         static bool last_ap_state = pilot.ap_enabled();

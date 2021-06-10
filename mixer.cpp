@@ -157,7 +157,7 @@ void mixer_t::mixing_update() {
     }
 }
 
-void mixer_t::update( float control_norm[SBUS_CHANNELS] ) {
+void mixer_t::update() {
     // initialize commands
     inputs << pilot.get_throttle(), pilot.get_aileron(), pilot.get_elevator(),
         pilot.get_rudder(), pilot.get_flap(), pilot.get_gear(),

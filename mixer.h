@@ -8,7 +8,6 @@
 #include <math.h>
 
 #include "pwm.h"
-#include "sbus.h"
 
 class mixer_t {
 private:
@@ -25,7 +24,7 @@ public:
     void setup();
     void sas_defaults();
     void update_matrix(message::config_mixer_t *mix_config );
-    void update( float control_norm[SBUS_CHANNELS] );
+    void update();
 };
 
 extern mixer_t mixer;
