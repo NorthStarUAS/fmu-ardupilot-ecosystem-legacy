@@ -297,9 +297,9 @@ void EKF15::time_update(IMUdata imu) {
 	
     // Covariance Time Update
     // P = PHI * P * PHI.transpose() + Q;			// P = PHI*P*PHI' + Q
-    t1 = PHI.transpose();
-    t2 = PHI * P;
-    t3 = t1;
+    t1 = PHI * P;
+    t2 = PHI.transpose();
+    t3 = t1 * t2;
     P = t3 + Q;
     P = (P + P.transpose()) * 0.5;			// P = 0.5*(P+P')
 	
