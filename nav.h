@@ -3,14 +3,15 @@
 #pragma once
 
 #include "setup_board.h"
-#include "structs.h"
+#include "nav_structs.h"
 
 #if defined(AURA_ONBOARD_EKF)
-#include "EKF_15state.h"
-#include "EKF_15state_mag.h"
+#include "nav_ekf15.h"
+#include "nav_ekf15_mag.h"
 #endif
 
-class ekf_t {
+class nav_t {
+    
 private:
     bool ekf_inited = false;
     unsigned long int gps_last_millis = 0;
@@ -20,11 +21,11 @@ private:
 #endif
     
 public:
-    NAVdata nav;
+    NAVdata data;
     uint8_t status;             // 0 = uninitted, 1 = no gps, 2 = 0k
     void setup();
     void update();
     void reinit();              // request the filter reinit itself
 };
 
-extern ekf_t the_ekf;
+extern nav_t nav;

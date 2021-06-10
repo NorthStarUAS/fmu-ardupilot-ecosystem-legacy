@@ -8,15 +8,15 @@
 
 #include "airdata.h"
 #include "config.h"
-#include "ekf.h"
 #include "gps.h"
 #include "imu.h"
 #include "led.h"
 #include "mixer.h"
+#include "nav.h"
 #include "pilot.h"
 #include "power.h"
 #include "pwm.h"
-#include "constants.h"
+#include "nav_constants.h"
 #include "sbus.h"
 #include "serial_link.h"
 #include "aura4_messages.h"
@@ -129,7 +129,7 @@ bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size 
         result = true;
     } else if ( id == message::command_reset_ekf_id && message_size == 1 ) {
         console->printf("received reset ekf command\n");
-        the_ekf.reinit();
+        nav.reinit();
         write_ack_bin( id, 0 );
         result = true;
     } else {
@@ -307,67 +307,67 @@ void comms_t::write_gps_ascii() {
 // output a binary representation of the Nav data
 int comms_t::write_nav_bin()
 {
-    static message::ekf_t nav;
-    nav.millis = the_imu.imu_millis;
-    nav.lat_rad = the_ekf.nav.lat;
-    nav.lon_rad = the_ekf.nav.lon;
-    nav.altitude_m = the_ekf.nav.alt;
-    nav.vn_ms = the_ekf.nav.vn;
-    nav.ve_ms = the_ekf.nav.ve;
-    nav.vd_ms = the_ekf.nav.vd;
-    nav.phi_rad = the_ekf.nav.phi;
-    nav.the_rad = the_ekf.nav.the;
-    nav.psi_rad = the_ekf.nav.psi;
-    nav.p_bias = the_ekf.nav.gbx;
-    nav.q_bias = the_ekf.nav.gby;
-    nav.r_bias = the_ekf.nav.gbz;
-    nav.ax_bias = the_ekf.nav.abx;
-    nav.ay_bias = the_ekf.nav.aby;
-    nav.az_bias = the_ekf.nav.abz;
-    float max_pos_cov = the_ekf.nav.Pp0;
-    if ( the_ekf.nav.Pp1 > max_pos_cov ) { max_pos_cov = the_ekf.nav.Pp1; }
-    if ( the_ekf.nav.Pp2 > max_pos_cov ) { max_pos_cov = the_ekf.nav.Pp2; }
+    static message::ekf_t nav_msg;
+    nav_msg.millis = the_imu.imu_millis;
+    nav_msg.lat_rad = nav.data.lat;
+    nav_msg.lon_rad = nav.data.lon;
+    nav_msg.altitude_m = nav.data.alt;
+    nav_msg.vn_ms = nav.data.vn;
+    nav_msg.ve_ms = nav.data.ve;
+    nav_msg.vd_ms = nav.data.vd;
+    nav_msg.phi_rad = nav.data.phi;
+    nav_msg.the_rad = nav.data.the;
+    nav_msg.psi_rad = nav.data.psi;
+    nav_msg.p_bias = nav.data.gbx;
+    nav_msg.q_bias = nav.data.gby;
+    nav_msg.r_bias = nav.data.gbz;
+    nav_msg.ax_bias = nav.data.abx;
+    nav_msg.ay_bias = nav.data.aby;
+    nav_msg.az_bias = nav.data.abz;
+    float max_pos_cov = nav.data.Pp0;
+    if ( nav.data.Pp1 > max_pos_cov ) { max_pos_cov = nav.data.Pp1; }
+    if ( nav.data.Pp2 > max_pos_cov ) { max_pos_cov = nav.data.Pp2; }
     if ( max_pos_cov > 655.0 ) { max_pos_cov = 655.0; }
-    nav.max_pos_cov = max_pos_cov;
-    float max_vel_cov = the_ekf.nav.Pv0;
-    if ( the_ekf.nav.Pv1 > max_vel_cov ) { max_vel_cov = the_ekf.nav.Pv1; }
-    if ( the_ekf.nav.Pv2 > max_vel_cov ) { max_vel_cov = the_ekf.nav.Pv2; }
+    nav_msg.max_pos_cov = max_pos_cov;
+    float max_vel_cov = nav.data.Pv0;
+    if ( nav.data.Pv1 > max_vel_cov ) { max_vel_cov = nav.data.Pv1; }
+    if ( nav.data.Pv2 > max_vel_cov ) { max_vel_cov = nav.data.Pv2; }
     if ( max_vel_cov > 65.5 ) { max_vel_cov = 65.5; }
-    nav.max_vel_cov = max_vel_cov;
-    float max_att_cov = the_ekf.nav.Pa0;
-    if ( the_ekf.nav.Pa1 > max_att_cov ) { max_att_cov = the_ekf.nav.Pa1; }
-    if ( the_ekf.nav.Pa2 > max_att_cov ) { max_att_cov = the_ekf.nav.Pa2; }
+    nav_msg.max_vel_cov = max_vel_cov;
+    float max_att_cov = nav.data.Pa0;
+    if ( nav.data.Pa1 > max_att_cov ) { max_att_cov = nav.data.Pa1; }
+    if ( nav.data.Pa2 > max_att_cov ) { max_att_cov = nav.data.Pa2; }
     if ( max_att_cov > 6.55 ) { max_vel_cov = 6.55; }
-    nav.max_att_cov = max_att_cov;
-    nav.status = the_ekf.status;
-    nav.pack();
-    return serial.write_packet( nav.id, nav.payload, nav.len );
+    nav_msg.max_att_cov = max_att_cov;
+    nav_msg.status = nav.status;
+    nav_msg.pack();
+    return serial.write_packet( nav_msg.id, nav_msg.payload, nav_msg.len );
 }
 
 void comms_t::write_nav_ascii() {
     if ( true ) {
         // values
         console->printf("Pos: %.7f, %.7f, %.2f",
-                        the_ekf.nav.lat*R2D, the_ekf.nav.lon*R2D,the_ekf.nav.alt);
+                        nav.data.lat*R2D, nav.data.lon*R2D,nav.data.alt);
         console->printf(" Vel: %.2f, %.2f, %.2f",
-                        the_ekf.nav.vn, the_ekf.nav.ve, the_ekf.nav.vd);
+                        nav.data.vn, nav.data.ve, nav.data.vd);
         console->printf(" Att: %.2f, %.2f, %.2f\n",
-                        the_ekf.nav.phi*R2D, the_ekf.nav.the*R2D, the_ekf.nav.psi*R2D);
+                        nav.data.phi*R2D, nav.data.the*R2D, nav.data.psi*R2D);
     } else {
         // covariances
         float num = 3.0;        // how many standard deviations
         console->printf("cov pos: %.2f, %.2f, %.2f",
-                        num * the_ekf.nav.Pp0,
-                        num * the_ekf.nav.Pp1,
-                        num * the_ekf.nav.Pp2);
+                        num * nav.data.Pp0,
+                        num * nav.data.Pp1,
+                        num * nav.data.Pp2);
         console->printf(" vel: %.2f, %.2f, %.2f",
-                        num * the_ekf.nav.Pv0,
-                        num * the_ekf.nav.Pv1,
-                        num * the_ekf.nav.Pv2);
+                        num * nav.data.Pv0,
+                        num * nav.data.Pv1,
+                        num * nav.data.Pv2);
         console->printf(" att: %.2f, %.2f, %.2f\n",
-                        num * the_ekf.nav.Pa0*R2D,
-                        num * the_ekf.nav.Pa1*R2D,
-                        num * the_ekf.nav.Pa2*R2D);
+                        num * nav.data.Pa0*R2D,
+                        num * nav.data.Pa1*R2D,
+                        num * nav.data.Pa2*R2D);
     }
 }
 

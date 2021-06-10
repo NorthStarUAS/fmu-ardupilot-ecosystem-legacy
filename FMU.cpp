@@ -19,11 +19,11 @@ AP_HAL::UARTDriver *console = hal.console;
 // #include "airdata.h"
 #include "comms.h"
 #include "config.h"
-#include "ekf.h"
 #include "gps.h"
 #include "imu.h"
 // #include "led.h"
 // #include "mixer.h"
+#include "nav.h"
 // #include "pilot.h"
 // #include "power.h"
 // #include "pwm.h"
@@ -95,7 +95,7 @@ void setup() {
 //     led.setup();
 
     // ekf init (just prints availability status)
-    the_ekf.setup();
+    nav.setup();
     
     console->printf("Setup finished.\n");
     console->printf("Ready and transmitting...\n");
@@ -129,7 +129,7 @@ void loop() {
         the_imu.update();
 
         if ( config.ekf_cfg.select != message::enum_nav::none ) {
-            the_ekf.update();
+            nav.update();
         }
         
 //         // output keyed off new IMU data
@@ -166,9 +166,9 @@ void loop() {
                 // write_pilot_in_ascii();
                 // write_actuator_out_ascii();
                 // comms.write_gps_ascii();
-                // if ( config.ekf_cfg.select != message::enum_nav::none ) {
-                //     comms.write_nav_ascii();
-                // }
+                if ( config.ekf_cfg.select != message::enum_nav::none ) {
+                    comms.write_nav_ascii();
+                }
                 // comms.write_airdata_ascii();
                 // write_status_info_ascii();
                 // comms.write_imu_ascii();

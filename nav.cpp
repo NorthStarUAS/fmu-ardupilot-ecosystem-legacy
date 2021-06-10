@@ -4,11 +4,11 @@
 #include "gps.h"
 #include "imu.h"
 
-#include "ekf.h"
+#include "nav.h"
 
 static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 
-void ekf_t::setup() {
+void nav_t::setup() {
     config.ekf_cfg.select = message::enum_nav::nav15; // force (fixme)
     #if defined(AURA_ONBOARD_EKF)
     console->printf("EKF: available  Current setting: ");
@@ -26,7 +26,7 @@ void ekf_t::setup() {
     #endif
 }
 
-void ekf_t::update() {
+void nav_t::update() {
     #if defined(AURA_ONBOARD_EKF)
     IMUdata imu1;
     imu1.time = the_imu.imu_millis / 1000.0;
@@ -77,16 +77,16 @@ void ekf_t::update() {
             status = 2;         // ok
         }
         if ( config.ekf_cfg.select == message::enum_nav::nav15 ) {
-            nav = ekf.get_nav();
+            data = ekf.get_nav();
         } else if ( config.ekf_cfg.select == message::enum_nav::nav15_mag ) {
-            nav = ekf_mag.get_nav();
+            data = ekf_mag.get_nav();
         }
 
         // sanity checks in case degenerate input leads to the filter
         // blowing up.  look for nans (or even negative #'s) in the
         // covariance matrix.
-        if ( std::isnan(nav.Pp0) or std::isnan(nav.Pv0) or std::isnan(nav.Pa0)
-             or (nav.Pp0 < -0.1) or (nav.Pv0 < -0.1) or (nav.Pa0 < -0.1) ) {
+        if ( std::isnan(data.Pp0) or std::isnan(data.Pv0) or std::isnan(data.Pa0)
+             or (data.Pp0 < -0.1) or (data.Pv0 < -0.1) or (data.Pa0 < -0.1) ) {
             console->printf("filter blew up...\n");
             status = 0;
             reinit();
@@ -101,8 +101,9 @@ void ekf_t::update() {
     #endif // AURA_ONBOARD_EKF
 }
 
-void ekf_t::reinit() {
+void nav_t::reinit() {
     ekf_inited = false;
 }
+
 // global shared instance
-ekf_t the_ekf;
+nav_t nav;

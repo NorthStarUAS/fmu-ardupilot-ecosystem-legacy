@@ -7,8 +7,8 @@
 
 #include "setup_board.h"
 
-#include "constants.h"
 #include "coremag.h"
+#include "nav_constants.h"
 #include "gps.h"
 
 //static const AP_HAL::HAL& hal = AP_HAL::get_HAL();

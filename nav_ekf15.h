@@ -16,31 +16,36 @@
 
 #pragma once
 
+#include <stdio.h>
+
+#pragma push_macro("_GLIBCXX_USE_C99_STDIO")
+#undef _GLIBCXX_USE_C99_STDIO
 #include <math.h>
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Geometry"
 #include "eigen3/Eigen/LU"
+#pragma pop_macro("_GLIBCXX_USE_C99_STDIO")
 
-#include "structs.h"
+#include "nav_structs.h"
 
 // define some types for notational convenience and consistency
-typedef Eigen::Matrix<float,9,9>   Matrix9f;
+typedef Eigen::Matrix<float,6,6> Matrix6f;
 typedef Eigen::Matrix<float,12,12> Matrix12f;
 typedef Eigen::Matrix<float,15,15> Matrix15f;
-typedef Eigen::Matrix<float,9,15>  Matrix9x15f;
-typedef Eigen::Matrix<float,15,9>  Matrix15x9f;
+typedef Eigen::Matrix<float,6,15> Matrix6x15f;
+typedef Eigen::Matrix<float,15,6> Matrix15x6f;
 typedef Eigen::Matrix<float,15,12> Matrix15x12f;
-typedef Eigen::Matrix<float,9,1>   Vector9f;
-typedef Eigen::Matrix<float,15,1>  Vector15f;
+typedef Eigen::Matrix<float,6,1> Vector6f;
+typedef Eigen::Matrix<float,15,1> Vector15f;
 
-class EKF15_mag {
+class EKF15 {
 
 public:
 
-    EKF15_mag() {
-	default_config();
+    EKF15() {
+        default_config();
     }
-    ~EKF15_mag() {}
+    ~EKF15() {}
 
     // set/get error characteristics of navigation sensors
     void set_config(NAVconfig _config);
@@ -49,27 +54,26 @@ public:
 
     // main interface
     void init(IMUdata imu, GPSdata gps);
-    void set_ideal_mag_vector_ned(Eigen::Vector3f v);
     void time_update(IMUdata imu);
-    void measurement_update(IMUdata imu, GPSdata gps);
+    void measurement_update(GPSdata gps);
     
     NAVdata get_nav();
     
 private:
 
     Matrix15f F, PHI, P, Qw, Q, ImKH, KRKt, I15 /* identity */;
+    Matrix15f t1, t2, t3;
     Matrix15x12f G;
-    Matrix15x9f K;
+    Matrix15x6f K;
     Vector15f x;
     Matrix12f Rw;
-    Matrix9x15f H;
-    Matrix9f R;
-    Vector9f y;
+    Matrix6x15f H;
+    Matrix6f R;
+    Vector6f y;
     Eigen::Matrix3f C_N2B, C_B2N, I3 /* identity */, temp33;
-    Eigen::Vector3f grav, f_b, om_ib, pos_ins_ned, pos_gps_ned, dx, mag_ned;
+    Eigen::Vector3f grav, f_b, om_ib, /*nr,*/ pos_ins_ned, pos_gps_ned, dx, mag_ned;
 
     Eigen::Quaternionf quat;
-    float tprev;
 
     IMUdata imu_last;
     NAVconfig config;
