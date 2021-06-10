@@ -19,7 +19,7 @@ AP_HAL::UARTDriver *console = hal.console;
 // #include "airdata.h"
 #include "comms.h"
 #include "config.h"
-#include "gps.h"
+#include "gps_mgr.h"
 #include "imu_mgr.h"
 // #include "led.h"
 // #include "mixer.h"
@@ -82,7 +82,7 @@ void setup() {
 //     pwm.setup(config.board.board);
 
     // initialize the gps receiver
-    the_gps.setup();
+    gps_mgr.setup();
 
 //     // initialize air data (marmot v1)
 //     airdata.setup();
@@ -189,7 +189,7 @@ void loop() {
 //         power.update();
 
         // suck in any available gps messages
-        the_gps.update();
+        gps_mgr.update();
     }
     
 //     // keep processing while there is data in the uart buffer
@@ -211,7 +211,7 @@ void loop() {
 //     comms.read_commands();
 
 //     // blink the led on boards that support it
-//     led.update(imu.gyros_calibrated, the_gps.gps_data.fixType);
+//     led.update(imu.gyros_calibrated, gps_mgr.gps_data.fixType);
 
     // hal.scheduler->delay(5000); setup(); // debugging
 }

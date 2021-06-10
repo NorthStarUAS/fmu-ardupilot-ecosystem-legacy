@@ -9,7 +9,7 @@
 
 #include "coremag.h"
 #include "nav_constants.h"
-#include "gps.h"
+#include "gps_mgr.h"
 
 //static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 
@@ -22,13 +22,13 @@ const AP_Param::GroupInfo GCS_MAVLINK_Parameters::var_info[] = {
     AP_GROUPEND
 };
 
-void gps_t::setup() {
+void gps_mgr_t::setup() {
     // Initialize the UART for GPS system
     serial_manager.init();
     gps.init(serial_manager);
 }
 
-void gps_t::update() {
+void gps_mgr_t::update() {
     // suck in any available gps bytes
     gps.update();
     if (last_message_ms != gps.last_message_time_ms()) {
@@ -48,7 +48,7 @@ void gps_t::update() {
     }
 }
 
-bool gps_t::settle() {
+bool gps_mgr_t::settle() {
     if ( gps_acquired ) {
         return AP_HAL::millis() - gps_settle_timer > 10000; // 10 seconds
     } else {
@@ -56,7 +56,7 @@ bool gps_t::settle() {
     }
 }
 
-// void gps_t::update_unix_sec() {
+// void gps_mgr_t::update_unix_sec() {
 //     tmElements_t tm;
 //     int yr = gps_data.year;
 //     if (yr > 99) {
@@ -73,7 +73,7 @@ bool gps_t::settle() {
 //     unix_sec = makeTime(tm);
 // }
 
-void gps_t::update_magvar() {
+void gps_mgr_t::update_magvar() {
     long int jd = unixdate_to_julian_days( unix_sec );
     console->printf("GPS: julian days = %ld\n", jd);
     const Location &loc = gps.location();
@@ -91,4 +91,4 @@ void gps_t::update_magvar() {
 }
 
 // shared global instance
-gps_t the_gps;
+gps_mgr_t gps_mgr;

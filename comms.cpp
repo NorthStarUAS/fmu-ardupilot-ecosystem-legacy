@@ -8,7 +8,7 @@
 
 #include "airdata.h"
 #include "config.h"
-#include "gps.h"
+#include "gps_mgr.h"
 #include "imu_mgr.h"
 #include "led.h"
 #include "mixer.h"
@@ -259,12 +259,12 @@ void comms_t::write_imu_ascii()
 // output a binary representation of the GPS data
 int comms_t::write_gps_bin()
 {
-    if ( the_gps.gps_millis != gps_last_millis ) {
+    if ( gps_mgr.gps_millis != gps_last_millis ) {
 #if 0 // fixme
-        gps_last_millis = the_gps.gps_millis;
+        gps_last_millis = gps_mgr.gps_millis;
         return serial.write_packet( message::aura_nav_pvt_id,
-                                    (uint8_t *)(&(the_gps.gps_data)),
-                                    sizeof(the_gps.gps_data) );
+                                    (uint8_t *)(&(gps_mgr.gps_data)),
+                                    sizeof(gps_mgr.gps_data) );
 #else
         return 0;
 #endif
@@ -274,32 +274,32 @@ int comms_t::write_gps_bin()
 }
 
 void comms_t::write_gps_ascii() {
-    const Location &loc = the_gps.gps.location();
+    const Location &loc = gps_mgr.gps.location();
     console->printf("GPS:");
     console->printf(" Lat: %.7f", (double)loc.lat / 10000000.0);
-    //console->print(the_gps.gps_data.lat);
+    //console->print(gps_mgr.gps_data.lat);
     console->printf(" Lon: %.7f", (double)loc.lng / 10000000.0);
-    //console->print(the_gps.gps_data.lon);
+    //console->print(gps_mgr.gps_data.lon);
     console->printf(" Alt: %.1f", (float)loc.alt / 100.0);
-    const Vector3f vel = the_gps.gps.velocity();
+    const Vector3f vel = gps_mgr.gps.velocity();
     console->printf(" Vel: %.1f %.1f %.1f",
                     vel.x, vel.y, vel.z);
-    console->printf(" GSP: %.1f", the_gps.gps.ground_speed());
-    console->printf(" COG: %.1f", the_gps.gps.ground_course());
-    console->printf(" SAT: %d", the_gps.gps.num_sats());
-    console->printf(" FIX: %d", the_gps.gps.status());
+    console->printf(" GSP: %.1f", gps_mgr.gps.ground_speed());
+    console->printf(" COG: %.1f", gps_mgr.gps.ground_course());
+    console->printf(" SAT: %d", gps_mgr.gps.num_sats());
+    console->printf(" FIX: %d", gps_mgr.gps.status());
 #if 0
     // example of using gmtime() to get these values here:
     // https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_NMEA_Output/AP_NMEA_Output.cpp#L86
     
     console->printf(" TIM:");
-    console->print(the_gps.gps_data.hour); console->print(':');
-    console->print(the_gps.gps_data.min); console->print(':');
-    console->print(the_gps.gps_data.sec);
+    console->print(gps_mgr.gps_data.hour); console->print(':');
+    console->print(gps_mgr.gps_data.min); console->print(':');
+    console->print(gps_mgr.gps_data.sec);
     console->print(" DATE:");
-    console->print(the_gps.gps_data.month); console->print('/');
-    console->print(the_gps.gps_data.day); console->print('/');
-    console->print(the_gps.gps_data.year);
+    console->print(gps_mgr.gps_data.month); console->print('/');
+    console->print(gps_mgr.gps_data.day); console->print('/');
+    console->print(gps_mgr.gps_data.year);
 #endif
     console->printf("\n");
 }

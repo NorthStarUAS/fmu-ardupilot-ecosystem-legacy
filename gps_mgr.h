@@ -17,7 +17,7 @@
 
 #include <AP_GPS/AP_GPS.h>
 
-class gps_t {
+class gps_mgr_t {
     
 public:
     AP_GPS gps;
@@ -40,4 +40,4 @@ private:
     void update_magvar();
 };
 
-extern gps_t the_gps;
+extern gps_mgr_t gps_mgr;
