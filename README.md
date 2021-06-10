@@ -22,7 +22,7 @@ Some major bullet point todo list items:
     blowing up the stack space on some super cramped boards.
 * look carefully at what is in setup_board.h and where this is
   #included all about
-* the_gps and the_imu are not great names. (_mgr is also not great,
+x the_gps and the_imu are not great names. (_mgr is also not great,
   but I've used it before and I hate it less ...)
 
 Rc-fmu turns an inexpensive teensy board into a sensor collector,

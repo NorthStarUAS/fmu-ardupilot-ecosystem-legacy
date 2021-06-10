@@ -1,10 +1,13 @@
 #pragma once
 
+// FIXME: this needs some cleanup in the context of AP / Chibios
+
 #include <AP_HAL/AP_HAL.h>
 
 // Firmware rev (needs to be updated here manually to match release number)
 const int FIRMWARE_REV = 500;
 
+// Make this available for notational convenience: console->printf()
 extern AP_HAL::UARTDriver *console;
 
 // automatic configuration

@@ -10,7 +10,7 @@
 #include "nav_ekf15_mag.h"
 #endif
 
-class nav_t {
+class nav_mgr_t {
     
 private:
     bool ekf_inited = false;
@@ -28,4 +28,4 @@ public:
     void reinit();              // request the filter reinit itself
 };
 
-extern nav_t nav;
+extern nav_mgr_t nav_mgr;

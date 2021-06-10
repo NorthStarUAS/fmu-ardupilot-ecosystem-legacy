@@ -4,11 +4,11 @@
 #include "gps_mgr.h"
 #include "imu_mgr.h"
 
-#include "nav.h"
+#include "nav_mgr.h"
 
 static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 
-void nav_t::setup() {
+void nav_mgr_t::setup() {
     config.ekf_cfg.select = message::enum_nav::nav15; // force (fixme)
     #if defined(AURA_ONBOARD_EKF)
     console->printf("EKF: available  Current setting: ");
@@ -26,7 +26,7 @@ void nav_t::setup() {
     #endif
 }
 
-void nav_t::update() {
+void nav_mgr_t::update() {
     #if defined(AURA_ONBOARD_EKF)
     IMUdata imu1;
     imu1.time = imu_mgr.imu_millis / 1000.0;
@@ -101,9 +101,9 @@ void nav_t::update() {
     #endif // AURA_ONBOARD_EKF
 }
 
-void nav_t::reinit() {
+void nav_mgr_t::reinit() {
     ekf_inited = false;
 }
 
 // global shared instance
-nav_t nav;
+nav_mgr_t nav_mgr;

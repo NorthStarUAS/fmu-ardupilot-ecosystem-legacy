@@ -12,7 +12,7 @@
 #include "imu_mgr.h"
 #include "led.h"
 #include "mixer.h"
-#include "nav.h"
+#include "nav_mgr.h"
 #include "pilot.h"
 #include "power.h"
 #include "pwm.h"
@@ -129,7 +129,7 @@ bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size 
         result = true;
     } else if ( id == message::command_reset_ekf_id && message_size == 1 ) {
         console->printf("received reset ekf command\n");
-        nav.reinit();
+        nav_mgr.reinit();
         write_ack_bin( id, 0 );
         result = true;
     } else {
@@ -309,37 +309,37 @@ int comms_t::write_nav_bin()
 {
     static message::ekf_t nav_msg;
     nav_msg.millis = imu_mgr.imu_millis;
-    nav_msg.lat_rad = nav.data.lat;
-    nav_msg.lon_rad = nav.data.lon;
-    nav_msg.altitude_m = nav.data.alt;
-    nav_msg.vn_ms = nav.data.vn;
-    nav_msg.ve_ms = nav.data.ve;
-    nav_msg.vd_ms = nav.data.vd;
-    nav_msg.phi_rad = nav.data.phi;
-    nav_msg.the_rad = nav.data.the;
-    nav_msg.psi_rad = nav.data.psi;
-    nav_msg.p_bias = nav.data.gbx;
-    nav_msg.q_bias = nav.data.gby;
-    nav_msg.r_bias = nav.data.gbz;
-    nav_msg.ax_bias = nav.data.abx;
-    nav_msg.ay_bias = nav.data.aby;
-    nav_msg.az_bias = nav.data.abz;
-    float max_pos_cov = nav.data.Pp0;
-    if ( nav.data.Pp1 > max_pos_cov ) { max_pos_cov = nav.data.Pp1; }
-    if ( nav.data.Pp2 > max_pos_cov ) { max_pos_cov = nav.data.Pp2; }
+    nav_msg.lat_rad = nav_mgr.data.lat;
+    nav_msg.lon_rad = nav_mgr.data.lon;
+    nav_msg.altitude_m = nav_mgr.data.alt;
+    nav_msg.vn_ms = nav_mgr.data.vn;
+    nav_msg.ve_ms = nav_mgr.data.ve;
+    nav_msg.vd_ms = nav_mgr.data.vd;
+    nav_msg.phi_rad = nav_mgr.data.phi;
+    nav_msg.the_rad = nav_mgr.data.the;
+    nav_msg.psi_rad = nav_mgr.data.psi;
+    nav_msg.p_bias = nav_mgr.data.gbx;
+    nav_msg.q_bias = nav_mgr.data.gby;
+    nav_msg.r_bias = nav_mgr.data.gbz;
+    nav_msg.ax_bias = nav_mgr.data.abx;
+    nav_msg.ay_bias = nav_mgr.data.aby;
+    nav_msg.az_bias = nav_mgr.data.abz;
+    float max_pos_cov = nav_mgr.data.Pp0;
+    if ( nav_mgr.data.Pp1 > max_pos_cov ) { max_pos_cov = nav_mgr.data.Pp1; }
+    if ( nav_mgr.data.Pp2 > max_pos_cov ) { max_pos_cov = nav_mgr.data.Pp2; }
     if ( max_pos_cov > 655.0 ) { max_pos_cov = 655.0; }
     nav_msg.max_pos_cov = max_pos_cov;
-    float max_vel_cov = nav.data.Pv0;
-    if ( nav.data.Pv1 > max_vel_cov ) { max_vel_cov = nav.data.Pv1; }
-    if ( nav.data.Pv2 > max_vel_cov ) { max_vel_cov = nav.data.Pv2; }
+    float max_vel_cov = nav_mgr.data.Pv0;
+    if ( nav_mgr.data.Pv1 > max_vel_cov ) { max_vel_cov = nav_mgr.data.Pv1; }
+    if ( nav_mgr.data.Pv2 > max_vel_cov ) { max_vel_cov = nav_mgr.data.Pv2; }
     if ( max_vel_cov > 65.5 ) { max_vel_cov = 65.5; }
     nav_msg.max_vel_cov = max_vel_cov;
-    float max_att_cov = nav.data.Pa0;
-    if ( nav.data.Pa1 > max_att_cov ) { max_att_cov = nav.data.Pa1; }
-    if ( nav.data.Pa2 > max_att_cov ) { max_att_cov = nav.data.Pa2; }
+    float max_att_cov = nav_mgr.data.Pa0;
+    if ( nav_mgr.data.Pa1 > max_att_cov ) { max_att_cov = nav_mgr.data.Pa1; }
+    if ( nav_mgr.data.Pa2 > max_att_cov ) { max_att_cov = nav_mgr.data.Pa2; }
     if ( max_att_cov > 6.55 ) { max_vel_cov = 6.55; }
     nav_msg.max_att_cov = max_att_cov;
-    nav_msg.status = nav.status;
+    nav_msg.status = nav_mgr.status;
     nav_msg.pack();
     return serial.write_packet( nav_msg.id, nav_msg.payload, nav_msg.len );
 }
@@ -348,26 +348,26 @@ void comms_t::write_nav_ascii() {
     if ( true ) {
         // values
         console->printf("Pos: %.7f, %.7f, %.2f",
-                        nav.data.lat*R2D, nav.data.lon*R2D,nav.data.alt);
+                        nav_mgr.data.lat*R2D, nav_mgr.data.lon*R2D,nav_mgr.data.alt);
         console->printf(" Vel: %.2f, %.2f, %.2f",
-                        nav.data.vn, nav.data.ve, nav.data.vd);
+                        nav_mgr.data.vn, nav_mgr.data.ve, nav_mgr.data.vd);
         console->printf(" Att: %.2f, %.2f, %.2f\n",
-                        nav.data.phi*R2D, nav.data.the*R2D, nav.data.psi*R2D);
+                        nav_mgr.data.phi*R2D, nav_mgr.data.the*R2D, nav_mgr.data.psi*R2D);
     } else {
         // covariances
         float num = 3.0;        // how many standard deviations
         console->printf("cov pos: %.2f, %.2f, %.2f",
-                        num * nav.data.Pp0,
-                        num * nav.data.Pp1,
-                        num * nav.data.Pp2);
+                        num * nav_mgr.data.Pp0,
+                        num * nav_mgr.data.Pp1,
+                        num * nav_mgr.data.Pp2);
         console->printf(" vel: %.2f, %.2f, %.2f",
-                        num * nav.data.Pv0,
-                        num * nav.data.Pv1,
-                        num * nav.data.Pv2);
+                        num * nav_mgr.data.Pv0,
+                        num * nav_mgr.data.Pv1,
+                        num * nav_mgr.data.Pv2);
         console->printf(" att: %.2f, %.2f, %.2f\n",
-                        num * nav.data.Pa0*R2D,
-                        num * nav.data.Pa1*R2D,
-                        num * nav.data.Pa2*R2D);
+                        num * nav_mgr.data.Pa0*R2D,
+                        num * nav_mgr.data.Pa1*R2D,
+                        num * nav_mgr.data.Pa2*R2D);
     }
 }
 

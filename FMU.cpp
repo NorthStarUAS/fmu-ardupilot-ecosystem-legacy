@@ -23,7 +23,7 @@ AP_HAL::UARTDriver *console = hal.console;
 #include "imu_mgr.h"
 // #include "led.h"
 // #include "mixer.h"
-#include "nav.h"
+#include "nav_mgr.h"
 // #include "pilot.h"
 // #include "power.h"
 // #include "pwm.h"
@@ -95,7 +95,7 @@ void setup() {
 //     led.setup();
 
     // ekf init (just prints availability status)
-    nav.setup();
+    nav_mgr.setup();
     
     console->printf("Setup finished.\n");
     console->printf("Ready and transmitting...\n");
@@ -129,7 +129,7 @@ void loop() {
         imu_mgr.update();
 
         if ( config.ekf_cfg.select != message::enum_nav::none ) {
-            nav.update();
+            nav_mgr.update();
         }
         
 //         // output keyed off new IMU data
