@@ -9,7 +9,7 @@
 #include "airdata.h"
 #include "config.h"
 #include "gps.h"
-#include "imu.h"
+#include "imu_mgr.h"
 #include "led.h"
 #include "mixer.h"
 #include "nav.h"
@@ -74,8 +74,8 @@ bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size 
         config.imu_cfg.unpack(buf, message_size);
         if ( message_size == config.imu_cfg.len ) {
             console->printf("received imu config\n");
-            the_imu.set_strapdown_calibration(); // update accel_affine matrix
-            the_imu.set_mag_calibration(); // update mag_affine matrix
+            imu_mgr.set_strapdown_calibration(); // update accel_affine matrix
+            imu_mgr.set_mag_calibration(); // update mag_affine matrix
             config.write_storage();
             write_ack_bin( id, 0 );
             result = true;
@@ -124,7 +124,7 @@ bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size 
         }
     } else if ( id == message::command_zero_gyros_id && message_size == 1 ) {
         console->printf("received zero gyros command\n");
-        the_imu.gyros_calibrated = 0;   // start state
+        imu_mgr.gyros_calibrated = 0;   // start state
         write_ack_bin( id, 0 );
         result = true;
     } else if ( id == message::command_reset_ekf_id && message_size == 1 ) {
@@ -220,23 +220,23 @@ int comms_t::write_imu_bin()
     const float tempScale = 0.01;
     
     static message::imu_t imu1;
-    imu1.millis = the_imu.imu_millis;
-    imu1.raw[0] = the_imu.get_ax_raw() / accelScale;
-    imu1.raw[1] = the_imu.get_ay_raw() / accelScale;
-    imu1.raw[2] = the_imu.get_az_raw() / accelScale;
-    imu1.raw[3] = the_imu.get_hx_raw() / magScale;
-    imu1.raw[4] = the_imu.get_hy_raw() / magScale;
-    imu1.raw[5] = the_imu.get_hz_raw() / magScale;
-    imu1.cal[0] = the_imu.get_ax_cal() / accelScale;
-    imu1.cal[1] = the_imu.get_ay_cal() / accelScale;
-    imu1.cal[2] = the_imu.get_az_cal() / accelScale;
-    imu1.cal[3] = the_imu.get_p_cal() / gyroScale;
-    imu1.cal[4] = the_imu.get_q_cal() / gyroScale;
-    imu1.cal[5] = the_imu.get_r_cal() / gyroScale;
-    imu1.cal[6] = the_imu.get_hx_cal() / magScale;
-    imu1.cal[7] = the_imu.get_hy_cal() / magScale;
-    imu1.cal[8] = the_imu.get_hz_cal() / magScale;
-    imu1.cal[9] = the_imu.get_tempC() / tempScale;
+    imu1.millis = imu_mgr.imu_millis;
+    imu1.raw[0] = imu_mgr.get_ax_raw() / accelScale;
+    imu1.raw[1] = imu_mgr.get_ay_raw() / accelScale;
+    imu1.raw[2] = imu_mgr.get_az_raw() / accelScale;
+    imu1.raw[3] = imu_mgr.get_hx_raw() / magScale;
+    imu1.raw[4] = imu_mgr.get_hy_raw() / magScale;
+    imu1.raw[5] = imu_mgr.get_hz_raw() / magScale;
+    imu1.cal[0] = imu_mgr.get_ax_cal() / accelScale;
+    imu1.cal[1] = imu_mgr.get_ay_cal() / accelScale;
+    imu1.cal[2] = imu_mgr.get_az_cal() / accelScale;
+    imu1.cal[3] = imu_mgr.get_p_cal() / gyroScale;
+    imu1.cal[4] = imu_mgr.get_q_cal() / gyroScale;
+    imu1.cal[5] = imu_mgr.get_r_cal() / gyroScale;
+    imu1.cal[6] = imu_mgr.get_hx_cal() / magScale;
+    imu1.cal[7] = imu_mgr.get_hy_cal() / magScale;
+    imu1.cal[8] = imu_mgr.get_hz_cal() / magScale;
+    imu1.cal[9] = imu_mgr.get_tempC() / tempScale;
     imu1.pack();
     return serial.write_packet( imu1.id, imu1.payload, imu1.len );
 }
@@ -245,14 +245,14 @@ void comms_t::write_imu_ascii()
 {
     // output imu data
     console->printf("IMU: ");
-    console->printf("%ld ", the_imu.imu_millis);
-    console->printf("%.2f ", the_imu.get_p_cal());
-    console->printf("%.2f ", the_imu.get_q_cal());
-    console->printf("%.2f ", the_imu.get_r_cal());
-    console->printf("%.2f ", the_imu.get_ax_cal());
-    console->printf("%.2f ", the_imu.get_ay_cal());
-    console->printf("%.2f ", the_imu.get_az_cal());
-    console->printf("%.2f ", the_imu.get_tempC());
+    console->printf("%ld ", imu_mgr.imu_millis);
+    console->printf("%.2f ", imu_mgr.get_p_cal());
+    console->printf("%.2f ", imu_mgr.get_q_cal());
+    console->printf("%.2f ", imu_mgr.get_r_cal());
+    console->printf("%.2f ", imu_mgr.get_ax_cal());
+    console->printf("%.2f ", imu_mgr.get_ay_cal());
+    console->printf("%.2f ", imu_mgr.get_az_cal());
+    console->printf("%.2f ", imu_mgr.get_tempC());
     console->printf("\n");
 }
 
@@ -308,7 +308,7 @@ void comms_t::write_gps_ascii() {
 int comms_t::write_nav_bin()
 {
     static message::ekf_t nav_msg;
-    nav_msg.millis = the_imu.imu_millis;
+    nav_msg.millis = imu_mgr.imu_millis;
     nav_msg.lat_rad = nav.data.lat;
     nav_msg.lon_rad = nav.data.lon;
     nav_msg.altitude_m = nav.data.alt;

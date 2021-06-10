@@ -3,7 +3,7 @@
 #include "airdata.h"
 #include "comms.h"
 #include "config.h"
-#include "imu.h"
+#include "imu_mgr.h"
 #include "led.h"
 #include "mixer.h"
 #include "power.h"
@@ -140,7 +140,7 @@ int config_t::write_storage() {
 void config_t::force_config_aura3() {
     console->printf("Forcing an aura v2 config\n");
     config.board_cfg.board = 1;    // 0 = marmot v1, 1 = aura v2
-    the_imu.defaults_aura3();
+    imu_mgr.defaults_aura3();
     airdata.defaults_aura3();
     led.defaults_aura3();
     config.power_cfg.have_attopilot = true;
@@ -160,7 +160,7 @@ void config_t::force_config_aura3() {
 void config_t::force_config_goldy3() {
     console->printf("Forcing a bfs/marmot config\n");
     config.board_cfg.board = 0;    // 0 = marmot v1, 1 = aura v2
-    the_imu.defaults_goldy3();
+    imu_mgr.defaults_goldy3();
     airdata.defaults_goldy3();
     led.defaults_goldy3();
     pwm.act_gain_defaults();
@@ -178,7 +178,7 @@ void config_t::force_config_goldy3() {
 void config_t::reset_defaults() {
     console->printf("Setting default config ...\n");
     config.board_cfg.board = 0;
-    the_imu.defaults_goldy3();
+    imu_mgr.defaults_goldy3();
     led.defaults_goldy3();
     pwm.act_gain_defaults();
     mixer.sas_defaults();

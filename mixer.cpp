@@ -1,7 +1,7 @@
 // Module to handle actuator input/output and mixing.
 
 #include "config.h"
-#include "imu.h"
+#include "imu_mgr.h"
 #include "pilot.h"
 
 #include "mixer.h"
@@ -137,13 +137,13 @@ void mixer_t::sas_update() {
     }
 
     if ( config.stab_cfg.sas_rollaxis ) {
-        inputs[1] -= tune * config.stab_cfg.sas_rollgain * the_imu.get_p_cal();
+        inputs[1] -= tune * config.stab_cfg.sas_rollgain * imu_mgr.get_p_cal();
     }
     if ( config.stab_cfg.sas_pitchaxis ) {
-        inputs[2] += tune * config.stab_cfg.sas_pitchgain * the_imu.get_q_cal();
+        inputs[2] += tune * config.stab_cfg.sas_pitchgain * imu_mgr.get_q_cal();
     }
     if ( config.stab_cfg.sas_yawaxis ) {
-        inputs[3] += tune * config.stab_cfg.sas_yawgain * the_imu.get_r_cal();
+        inputs[3] += tune * config.stab_cfg.sas_yawgain * imu_mgr.get_r_cal();
     }
 }
 

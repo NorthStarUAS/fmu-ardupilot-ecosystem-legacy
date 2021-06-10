@@ -20,7 +20,7 @@ AP_HAL::UARTDriver *console = hal.console;
 #include "comms.h"
 #include "config.h"
 #include "gps.h"
-#include "imu.h"
+#include "imu_mgr.h"
 // #include "led.h"
 // #include "mixer.h"
 #include "nav.h"
@@ -66,11 +66,11 @@ void setup() {
 //     // config.force_config_goldy3();
     
     // update imu strapdown and mag_affine matrices from config
-    the_imu.set_strapdown_calibration();
-    the_imu.set_mag_calibration();
+    imu_mgr.set_strapdown_calibration();
+    imu_mgr.set_mag_calibration();
     
     // initialize the IMU
-    the_imu.setup();
+    imu_mgr.setup();
 
 //     // initialize the SBUS receiver
 //     sbus.setup();
@@ -126,7 +126,7 @@ void loop() {
         }
         
         // top priority, used for timing sync downstream.
-        the_imu.update();
+        imu_mgr.update();
 
         if ( config.ekf_cfg.select != message::enum_nav::none ) {
             nav.update();
@@ -152,8 +152,8 @@ void loop() {
         // one second heartbeat output
         if ( AP_HAL::millis() - hbTimer >= 10000 ) {
             hbTimer = AP_HAL::millis();
-            // console->printf("Hello world! (%ld) %d\n", hbTimer, the_imu.gyros_calibrated);
-            if ( the_imu.gyros_calibrated == 2 ) {
+            // console->printf("Hello world! (%ld) %d\n", hbTimer, imu_mgr.gyros_calibrated);
+            if ( imu_mgr.gyros_calibrated == 2 ) {
                 comms.write_status_info_ascii();
                 comms.write_power_ascii();
                 console->printf("\n");
@@ -162,7 +162,7 @@ void loop() {
         // 10hz human debugging output, but only after gyros finish calibrating
         if ( AP_HAL::millis() - debugTimer >= 100 ) {
             debugTimer = AP_HAL::millis();
-            if ( the_imu.gyros_calibrated == 2 ) {
+            if ( imu_mgr.gyros_calibrated == 2 ) {
                 // write_pilot_in_ascii();
                 // write_actuator_out_ascii();
                 // comms.write_gps_ascii();

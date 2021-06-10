@@ -2,7 +2,7 @@
 
 #include "config.h"
 #include "gps.h"
-#include "imu.h"
+#include "imu_mgr.h"
 
 #include "nav.h"
 
@@ -29,19 +29,19 @@ void nav_t::setup() {
 void nav_t::update() {
     #if defined(AURA_ONBOARD_EKF)
     IMUdata imu1;
-    imu1.time = the_imu.imu_millis / 1000.0;
-    imu1.p = the_imu.get_p_cal();
-    imu1.q = the_imu.get_q_cal();
-    imu1.r = the_imu.get_r_cal();
-    imu1.ax = the_imu.get_ax_cal();
-    imu1.ay = the_imu.get_ay_cal();
-    imu1.az = the_imu.get_az_cal();
-    imu1.hx = the_imu.get_hx_cal();
-    imu1.hy = the_imu.get_hy_cal();
-    imu1.hz = the_imu.get_hz_cal();
+    imu1.time = imu_mgr.imu_millis / 1000.0;
+    imu1.p = imu_mgr.get_p_cal();
+    imu1.q = imu_mgr.get_q_cal();
+    imu1.r = imu_mgr.get_r_cal();
+    imu1.ax = imu_mgr.get_ax_cal();
+    imu1.ay = imu_mgr.get_ay_cal();
+    imu1.az = imu_mgr.get_az_cal();
+    imu1.hx = imu_mgr.get_hx_cal();
+    imu1.hy = imu_mgr.get_hy_cal();
+    imu1.hz = imu_mgr.get_hz_cal();
     
     GPSdata gps1;
-    gps1.time = the_imu.imu_millis / 1000.0;
+    gps1.time = imu_mgr.imu_millis / 1000.0;
     gps1.unix_sec = gps1.time;
     const Location &loc = the_gps.gps.location();
     gps1.lat = loc.lat / 10000000.0;

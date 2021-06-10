@@ -6,7 +6,7 @@
 #include <AP_Compass/AP_Compass.h>
 
 #include "setup_board.h"
-#include "imu_raw.h"
+#include "imu_hal.h"
 
 static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 
@@ -19,7 +19,7 @@ static AP_ExternalAHRS eAHRS;
 static Compass compass;
 
 // configure the IMU settings and setup the ISR to aquire the data
-void imu_raw_t::setup() {
+void imu_hal_t::setup() {
     console->printf("AP_InertialSensor startup...\n");
     hal.scheduler->delay(100);
     ins.init(100);
@@ -33,7 +33,7 @@ void imu_raw_t::setup() {
 }
 
 // query the imu and update the structures
-void imu_raw_t::update() {
+void imu_hal_t::update() {
     // static uint8_t accel_count = ins.get_accel_count();
     // static uint8_t gyro_count = ins.get_gyro_count();
  

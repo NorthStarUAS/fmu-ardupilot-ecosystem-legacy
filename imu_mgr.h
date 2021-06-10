@@ -13,14 +13,14 @@
 #include "eigen3/Eigen/Core"
 #pragma pop_macro("_GLIBCXX_USE_C99_STDIO")
 
-#include "imu_raw.h"
+#include "imu_hal.h"
 #include "cal_temp.h"
 
-class imu_t {
+class imu_mgr_t {
     
 private:
 
-    imu_raw_t imu_raw;
+    imu_hal_t imu_hal;
     
     Eigen::Matrix4f strapdown = Eigen::Matrix4f::Identity();
     Eigen::Matrix4f accel_affine = Eigen::Matrix4f::Identity();
@@ -86,4 +86,4 @@ public:
     inline float get_tempC() { return tempC; }
 };
 
-extern imu_t the_imu;
+extern imu_mgr_t imu_mgr;

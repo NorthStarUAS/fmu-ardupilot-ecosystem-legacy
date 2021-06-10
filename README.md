@@ -18,9 +18,12 @@ Some major bullet point todo list items:
   vs. global instances vs. namespace vs. cross-wired interdependencies
   between everything.  I have some messy mixes of these due to deep
   dive, sprint development dynamics.
+  - notice that statically allocating big things avoids potentially
+    blowing up the stack space on some super cramped boards.
 * look carefully at what is in setup_board.h and where this is
   #included all about
-* the_gps and the_imu are not great names.
+* the_gps and the_imu are not great names. (_mgr is also not great,
+  but I've used it before and I hate it less ...)
 
 Rc-fmu turns an inexpensive teensy board into a sensor collector,
 attitude determination system, communications hub, and servo

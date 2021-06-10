@@ -1,4 +1,4 @@
-#include "imu.h"
+#include "imu_mgr.h"
 
 #include "setup_board.h"
 #include "config.h"
@@ -7,7 +7,7 @@
 
 // Setup imu defaults:
 // Goldy3 has mpu9250 on SPI CS line 24
-void imu_t::defaults_goldy3() {
+void imu_mgr_t::defaults_goldy3() {
     config.imu_cfg.interface = 0;       // SPI
     config.imu_cfg.pin_or_address = 24; // CS pin
     defaults_common();
@@ -15,7 +15,7 @@ void imu_t::defaults_goldy3() {
 
 // Setup imu defaults:
 // Aura3 has mpu9250 on I2C Addr 0x68
-void imu_t::defaults_aura3() {
+void imu_mgr_t::defaults_aura3() {
     config.imu_cfg.interface = 1;       // i2c
     config.imu_cfg.pin_or_address = 0x68; // mpu9250 i2c addr
     defaults_common();
@@ -23,7 +23,7 @@ void imu_t::defaults_aura3() {
 
 // Setup imu defaults:
 // Aura3 has mpu9250 on I2C Addr 0x68
-void imu_t::defaults_common() {
+void imu_mgr_t::defaults_common() {
     Eigen::Matrix3f strapdown3x3 = Eigen::Matrix3f::Identity();
     for ( int i = 0; i < 9; i++ ) {
         // no need to worry about row vs. column major here (symmetrical ident)
@@ -47,7 +47,7 @@ void imu_t::defaults_common() {
 }
 
 // Update the R matrix (called after loading/receiving any new config message)
-void imu_t::set_strapdown_calibration() {
+void imu_mgr_t::set_strapdown_calibration() {
     // config.imu_cfg.orientation is row major, but internally Eigen defaults
     // to column major.
     Eigen::Matrix3f strapdown3x3 = Eigen::Matrix<float, 3, 3, Eigen::RowMajor>(config.imu_cfg.strapdown_calib);
@@ -82,14 +82,14 @@ void imu_t::set_strapdown_calibration() {
 }
 
 // setup accel temp calibration
-//void imu_t::set_accel_calibration() {
+//void imu_mgr_t::set_accel_calibration() {
     //ax_cal.init(config.imu_cfg.ax_coeff, config.imu_cfg.min_temp, config.imu_cfg.max_temp);
     //ay_cal.init(config.imu_cfg.ay_coeff, config.imu_cfg.min_temp, config.imu_cfg.max_temp);
     //az_cal.init(config.imu_cfg.az_coeff, config.imu_cfg.min_temp, config.imu_cfg.max_temp);
 //}
 
 // update the mag calibration matrix from the config structur
-void imu_t::set_mag_calibration() {
+void imu_mgr_t::set_mag_calibration() {
     mag_affine = Eigen::Matrix4f::Identity();
     mag_affine = Eigen::Matrix<float, 4, 4, Eigen::RowMajor>(config.imu_cfg.mag_affine);
     
@@ -104,23 +104,23 @@ void imu_t::set_mag_calibration() {
 }
 
 // configure the IMU settings and setup the ISR to aquire the data
-void imu_t::setup() {
-    imu_raw.setup();
+void imu_mgr_t::setup() {
+    imu_hal.setup();
 }
 
 // query the imu and update the structures
-void imu_t::update() {
+void imu_mgr_t::update() {
     // static uint8_t accel_count = ins.get_accel_count();
     // static uint8_t gyro_count = ins.get_gyro_count();
 
-    imu_raw.update();
-    imu_millis = imu_raw.raw_millis;
+    imu_hal.update();
+    imu_millis = imu_hal.raw_millis;
     
-    accels_raw << imu_raw.accel.x, imu_raw.accel.y, imu_raw.accel.z, 1.0;
-    gyros_raw << imu_raw.gyro.x, imu_raw.gyro.y, imu_raw.gyro.z, 1.0;
+    accels_raw << imu_hal.accel.x, imu_hal.accel.y, imu_hal.accel.z, 1.0;
+    gyros_raw << imu_hal.gyro.x, imu_hal.gyro.y, imu_hal.gyro.z, 1.0;
 
     Eigen::Vector4f mags_precal;
-    mags_precal << imu_raw.mag.x, imu_raw.mag.y, imu_raw.mag.z, 1.0;
+    mags_precal << imu_hal.mag.x, imu_hal.mag.y, imu_hal.mag.z, 1.0;
     mags_raw = strapdown * mags_precal;
     
     accels_cal = accel_affine * accels_raw;
@@ -145,7 +145,7 @@ void imu_t::update() {
 // agree (close enough) for 4 consecutive seconds, then we calibrate
 // with the 1 sec low pass filter value.  If time expires, the
 // calibration fails and we run with raw gyro values.
-void imu_t::calibrate_gyros() {
+void imu_mgr_t::calibrate_gyros() {
     if ( gyros_calibrated == 0 ) {
         console->printf("Initialize gyro calibration: ");
         slow = gyros_cal.segment(0,3);
@@ -191,4 +191,4 @@ void imu_t::calibrate_gyros() {
 }
 
 // global shared instance
-imu_t the_imu;
+imu_mgr_t imu_mgr;

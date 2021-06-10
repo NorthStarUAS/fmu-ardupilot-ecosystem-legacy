@@ -9,4 +9,3 @@ def build(bld):
         use=[vehicle + '_libs', 'ap'],
         defines=['ALLOW_DOUBLE_MATH_FUNCTIONS'],
     )
-    

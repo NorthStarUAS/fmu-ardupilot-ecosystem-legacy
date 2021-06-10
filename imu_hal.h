@@ -4,7 +4,7 @@
 
 #include <AP_Math/AP_Math.h>
 
-class imu_raw_t {
+class imu_hal_t {
     
 public:
 
