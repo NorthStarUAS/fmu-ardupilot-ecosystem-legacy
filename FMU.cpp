@@ -1,5 +1,3 @@
-
-#define ALLOW_DOUBLE_MATH_FUNCTIONS
 #include <AP_HAL/AP_HAL.h>
 #include <AP_BoardConfig/AP_BoardConfig.h>
 
@@ -152,7 +150,7 @@ void loop() {
 //         comms.output_counter += comms.write_imu_bin();
 
         // one second heartbeat output
-        if ( AP_HAL::millis() - hbTimer >= 5000 ) {
+        if ( AP_HAL::millis() - hbTimer >= 10000 ) {
             hbTimer = AP_HAL::millis();
             // console->printf("Hello world! (%ld) %d\n", hbTimer, the_imu.gyros_calibrated);
             if ( the_imu.gyros_calibrated == 2 ) {
@@ -167,10 +165,10 @@ void loop() {
             if ( the_imu.gyros_calibrated == 2 ) {
                 // write_pilot_in_ascii();
                 // write_actuator_out_ascii();
-                comms.write_gps_ascii();
-                if ( config.ekf_cfg.select != message::enum_nav::none ) {
-                    comms.write_nav_ascii();
-                }
+                // comms.write_gps_ascii();
+                // if ( config.ekf_cfg.select != message::enum_nav::none ) {
+                //     comms.write_nav_ascii();
+                // }
                 // comms.write_airdata_ascii();
                 // write_status_info_ascii();
                 // comms.write_imu_ascii();

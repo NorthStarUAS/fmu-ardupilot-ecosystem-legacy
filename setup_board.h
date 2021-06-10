@@ -1,6 +1,5 @@
 #pragma once
 
-#define ALLOW_DOUBLE_MATH_FUNCTIONS
 #include <AP_HAL/AP_HAL.h>
 
 // Firmware rev (needs to be updated here manually to match release number)
@@ -15,8 +14,8 @@ extern AP_HAL::UARTDriver *console;
  #define MARMOT_V1
 #endif
 
-// teensy32 can barely run the ekf at 50hz so only enable this feature
-// for the newer processors.
+// mRo Pixracer: can run the ekf at 100hz
+// teensy32 can run the ekf at 50hz
 #if defined(ARDUINO_TEENSY32)
 #undef AURA_ONBOARD_EKF
 #else

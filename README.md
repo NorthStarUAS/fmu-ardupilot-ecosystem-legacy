@@ -141,6 +141,11 @@ name, not the common name you picked.
 
 So Eigen-3.3.9 can compile:
 
+  In your app wscript file in the bld.ap_program() section make sure
+  to add 'ALLOW_DOUBLE_MATH_FUNCTIONS' to the defines=[] line:
+  
+    defines=['ALLOW_DOUBLE_MATH_FUNCTIONS'],
+
   In /usr/arm-none-eabi/include/c++/10.2.0/bits/basic_string.h
   - remove std:: from in front of vsnprint() calls
 

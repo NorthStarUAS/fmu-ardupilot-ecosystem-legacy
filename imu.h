@@ -2,7 +2,6 @@
 
 #pragma once
 
-#define ALLOW_DOUBLE_MATH_FUNCTIONS
 #include <AP_HAL/AP_HAL.h>
 
 #if HAL_OS_POSIX_IO

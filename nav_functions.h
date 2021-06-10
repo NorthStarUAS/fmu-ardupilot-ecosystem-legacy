@@ -32,7 +32,6 @@
 #include "eigen3/Eigen/Geometry"
 #pragma pop_macro("_GLIBCXX_USE_C99_STDIO")
 
-#define ALLOW_DOUBLE_MATH_FUNCTIONS
 #include <AP_HAL/AP_HAL.h>
 
 // Constants

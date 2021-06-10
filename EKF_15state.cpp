@@ -14,7 +14,6 @@
  *
  */
 
-#define ALLOW_DOUBLE_MATH_FUNCTIONS
 #include <AP_HAL/AP_HAL.h>
 
 #include "setup_board.h"

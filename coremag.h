@@ -35,9 +35,7 @@
 
 #pragma once
 
-#define ALLOW_DOUBLE_MATH_FUNCTIONS
 #include <AP_HAL/AP_HAL.h>
-
 
 /* Convert date to Julian day 1950-2049 */
 unsigned long int yymmdd_to_julian_days( int yy, int mm, int dd );

@@ -7,5 +7,6 @@ def build(bld):
         program_name='rc-fmu-ap',
         program_groups=['bin', 'rc-fmu-ap'],
         use=[vehicle + '_libs', 'ap'],
+        defines=['ALLOW_DOUBLE_MATH_FUNCTIONS'],
     )
     
