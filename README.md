@@ -144,4 +144,51 @@ So Eigen-3.3.9 can compile:
   In /usr/arm-none-eabi/include/c++/10.2.0/bits/basic_string.h
   - remove std:: from in front of vsnprint() calls
 
-  In ardupilot/Tools/ardupilotwaf comment out -Werror=deprecated-delcarations
+  In ardupilot/Tools/ardupilotwaf/boards.py (chibios section at
+  least), comment out:
+
+      /* no: need to fix this in Memory.h */ -Werror=deprecated-delcarations
+      -Werror=float-equal
+
+  Implementation for realloc() without std::realloc() in Eigen Memory.h
+  Reference: http://hdiff.luite.com/cgit/eigen/tree/eigen3/Eigen/src/Core/util/Memory.h?id=6507408b52e39c015ac6943bdaa002ebe31c46ce
+/*****************************************************************************
+*** Implementation of generic aligned realloc (when no realloc can be used)***
+*****************************************************************************/
+
+void* aligned_malloc(std::size_t size);
+void  aligned_free(void *ptr);
+
+/** \internal
+  * \brief Reallocates aligned memory.
+  * Allows reallocation with aligned ptr types. This implementation will
+  * always create a new memory chunk and copy the old data.
+  */
+inline void* generic_aligned_realloc(void* ptr, size_t size, size_t old_size)
+{
+  if (ptr==0)
+    return aligned_malloc(size);
+
+  if (size==0)
+  {
+    aligned_free(ptr);
+    return 0;
+  }
+
+  void* newptr = aligned_malloc(size);
+  if (newptr == 0)
+  {
+    #ifdef EIGEN_HAS_ERRNO
+    errno = ENOMEM; // according to the standard
+    #endif
+    return 0;
+  }
+
+  if (ptr != 0)
+  {
+    std::memcpy(newptr, ptr, (std::min)(size,old_size));
+    aligned_free(ptr);
+  }
+
+  return newptr;
+}

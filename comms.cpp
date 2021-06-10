@@ -129,7 +129,7 @@ bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size 
         result = true;
     } else if ( id == message::command_reset_ekf_id && message_size == 1 ) {
         console->printf("received reset ekf command\n");
-        ekf.reinit();
+        the_ekf.reinit();
         write_ack_bin( id, 0 );
         result = true;
     } else {
@@ -197,7 +197,7 @@ void write_actuator_out_ascii()
 {
     // actuator output
     console->printf("RCOUT:");
-    for ( int i = 0; i < PWM_CHANNELS; i++ ) {
+    for ( int i = 0; i < MAX_PWM_CHANNELS; i++ ) {
         console->printf("%d ", pwm.output_pwm[i]);
     }
     console->printf("\n");
@@ -289,6 +289,9 @@ void comms_t::write_gps_ascii() {
     console->printf(" SAT: %d", the_gps.gps.num_sats());
     console->printf(" FIX: %d", the_gps.gps.status());
 #if 0
+    // example of using gmtime() to get these values here:
+    // https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_NMEA_Output/AP_NMEA_Output.cpp#L86
+    
     console->printf(" TIM:");
     console->print(the_gps.gps_data.hour); console->print(':');
     console->print(the_gps.gps_data.min); console->print(':');
@@ -306,88 +309,66 @@ int comms_t::write_nav_bin()
 {
     static message::ekf_t nav;
     nav.millis = the_imu.imu_millis;
-    nav.lat_rad = ekf.nav.lat;
-    nav.lon_rad = ekf.nav.lon;
-    nav.altitude_m = ekf.nav.alt;
-    nav.vn_ms = ekf.nav.vn;
-    nav.ve_ms = ekf.nav.ve;
-    nav.vd_ms = ekf.nav.vd;
-    nav.phi_rad = ekf.nav.phi;
-    nav.the_rad = ekf.nav.the;
-    nav.psi_rad = ekf.nav.psi;
-    nav.p_bias = ekf.nav.gbx;
-    nav.q_bias = ekf.nav.gby;
-    nav.r_bias = ekf.nav.gbz;
-    nav.ax_bias = ekf.nav.abx;
-    nav.ay_bias = ekf.nav.aby;
-    nav.az_bias = ekf.nav.abz;
-    float max_pos_cov = ekf.nav.Pp0;
-    if ( ekf.nav.Pp1 > max_pos_cov ) { max_pos_cov = ekf.nav.Pp1; }
-    if ( ekf.nav.Pp2 > max_pos_cov ) { max_pos_cov = ekf.nav.Pp2; }
+    nav.lat_rad = the_ekf.nav.lat;
+    nav.lon_rad = the_ekf.nav.lon;
+    nav.altitude_m = the_ekf.nav.alt;
+    nav.vn_ms = the_ekf.nav.vn;
+    nav.ve_ms = the_ekf.nav.ve;
+    nav.vd_ms = the_ekf.nav.vd;
+    nav.phi_rad = the_ekf.nav.phi;
+    nav.the_rad = the_ekf.nav.the;
+    nav.psi_rad = the_ekf.nav.psi;
+    nav.p_bias = the_ekf.nav.gbx;
+    nav.q_bias = the_ekf.nav.gby;
+    nav.r_bias = the_ekf.nav.gbz;
+    nav.ax_bias = the_ekf.nav.abx;
+    nav.ay_bias = the_ekf.nav.aby;
+    nav.az_bias = the_ekf.nav.abz;
+    float max_pos_cov = the_ekf.nav.Pp0;
+    if ( the_ekf.nav.Pp1 > max_pos_cov ) { max_pos_cov = the_ekf.nav.Pp1; }
+    if ( the_ekf.nav.Pp2 > max_pos_cov ) { max_pos_cov = the_ekf.nav.Pp2; }
     if ( max_pos_cov > 655.0 ) { max_pos_cov = 655.0; }
     nav.max_pos_cov = max_pos_cov;
-    float max_vel_cov = ekf.nav.Pv0;
-    if ( ekf.nav.Pv1 > max_vel_cov ) { max_vel_cov = ekf.nav.Pv1; }
-    if ( ekf.nav.Pv2 > max_vel_cov ) { max_vel_cov = ekf.nav.Pv2; }
+    float max_vel_cov = the_ekf.nav.Pv0;
+    if ( the_ekf.nav.Pv1 > max_vel_cov ) { max_vel_cov = the_ekf.nav.Pv1; }
+    if ( the_ekf.nav.Pv2 > max_vel_cov ) { max_vel_cov = the_ekf.nav.Pv2; }
     if ( max_vel_cov > 65.5 ) { max_vel_cov = 65.5; }
     nav.max_vel_cov = max_vel_cov;
-    float max_att_cov = ekf.nav.Pa0;
-    if ( ekf.nav.Pa1 > max_att_cov ) { max_att_cov = ekf.nav.Pa1; }
-    if ( ekf.nav.Pa2 > max_att_cov ) { max_att_cov = ekf.nav.Pa2; }
+    float max_att_cov = the_ekf.nav.Pa0;
+    if ( the_ekf.nav.Pa1 > max_att_cov ) { max_att_cov = the_ekf.nav.Pa1; }
+    if ( the_ekf.nav.Pa2 > max_att_cov ) { max_att_cov = the_ekf.nav.Pa2; }
     if ( max_att_cov > 6.55 ) { max_vel_cov = 6.55; }
     nav.max_att_cov = max_att_cov;
-    nav.status = ekf.status;
+    nav.status = the_ekf.status;
     nav.pack();
     return serial.write_packet( nav.id, nav.payload, nav.len );
 }
 
 void comms_t::write_nav_ascii() {
-#if 0
-    if ( false ) {
+    if ( true ) {
         // values
-        console->print("Pos: ");
-        console->print(ekf.nav.lat*R2D, 7);
-        console->print(", ");
-        console->print(ekf.nav.lon*R2D, 7);
-        console->print(", ");
-        console->print(ekf.nav.alt, 2);
-        console->print(" Vel: ");
-        console->print(ekf.nav.vn, 2);
-        console->print(", ");
-        console->print(ekf.nav.ve, 2);
-        console->print(", ");
-        console->print(ekf.nav.vd, 2);
-        console->print(" Att: ");
-        console->print(ekf.nav.phi*R2D, 2);
-        console->print(", ");
-        console->print(ekf.nav.the*R2D, 2);
-        console->print(", ");
-        console->print(ekf.nav.psi*R2D, 2);
-        console->println();
+        console->printf("Pos: %.7f, %.7f, %.2f",
+                        the_ekf.nav.lat*R2D, the_ekf.nav.lon*R2D,the_ekf.nav.alt);
+        console->printf(" Vel: %.2f, %.2f, %.2f",
+                        the_ekf.nav.vn, the_ekf.nav.ve, the_ekf.nav.vd);
+        console->printf(" Att: %.2f, %.2f, %.2f\n",
+                        the_ekf.nav.phi*R2D, the_ekf.nav.the*R2D, the_ekf.nav.psi*R2D);
     } else {
         // covariances
         float num = 3.0;        // how many standard deviations
-        console->print("cov pos: ");
-        console->print(num * ekf.nav.Pp0, 2);
-        console->print(", ");
-        console->print(num * ekf.nav.Pp1, 2);
-        console->print(", ");
-        console->print(num * ekf.nav.Pp2, 2);
-        console->print(" vel: ");
-        console->print(num * ekf.nav.Pv0, 2);
-        console->print(", ");
-        console->print(num * ekf.nav.Pv1, 2);
-        console->print(", ");
-        console->print(num * ekf.nav.Pv2, 2);
-        console->print(" att: ");
-        console->print(num * ekf.nav.Pa0*R2D, 2);
-        console->print(", ");
-        console->print(num * ekf.nav.Pa1*R2D, 2);
-        console->print(", ");
-        console->print(num * ekf.nav.Pa2*R2D, 2);
-        console->println();
+        console->printf("cov pos: %.2f, %.2f, %.2f",
+                        num * the_ekf.nav.Pp0,
+                        num * the_ekf.nav.Pp1,
+                        num * the_ekf.nav.Pp2);
+        console->printf(" vel: %.2f, %.2f, %.2f",
+                        num * the_ekf.nav.Pv0,
+                        num * the_ekf.nav.Pv1,
+                        num * the_ekf.nav.Pv2);
+        console->printf(" att: %.2f, %.2f, %.2f\n",
+                        num * the_ekf.nav.Pa0*R2D,
+                        num * the_ekf.nav.Pa1*R2D,
+                        num * the_ekf.nav.Pa2*R2D);
     }
-#endif
 }
 
 // output a binary representation of the barometer data

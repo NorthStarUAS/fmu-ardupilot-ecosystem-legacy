@@ -6,6 +6,6 @@ def build(bld):
     bld.ap_program(
         program_name='rc-fmu-ap',
         program_groups=['bin', 'rc-fmu-ap'],
-        use=[vehicle + '_libs', 'ap']
+        use=[vehicle + '_libs', 'ap'],
     )
     

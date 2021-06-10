@@ -63,6 +63,7 @@ public:
 private:
 
     Matrix15f F, PHI, P, Qw, Q, ImKH, KRKt, I15 /* identity */;
+    Matrix15f t1, t2, t3;
     Matrix15x12f G;
     Matrix15x6f K;
     Vector15f x;

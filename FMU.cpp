@@ -21,7 +21,7 @@ AP_HAL::UARTDriver *console = hal.console;
 // #include "airdata.h"
 #include "comms.h"
 #include "config.h"
-// #include "src/ekf.h"
+#include "ekf.h"
 #include "gps.h"
 #include "imu.h"
 // #include "led.h"
@@ -96,10 +96,11 @@ void setup() {
 //     // led for status blinking if defined
 //     led.setup();
 
-//     // ekf init (just prints availability status)
-//     ekf.setup();
+    // ekf init (just prints availability status)
+    the_ekf.setup();
     
-//     Serial.println("Ready and transmitting...");
+    console->printf("Setup finished.\n");
+    console->printf("Ready and transmitting...\n");
 }
 
 // main loop
@@ -129,9 +130,9 @@ void loop() {
         // top priority, used for timing sync downstream.
         the_imu.update();
 
-//         if ( config.ekf.select != message::enum_nav::none ) {
-//             ekf.update();
-//         }
+        if ( config.ekf_cfg.select != message::enum_nav::none ) {
+            the_ekf.update();
+        }
         
 //         // output keyed off new IMU data
 //         comms.output_counter += comms.write_pilot_in_bin();
@@ -167,9 +168,9 @@ void loop() {
                 // write_pilot_in_ascii();
                 // write_actuator_out_ascii();
                 comms.write_gps_ascii();
-                // if ( config.ekf.select != message::enum_nav::none ) {
-                //     comms.write_nav_ascii();
-                // }
+                if ( config.ekf_cfg.select != message::enum_nav::none ) {
+                    comms.write_nav_ascii();
+                }
                 // comms.write_airdata_ascii();
                 // write_status_info_ascii();
                 // comms.write_imu_ascii();
@@ -198,10 +199,10 @@ void loop() {
 //         static bool last_ap_state = pilot.ap_enabled();
 //         pilot.update_manual();
 //         if ( pilot.ap_enabled() ) {
-//             if ( !last_ap_state ) { Serial.println("ap enabled"); }
+//             if ( !last_ap_state ) { console-printf("ap enabled\n"); }
 //             mixer.update( pilot.ap_inputs );
 //         } else {
-//             if ( last_ap_state ) { Serial.println("ap disabled (manaul flight)"); }
+//             if ( last_ap_state ) { console->printf("ap disabled (manaul flight)\n"); }
 //             mixer.update( pilot.manual_inputs );
 //         }
 //         pwm.update();

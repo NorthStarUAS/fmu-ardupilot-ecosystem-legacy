@@ -27,4 +27,4 @@ public:
     void reinit();              // request the filter reinit itself
 };
 
-extern ekf_t ekf;
+extern ekf_t the_ekf;

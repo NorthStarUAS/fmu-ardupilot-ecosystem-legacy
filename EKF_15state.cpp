@@ -14,10 +14,11 @@
  *
  */
 
-//#include <iostream>
-//using std::cout;
-//using std::endl;
-//#include <stdio.h>
+#define ALLOW_DOUBLE_MATH_FUNCTIONS
+#include <AP_HAL/AP_HAL.h>
+
+#include "setup_board.h"
+static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 
 #include "nav_functions.h"
 #include "EKF_15state.h"
@@ -295,7 +296,11 @@ void EKF15::time_update(IMUdata imu) {
     Q = (Q + Q.transpose()) * 0.5;			// Q = 0.5*(Q+Q')
 	
     // Covariance Time Update
-    P = PHI * P * PHI.transpose() + Q;			// P = PHI*P*PHI' + Q
+    // P = PHI * P * PHI.transpose() + Q;			// P = PHI*P*PHI' + Q
+    t1 = PHI.transpose();
+    t2 = PHI * P;
+    t3 = t1;
+    P = t3 + Q;
     P = (P + P.transpose()) * 0.5;			// P = 0.5*(P+P')
 	
     nav.Pp0 = P(0,0);     nav.Pp1 = P(1,1);     nav.Pp2 = P(2,2);
@@ -304,7 +309,7 @@ void EKF15::time_update(IMUdata imu) {
     nav.Pabx = P(9,9);    nav.Paby = P(10,10);  nav.Pabz = P(11,11);
     nav.Pgbx = P(12,12);  nav.Pgby = P(13,13);  nav.Pgbz = P(14,14);
 
-    // ==================  DONE TU  ===================
+    // ==================  DONE Time Update  ===================
 }
 
 void EKF15::measurement_update(GPSdata gps) {
