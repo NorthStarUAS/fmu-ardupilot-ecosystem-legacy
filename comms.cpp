@@ -191,7 +191,7 @@ void comms_t::write_pilot_in_ascii()
     console->printf("\n");
 }
 
-void write_actuator_out_ascii()
+void comms_t::write_actuator_out_ascii()
 {
     // actuator output
     console->printf("RCOUT:");

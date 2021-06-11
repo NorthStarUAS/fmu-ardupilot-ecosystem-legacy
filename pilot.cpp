@@ -17,7 +17,7 @@ static const uint16_t PWM_RANGE = PWM_MAX - PWM_MIN;
 
 float pilot_t::pwm2norm(uint16_t pwm_val, uint8_t i) {
     float norm = 0.0;
-    if ( pwm_symmetrical & (1>>i) ) {
+    if ( pwm_symmetrical & (1<<i) ) {
         // i.e. aileron, rudder, elevator
         norm = (float)((int)pwm_val - PWM_CENTER) / PWM_HALF_RANGE;
     } else {
@@ -29,7 +29,7 @@ float pilot_t::pwm2norm(uint16_t pwm_val, uint8_t i) {
 
 uint16_t pilot_t::norm2pwm(float norm_val, uint8_t i) {
     uint16_t output = PWM_CENTER;
-    if ( pwm_symmetrical & (1>>i) ) {
+    if ( pwm_symmetrical & (1<<i) ) {
         output = PWM_CENTER + (int)(PWM_HALF_RANGE * norm_val); // * config.pwm_cfg.act_gain[i]);
     } else {
         output = PWM_MIN + (int)(PWM_RANGE * norm_val); // * config.pwm_cfg.act_gain[i]);

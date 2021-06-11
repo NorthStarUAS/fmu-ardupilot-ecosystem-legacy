@@ -7,8 +7,8 @@
 class pilot_t {
 private:
     // define if a channel is symmetrical or not (i.e. mapped to [0,1] for
-    // throttle, flaps, spoilers; [-1,1] for aileron, elevator, rudder
-    static const uint16_t pwm_symmetrical = (1 << 0) | (1 << 1) | (1 << 2);
+    // everything but throttle, flaps, gear
+    static const uint16_t pwm_symmetrical = ~(1 << 2 | 1 << 6 | 1 << 7);
     
     float pwm2norm(uint16_t pwm_val, uint8_t i);
     uint16_t norm2pwm(float norm_val, uint8_t i);

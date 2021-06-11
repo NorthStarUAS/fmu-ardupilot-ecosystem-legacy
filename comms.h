@@ -14,6 +14,7 @@ public:
     int write_ack_bin( uint8_t command_id, uint8_t subcommand_id );
     int write_pilot_in_bin();
     void write_pilot_in_ascii();
+    void write_actuator_out_ascii();
     int write_imu_bin();
     void write_imu_ascii();
     int write_gps_bin();

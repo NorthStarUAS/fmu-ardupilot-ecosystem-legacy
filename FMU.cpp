@@ -25,11 +25,6 @@ AP_HAL::UARTDriver *console = hal.console;
 #include "nav_mgr.h"
 #include "pilot.h"
 // #include "power.h"
-// #include "pwm.h"
-
-
-// Controls and Actuators
-// uint8_t test_pwm_channel = -1;
 
 void setup() {
     BoardConfig.init();         // setup any board specific drivers
@@ -70,11 +65,8 @@ void setup() {
     // initialize the IMU
     imu_mgr.setup();
 
-    // initialize the pilot interface (RC)
+    // initialize the pilot interface (RC in, out & mixer)
     pilot.setup();
-
-//     // initialize PWM output
-//     pwm.setup(config.board.board);
 
     // initialize the gps receiver
     gps_mgr.setup();
@@ -159,7 +151,7 @@ void loop() {
             debugTimer = AP_HAL::millis();
             if ( imu_mgr.gyros_calibrated == 2 ) {
                 comms.write_pilot_in_ascii();
-                // comms.write_actuator_out_ascii();
+                comms.write_actuator_out_ascii();
                 // comms.write_gps_ascii();
                 // if ( config.ekf_cfg.select != message::enum_nav::none ) {
                 //     comms.write_nav_ascii();
@@ -170,18 +162,12 @@ void loop() {
             }
         }
 
-//         // uncomment this next line to test drive individual servo channels
-//         // (for debugging or validation.)
-//         test_pwm_channel = -1;  // zero is throttle so be careful!
-//         if ( test_pwm_channel >= 0 ) {
-//             pwm.update(test_pwm_channel);
-//         }
 
-//         // poll the pressure sensors
-//         airdata.update();
+        // poll the pressure sensors
+        // airdata.update();
 
-//         // read power values
-//         power.update();
+        // read power values
+        // power.update();
 
         // suck in any available gps messages
         gps_mgr.update();
@@ -191,7 +177,7 @@ void loop() {
         static bool last_ap_state = pilot.ap_enabled();
         if ( pilot.ap_enabled() and !last_ap_state ) {
             console->printf("ap enabled\n");
-        } else if ( last_ap_state ) {
+        } else if ( !pilot.ap_enabled() and last_ap_state ) {
             console->printf("ap disabled (manaul flight)\n");
         }
         // pwm.update();
