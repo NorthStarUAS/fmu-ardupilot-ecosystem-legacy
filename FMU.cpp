@@ -54,9 +54,9 @@ void setup() {
         console->printf("Successfully loaded config from eeprom storage.\n");
     }
     
-//     // force/hard-code a specific board config if desired
-//     // config.force_config_aura3();
-//     // config.force_config_goldy3();
+    // force/hard-code a specific board config if desired
+    // config.force_config_aura3();
+    // config.force_config_goldy3();
     
     // update imu strapdown and mag_affine matrices from config
     imu_mgr.set_strapdown_calibration();
@@ -187,8 +187,9 @@ void loop() {
     // suck in any host commmands (inceptor updates, etc.)
     // comms.read_commands();
 
-    // if pilot input changed flag == true
-    pilot.write();
+    if ( pilot.changed ) {
+        pilot.write();
+    }
 
     // blink the led on boards that support it
     // led.update(imu.gyros_calibrated, gps_mgr.gps_data.fixType);

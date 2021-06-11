@@ -22,7 +22,7 @@ void mixer_t::sas_defaults() {
 };
 
 
-// // reset mixing parameters to startup defaults
+// reset mixing parameters to startup defaults
 // void mixer_t::mixing_defaults() {
 //     config.actuators.mix_autocoord = false;
 //     config.actuators.mix_throttle_trim = false;
@@ -119,6 +119,7 @@ void mixer_t::print_mixer_matrix() {
 void mixer_t::setup() {
     outputs.setZero();
     M = Eigen::Matrix<float, MAX_RCOUT_CHANNELS, MAX_RCOUT_CHANNELS, Eigen::RowMajor>(config.mixer_matrix_cfg.matrix);
+    M.setIdentity();
     print_mixer_matrix();
 }
 

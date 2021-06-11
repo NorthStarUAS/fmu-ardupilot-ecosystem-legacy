@@ -21,6 +21,7 @@ public:
     float ap_inputs[MAX_RCIN_CHANNELS];     // normalized
     uint16_t pwm_outputs[MAX_RCOUT_CHANNELS];
     bool failsafe = true;
+    bool changed = false;
 
     mixer_t mixer;
     

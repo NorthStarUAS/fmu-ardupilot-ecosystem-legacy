@@ -58,6 +58,7 @@ bool pilot_t::read() {
     bool new_input = false;
     if ( hal.rcin->new_input() ) {
         new_input = true;
+        changed = true;
         last_input = AP_HAL::millis();
         failsafe = false;
         nchannels = hal.rcin->read(pwm_inputs, MAX_RCIN_CHANNELS);
@@ -85,6 +86,7 @@ void pilot_t::write() {
         uint16_t pwm_val = norm2pwm(norm_val, i);
         hal.rcout->write(i, pwm_val);
     }
+    changed = false;
 }
 
 void pilot_t::update_ap( message::command_inceptors_t *inceptors ) {
@@ -98,6 +100,7 @@ void pilot_t::update_ap( message::command_inceptors_t *inceptors ) {
     ap_inputs[5] = inceptors->channel[3]; // rudder
     ap_inputs[6] = inceptors->channel[4]; // flap
     ap_inputs[7] = inceptors->channel[5]; // gear
+    changed = true;
 }
 
 // global shared instance
