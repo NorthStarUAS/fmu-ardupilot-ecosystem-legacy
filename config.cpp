@@ -5,7 +5,7 @@
 #include "config.h"
 #include "imu_mgr.h"
 #include "led.h"
-#include "mixer.h"
+#include "pilot.h"
 #include "power.h"
 
 // starting point for writing big eeprom struct
@@ -136,6 +136,12 @@ int config_t::write_storage() {
     return status;
 }
 
+void config_t::actuator_gain_defaults() {
+    for ( int i = 0; i < message::pwm_channels; i++ ) {
+        config.pwm_cfg.act_gain[i] = 1.0;
+    }
+}
+
 // force/hard-code a specific board config if desired
 void config_t::force_config_aura3() {
     console->printf("Forcing an aura v2 config\n");
@@ -144,8 +150,8 @@ void config_t::force_config_aura3() {
     airdata.defaults_aura3();
     led.defaults_aura3();
     config.power_cfg.have_attopilot = true;
-    pwm.act_gain_defaults();
-    mixer.setup();
+    actuator_gain_defaults();
+    pilot.mixer.setup();
     config.stab_cfg.sas_rollaxis = true;
     config.stab_cfg.sas_pitchaxis = true;
     config.stab_cfg.sas_yawaxis = true;
@@ -163,8 +169,8 @@ void config_t::force_config_goldy3() {
     imu_mgr.defaults_goldy3();
     airdata.defaults_goldy3();
     led.defaults_goldy3();
-    pwm.act_gain_defaults();
-    mixer.setup();
+    actuator_gain_defaults();
+    pilot.mixer.setup();
     config.stab_cfg.sas_rollaxis = true;
     config.stab_cfg.sas_pitchaxis = true;
     config.stab_cfg.sas_yawaxis = true;
@@ -180,9 +186,9 @@ void config_t::reset_defaults() {
     config.board_cfg.board = 0;
     imu_mgr.defaults_goldy3();
     led.defaults_goldy3();
-    pwm.act_gain_defaults();
-    mixer.sas_defaults();
-    mixer.setup();
+    actuator_gain_defaults();
+    pilot.mixer.sas_defaults();
+    pilot.mixer.setup();
     config.power_cfg.have_attopilot = false;
 }
 

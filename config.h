@@ -44,7 +44,8 @@ private:
     uint16_t set_serial_number(uint16_t value);
     int read_storage();
     int write_storage();
-    
+
+    void actuator_gain_defaults();
     void force_config_aura3();
     void force_config_goldy3();
     void reset_defaults();

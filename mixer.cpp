@@ -93,10 +93,10 @@ void mixer_t::update_matrix(message::config_mixer_t *mix_config ) {
     }
 
     // updating the mixer_matrix config message so we can save it in eeeprom
-    for ( int i = 0; i < MAX_PWM_CHANNELS; i++ ) {
-        for ( int j = 0; j < MAX_PWM_CHANNELS; j++ ) {
-            //Serial.println(j*MAX_PWM_CHANNELS+i);
-            config.mixer_matrix_cfg.matrix[i*MAX_PWM_CHANNELS+j] = M(i,j);
+    for ( int i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
+        for ( int j = 0; j < MAX_RCOUT_CHANNELS; j++ ) {
+            //console->printf("%d\n", j*MAX_RCOUT_CHANNELS+i);
+            config.mixer_matrix_cfg.matrix[i*MAX_RCOUT_CHANNELS+j] = M(i,j);
         }
     }
 
@@ -105,9 +105,9 @@ void mixer_t::update_matrix(message::config_mixer_t *mix_config ) {
 
 void mixer_t::print_mixer_matrix() {
     console->printf("Mixer Matrix:\n");
-    for ( int i = 0; i < MAX_PWM_CHANNELS; i++ ) {
+    for ( int i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
         console->printf("  ");
-        for ( int j = 0; j < MAX_PWM_CHANNELS; j++ ) {
+        for ( int j = 0; j < MAX_RCOUT_CHANNELS; j++ ) {
             if ( M(i,j) >= 0 ) {
                 console->printf(" ");
             }
@@ -118,8 +118,7 @@ void mixer_t::print_mixer_matrix() {
 }
 void mixer_t::setup() {
     outputs.setZero();
-    pwm.norm2pwm( outputs.data() );
-    M = Eigen::Matrix<float, MAX_PWM_CHANNELS, MAX_PWM_CHANNELS, Eigen::RowMajor>(config.mixer_matrix_cfg.matrix);
+    M = Eigen::Matrix<float, MAX_RCOUT_CHANNELS, MAX_RCOUT_CHANNELS, Eigen::RowMajor>(config.mixer_matrix_cfg.matrix);
     print_mixer_matrix();
 }
 
@@ -158,17 +157,12 @@ void mixer_t::mixing_update() {
 }
 
 void mixer_t::update() {
-    // initialize commands
+    // the pilot.get_* interface is smart to return manual
+    // vs. autopilot depending on switch state.
     inputs << pilot.get_throttle(), pilot.get_aileron(), pilot.get_elevator(),
         pilot.get_rudder(), pilot.get_flap(), pilot.get_gear(),
         pilot.get_ch7(), pilot.get_ch8();
     
     sas_update();
     mixing_update();
-
-    // compute pwm actuator output values from the normalized values
-    pwm.norm2pwm( outputs.data() );
 }
-
-// global shared instance
-mixer_t mixer;

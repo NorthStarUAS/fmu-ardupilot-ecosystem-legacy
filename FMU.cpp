@@ -22,7 +22,6 @@ AP_HAL::UARTDriver *console = hal.console;
 #include "gps_mgr.h"
 #include "imu_mgr.h"
 // #include "led.h"
-// #include "mixer.h"
 #include "nav_mgr.h"
 #include "pilot.h"
 // #include "power.h"
@@ -74,9 +73,6 @@ void setup() {
     // initialize the pilot interface (RC)
     pilot.setup();
 
-//     // initialize mixer (before actuators/pwm)
-//     mixer.setup();
-    
 //     // initialize PWM output
 //     pwm.setup(config.board.board);
 
@@ -191,27 +187,25 @@ void loop() {
         gps_mgr.update();
     }
 
-    pilot.update();
-//     // keep processing while there is data in the uart buffer
-//     while ( sbus.process() ) {
-//         static bool last_ap_state = pilot.ap_enabled();
-//         pilot.update_manual();
-//         if ( pilot.ap_enabled() ) {
-//             if ( !last_ap_state ) { console-printf("ap enabled\n"); }
-//             mixer.update( pilot.ap_inputs );
-//         } else {
-//             if ( last_ap_state ) { console->printf("ap disabled (manaul flight)\n"); }
-//             mixer.update( pilot.manual_inputs );
-//         }
-//         pwm.update();
-//         last_ap_state = pilot.ap_enabled();
-//     }
+    if ( pilot.read() ) {
+        static bool last_ap_state = pilot.ap_enabled();
+        if ( pilot.ap_enabled() and !last_ap_state ) {
+            console->printf("ap enabled\n");
+        } else if ( last_ap_state ) {
+            console->printf("ap disabled (manaul flight)\n");
+        }
+        // pwm.update();
+        last_ap_state = pilot.ap_enabled();
+    }
 
-//     // suck in any host commmands (flight control updates, etc.)
-//     comms.read_commands();
+    // suck in any host commmands (inceptor updates, etc.)
+    // comms.read_commands();
 
-//     // blink the led on boards that support it
-//     led.update(imu.gyros_calibrated, gps_mgr.gps_data.fixType);
+    // if pilot input changed flag == true
+    pilot.write();
+
+    // blink the led on boards that support it
+    // led.update(imu.gyros_calibrated, gps_mgr.gps_data.fixType);
 
     // hal.scheduler->delay(5000); setup(); // debugging
 }

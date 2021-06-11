@@ -1,8 +1,8 @@
 #pragma once
 
+#include "setup_board.h"
 #include "aura4_messages.h"
-
-const uint8_t MAX_RC_CHANNELS = 16;
+#include "mixer.h"
 
 class pilot_t {
 private:
@@ -11,21 +11,26 @@ private:
     static const uint16_t pwm_symmetrical = (1 << 0) | (1 << 1) | (1 << 2);
     
     float pwm2norm(uint16_t pwm_val, uint8_t i);
+    uint16_t norm2pwm(float norm_val, uint8_t i);
 
     uint32_t last_input = 0;
 
 public:
-    uint16_t pwm_inputs[MAX_RC_CHANNELS]; // AP delivers pwm units
-    float manual_inputs[MAX_RC_CHANNELS]; // normalized
-    float ap_inputs[MAX_RC_CHANNELS];     // normalized
+    uint16_t pwm_inputs[MAX_RCIN_CHANNELS];
+    float manual_inputs[MAX_RCIN_CHANNELS]; // normalized
+    float ap_inputs[MAX_RCIN_CHANNELS];     // normalized
+    uint16_t pwm_outputs[MAX_RCOUT_CHANNELS];
     bool failsafe = true;
+
+    mixer_t mixer;
     
     void setup();
-    void update();
+    bool read();
+    void write();
     
     void update_ap( message::command_inceptors_t *inceptors );
 
-    // convenience
+    // convenience (used by mixer)
     inline bool ap_enabled() { return manual_inputs[0] >= 0.0; }
     inline bool throttle_safety() { return manual_inputs[1] < 0.0; }
     inline float get_aileron() {

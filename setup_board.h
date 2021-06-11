@@ -10,6 +10,12 @@ const int FIRMWARE_REV = 500;
 // Make this available for notational convenience: console->printf()
 extern AP_HAL::UARTDriver *console;
 
+// it would be nice if these were dynamically detected, but they drive
+// structure allocations and I need to think through that part of it
+// carefully.
+const uint8_t MAX_RCIN_CHANNELS = 16;
+const uint8_t MAX_RCOUT_CHANNELS = 8;
+
 // automatic configuration
 #if defined(ARDUINO_TEENSY32) || defined(ARDUINO_TEENSY40)
  #define AURA_V2

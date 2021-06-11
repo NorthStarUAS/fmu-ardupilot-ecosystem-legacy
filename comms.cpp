@@ -15,7 +15,6 @@
 #include "nav_mgr.h"
 #include "pilot.h"
 #include "power.h"
-#include "pwm.h"
 #include "nav_constants.h"
 #include "serial_link.h"
 #include "aura4_messages.h"
@@ -84,7 +83,7 @@ bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size 
         config_mixer.unpack(buf, message_size);
         if ( message_size == config_mixer.len ) {
             console->printf("received new logic level mixer config\n");
-            mixer.update_matrix(&config_mixer);
+            pilot.mixer.update_matrix(&config_mixer);
             config.write_storage();
             write_ack_bin( id, 0 );
             result = true;
@@ -154,7 +153,7 @@ int comms_t::write_pilot_in_bin()
 {
     static message::pilot_t pilot1;
 
-    if (message::sbus_channels > MAX_RC_CHANNELS) {
+    if (message::sbus_channels > MAX_RCIN_CHANNELS) {
         return 0;
     }
     
@@ -196,8 +195,8 @@ void write_actuator_out_ascii()
 {
     // actuator output
     console->printf("RCOUT:");
-    for ( int i = 0; i < MAX_PWM_CHANNELS; i++ ) {
-        console->printf("%d ", pwm.output_pwm[i]);
+    for ( int i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
+        console->printf("%.2f ", pilot.mixer.outputs[i]);
     }
     console->printf("\n");
 }
