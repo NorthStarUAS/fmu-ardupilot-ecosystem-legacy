@@ -21,7 +21,7 @@ AP_HAL::UARTDriver *console = hal.console;
 #include "config.h"
 #include "gps_mgr.h"
 #include "imu_mgr.h"
-// #include "led.h"
+#include "led.h"
 #include "nav_mgr.h"
 #include "pilot.h"
 #include "power.h"
@@ -76,7 +76,7 @@ void setup() {
     power.setup();
     
     // led for status blinking if defined
-    // led.setup();
+    led.setup();
 
     // ekf init (just prints availability status)
     nav_mgr.setup();
@@ -182,8 +182,8 @@ void loop() {
         pilot.write();
     }
 
-    // blink the led on boards that support it
-    // led.update(imu.gyros_calibrated, gps_mgr.gps_data.fixType);
+    // blink the led
+    led.update(imu_mgr.gyros_calibrated, gps_mgr.gps);
 }
 
 AP_HAL_MAIN();

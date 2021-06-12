@@ -148,7 +148,6 @@ void config_t::force_config_aura3() {
     config.board_cfg.board = 1;    // 0 = marmot v1, 1 = aura v2
     imu_mgr.defaults_aura3();
     //airdata.defaults_aura3();
-    //led.defaults_aura3();
     config.power_cfg.have_attopilot = true;
     actuator_gain_defaults();
     pilot.mixer.setup();
@@ -168,7 +167,6 @@ void config_t::force_config_goldy3() {
     config.board_cfg.board = 0;    // 0 = marmot v1, 1 = aura v2
     imu_mgr.defaults_goldy3();
     //airdata.defaults_goldy3();
-    //led.defaults_goldy3();
     actuator_gain_defaults();
     pilot.mixer.setup();
     config.stab_cfg.sas_rollaxis = true;
@@ -185,7 +183,6 @@ void config_t::reset_defaults() {
     console->printf("Setting default config ...\n");
     config.board_cfg.board = 0;
     imu_mgr.defaults_goldy3();
-    led.defaults_goldy3();
     actuator_gain_defaults();
     pilot.mixer.setup();
     pilot.mixer.sas_defaults();

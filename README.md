@@ -10,6 +10,8 @@ progress.
 
 Some major bullet point todo list items:
 
+* figure out led's (AP_Notify)
+* figure out/test airdata connections (no external port on pixracer?)
 * decide how best to detect and choose when multiple imu and compass
   are available.
 * sort out how I really want to organize classes vs. singletons
