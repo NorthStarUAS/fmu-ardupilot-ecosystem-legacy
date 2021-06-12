@@ -71,14 +71,14 @@ void setup() {
     // initialize the gps receiver
     gps_mgr.setup();
 
-//     // initialize air data (marmot v1)
-//     airdata.setup();
+    // initialize air data (marmot v1)
+    // airdata.setup();
     
     // power sensing
     power.setup();
     
-//     // led for status blinking if defined
-//     led.setup();
+    // led for status blinking if defined
+    // led.setup();
 
     // ekf init (just prints availability status)
     nav_mgr.setup();
@@ -89,18 +89,11 @@ void setup() {
 
 // main loop
 void loop() {
-    // console->printf("Hello world!\n");
-
-    //console->printf("Rebooting intentionally in 10 seconds so we can see the setup console messages...\n");
-    //hal.scheduler->delay(10000);
-    //hal.scheduler->reboot(false);
-    
     static uint32_t mainTimer = 0;
     static uint32_t hbTimer = 0;
     static uint32_t debugTimer = 0;
        
-//     // When new IMU data is ready (new pulse from IMU), go out and grab the IMU data
-//     // and output fresh IMU message plus the most recent data from everything else.
+    // this is the heartbeat of the system here (DT_MILLIS)
     if ( AP_HAL::millis() - mainTimer >= DT_MILLIS ) {
         mainTimer += DT_MILLIS;
         if ( AP_HAL::millis() - mainTimer >= DT_MILLIS ) {
@@ -118,39 +111,37 @@ void loop() {
             nav_mgr.update();
         }
         
-//         // output keyed off new IMU data
-//         comms.output_counter += comms.write_pilot_in_bin();
-//         comms.output_counter += comms.write_gps_bin();
-//         comms.output_counter += comms.write_airdata_bin();
-//         comms.output_counter += comms.write_power_bin();
-//         // do a little extra dance with the return value because
-//         // write_status_info_bin() can reset comms.output_counter (but
-//         // that gets ignored if we do the math in one step)
-//         uint8_t result = comms.write_status_info_bin();
-//         comms.output_counter += result;
-//         if ( config.ekf.select != message::enum_nav::none ) {
-//             comms.output_counter += comms.write_nav_bin();
-//         }
-//         // write imu message last: used as an implicit end of data
-//         // frame marker.
-//         comms.output_counter += comms.write_imu_bin();
+        comms.output_counter += comms.write_pilot_in_bin();
+        comms.output_counter += comms.write_gps_bin();
+        // comms.output_counter += comms.write_airdata_bin();
+        comms.output_counter += comms.write_power_bin();
+        // do a little extra dance with the return value because
+        // write_status_info_bin() can reset comms.output_counter (but
+        // that gets ignored if we do the math in one step)
+        uint8_t result = comms.write_status_info_bin();
+        comms.output_counter += result;
+        if ( config.ekf_cfg.select != message::enum_nav::none ) {
+            comms.output_counter += comms.write_nav_bin();
+        }
+        // write imu message last: used as an implicit end of data
+        // frame marker.
+        comms.output_counter += comms.write_imu_bin();
 
         // one second heartbeat output
         if ( AP_HAL::millis() - hbTimer >= 10000 ) {
             hbTimer = AP_HAL::millis();
-            // console->printf("Hello world! (%ld) %d\n", hbTimer, imu_mgr.gyros_calibrated);
             if ( imu_mgr.gyros_calibrated == 2 ) {
                 comms.write_status_info_ascii();
                 comms.write_power_ascii();
                 console->printf("\n");
             }
         }
-        // 10hz human debugging output, but only after gyros finish calibrating
+        // 10hz human console output, (begins when gyros finish calibrating)
         if ( AP_HAL::millis() - debugTimer >= 100 ) {
             debugTimer = AP_HAL::millis();
             if ( imu_mgr.gyros_calibrated == 2 ) {
-                comms.write_pilot_in_ascii();
-                comms.write_actuator_out_ascii();
+                // comms.write_pilot_in_ascii();
+                // comms.write_actuator_out_ascii();
                 // comms.write_gps_ascii();
                 // if ( config.ekf_cfg.select != message::enum_nav::none ) {
                 //     comms.write_nav_ascii();
@@ -160,7 +151,6 @@ void loop() {
                 // comms.write_imu_ascii();
             }
         }
-
 
         // poll the pressure sensors
         // airdata.update();
@@ -183,8 +173,8 @@ void loop() {
         last_ap_state = pilot.ap_enabled();
     }
 
-    // suck in any host commmands (inceptor updates, etc.)
-    // comms.read_commands();
+    // read in any host commmands (inceptor updates, etc.)
+    comms.read_commands();
 
     if ( pilot.changed ) {
         pilot.write();
@@ -192,8 +182,6 @@ void loop() {
 
     // blink the led on boards that support it
     // led.update(imu.gyros_calibrated, gps_mgr.gps_data.fixType);
-
-    // hal.scheduler->delay(5000); setup(); // debugging
 }
 
 AP_HAL_MAIN();
