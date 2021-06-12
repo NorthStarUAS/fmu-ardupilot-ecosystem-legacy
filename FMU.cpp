@@ -24,7 +24,7 @@ AP_HAL::UARTDriver *console = hal.console;
 // #include "led.h"
 #include "nav_mgr.h"
 #include "pilot.h"
-// #include "power.h"
+#include "power.h"
 
 void setup() {
     BoardConfig.init();         // setup any board specific drivers
@@ -74,9 +74,8 @@ void setup() {
 //     // initialize air data (marmot v1)
 //     airdata.setup();
     
-//     // power sensing
-//     analogReadResolution(16);   // set up ADC0
-//     power.setup(config.board.board);
+    // power sensing
+    power.setup();
     
 //     // led for status blinking if defined
 //     led.setup();
@@ -167,7 +166,7 @@ void loop() {
         // airdata.update();
 
         // read power values
-        // power.update();
+        power.update();
 
         // suck in any available gps messages
         gps_mgr.update();

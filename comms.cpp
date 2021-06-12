@@ -403,22 +403,17 @@ void comms_t::write_airdata_ascii()
 int comms_t::write_power_bin()
 {
     static message::power_t power1;
-    power1.int_main_v = power.pwr1_v;
     power1.avionics_v = power.avionics_v;
-    power1.ext_main_v = power.pwr2_v;
-    power1.ext_main_amp = power.pwr_a;
+    power1.int_main_v = power.battery_volts;
+    power1.ext_main_amp = power.battery_amps;
     power1.pack();
     return serial.write_packet( power1.id, power1.payload, power1.len );
 }
 
 void comms_t::write_power_ascii()
 {
-#if 0
-    // This info is static so we don't need to send it at a high rate ... once every 10 seconds (?)
-    // with an immediate message at the start.
-    console->print("Volts Main: "); console->print(power.pwr1_v, 2);
-    console->print(" avionics: "); console->println(power.avionics_v, 2);
-#endif
+    console->printf("Avionics v: %.2f  Batt v: %.2f  Batt amp: %.2f\n",
+                    power.avionics_v, power.battery_volts, power.battery_amps);
 }
 
 // output a binary representation of various status and config information
