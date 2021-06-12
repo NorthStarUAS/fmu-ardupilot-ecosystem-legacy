@@ -32,8 +32,6 @@ void setup() {
     console->begin(57600);
     hal.scheduler->delay(2000); // give the electrons a second to settle
     
-    comms.setup();
-
     console->printf("\nRice Creek UAS FMU: Rev %d\n", FIRMWARE_REV);
     console->printf("You are seeing this message on the console interface.\n");
     console->printf("Sensor/config communication is on Serial1 @ %d baud (N81) no flow control.\n", DEFAULT_BAUD);
@@ -82,7 +80,9 @@ void setup() {
 
     // ekf init (just prints availability status)
     nav_mgr.setup();
-    
+
+    comms.setup();              // do this after gps initialization
+
     console->printf("Setup finished.\n");
     console->printf("Ready and transmitting...\n");
 }
@@ -110,22 +110,24 @@ void loop() {
         if ( config.ekf_cfg.select != message::enum_nav::none ) {
             nav_mgr.update();
         }
-        
-        comms.output_counter += comms.write_pilot_in_bin();
-        comms.output_counter += comms.write_gps_bin();
-        // comms.output_counter += comms.write_airdata_bin();
-        comms.output_counter += comms.write_power_bin();
-        // do a little extra dance with the return value because
-        // write_status_info_bin() can reset comms.output_counter (but
-        // that gets ignored if we do the math in one step)
-        uint8_t result = comms.write_status_info_bin();
-        comms.output_counter += result;
-        if ( config.ekf_cfg.select != message::enum_nav::none ) {
-            comms.output_counter += comms.write_nav_bin();
+
+        if ( true) {
+            comms.output_counter += comms.write_pilot_in_bin();
+            comms.output_counter += comms.write_gps_bin();
+            // comms.output_counter += comms.write_airdata_bin();
+            comms.output_counter += comms.write_power_bin();
+            // do a little extra dance with the return value because
+            // write_status_info_bin() can reset comms.output_counter (but
+            // that gets ignored if we do the math in one step)
+            uint8_t result = comms.write_status_info_bin();
+            comms.output_counter += result;
+            if ( config.ekf_cfg.select != message::enum_nav::none ) {
+                comms.output_counter += comms.write_nav_bin();
+            }
+            // write imu message last: used as an implicit end of data
+            // frame marker.
+            comms.output_counter += comms.write_imu_bin();
         }
-        // write imu message last: used as an implicit end of data
-        // frame marker.
-        comms.output_counter += comms.write_imu_bin();
 
         // one second heartbeat output
         if ( AP_HAL::millis() - hbTimer >= 10000 ) {

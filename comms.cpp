@@ -27,6 +27,7 @@ static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 
 void comms_t::setup() {
     serial.open(DEFAULT_BAUD, hal.serial(1));
+    // serial.open(57600, hal.serial(1));
 }
 
 bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size )

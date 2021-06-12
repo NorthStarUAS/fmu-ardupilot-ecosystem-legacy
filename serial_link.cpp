@@ -27,6 +27,7 @@ void SerialLink::checksum( uint8_t hdr1, uint8_t hdr2, uint8_t *buf, uint16_t si
 }
 
 bool SerialLink::open( int baud, AP_HAL::UARTDriver *port ) {
+    console->printf("Opening comms port @ %d\n", baud);
     _port = port;
     _port->begin(baud);
     return true;
