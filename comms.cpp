@@ -433,7 +433,7 @@ int comms_t::write_status_info_bin()
         counter = MASTER_HZ * 1 - 1; // a message every 1 seconds (-1 so we aren't off by one frame) 
     }
 
-    status.serial_number = serial_number;
+    status.serial_number = config.serial_number;
     status.firmware_rev = FIRMWARE_REV;
     status.master_hz = MASTER_HZ;
     status.baud = DEFAULT_BAUD;

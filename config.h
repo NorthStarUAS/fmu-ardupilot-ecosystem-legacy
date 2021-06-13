@@ -39,7 +39,8 @@ private:
     message::config_power_t power_cfg;
     message::config_pwm_t pwm_cfg;
     message::config_stability_damping_t stab_cfg;
-    
+
+    uint16_t serial_number = 0;
     uint16_t read_serial_number();
     uint16_t set_serial_number(uint16_t value);
     int read_storage();

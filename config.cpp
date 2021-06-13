@@ -14,9 +14,6 @@ static const int CONFIG_OFFSET = 2;
 static const uint8_t START_OF_CFG0 = 147;
 static const uint8_t START_OF_CFG1 = 224;
 
-// global definitions
-uint16_t serial_number;
-
 config_t::config_t() {
     storage = hal.storage;
 }

@@ -36,5 +36,3 @@ const int DT_MILLIS = (1000 / MASTER_HZ);
 // baud rates vs. host baud rates.
 const int DEFAULT_BAUD = 500000;
 
-extern uint16_t serial_number;
-
