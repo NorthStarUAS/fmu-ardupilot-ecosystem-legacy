@@ -135,82 +135,27 @@ capabilities at a very inexpensive price point.
   remain on the host computer as well as other functions like logging
   and communication with the ground station.
 
-BUILD INSTRUCTIONS
-==================
+
+# BUILD INSTRUCTIONS
 
 (rev1 ... sketchy note phase ...)
 
-git pull arduino source tree
-git pull rc-fmu source tree (to an independent location)
-cd .../arduino
-ln -s .../path/to/rc-fmu .
-edit arduino/wscript to include rc-fmu as a program name
+* git pull arduino source tree
+* git pull rc-fmu source tree (to an independent location)
+* cd .../arduino
+* ln -s .../path/to/rc-fmu .
+* edit arduino/wscript to include rc-fmu as a program name
 
-edit …/ardupilot/libraries/AP_Vehicle/AP_Vehicle_Type.h to #define
-APM_BUILD_Subdir with a new value (I picked 101 to stay out of the way
-of possible future expansion.) But most likely these changes will live
-only on my own hard drive. Note: the symbol you define uses the subdir
-name, not the common name you picked.
+* edit …/ardupilot/libraries/AP_Vehicle/AP_Vehicle_Type.h to #define
+  APM_BUILD_Subdir with a new value (I picked 101 to stay out of the
+  way of possible future expansion.) But most likely these changes
+  will live only on my own hard drive. Note: the symbol you define
+  uses the subdir name, not the common name you picked.
 
-./waf configure --board XYZ
-./waf rc-fmu
+* I had to do extra steps to get Eigen3 to work inside the AP_HAL /
+  ChibiOS build environment.  Please see docs/README-Eigen3.md for the
+  required changes and work arounds.
 
+* ./waf configure --board XYZ
+* ./waf rc-fmu --upload
 
-So Eigen-3.3.9 can compile:
-
-  In your app wscript file in the bld.ap_program() section make sure
-  to add 'ALLOW_DOUBLE_MATH_FUNCTIONS' to the defines=[] line:
-  
-    defines=['ALLOW_DOUBLE_MATH_FUNCTIONS'],
-
-  In /usr/arm-none-eabi/include/c++/10.2.0/bits/basic_string.h
-  - remove std:: from in front of vsnprint() calls
-
-  In ardupilot/Tools/ardupilotwaf/boards.py (chibios section at
-  least), comment out:
-
-      /* no: need to fix this in Memory.h */ -Werror=deprecated-delcarations
-      -Werror=float-equal
-
-  Implementation for realloc() without std::realloc() in Eigen Memory.h
-  Reference: http://hdiff.luite.com/cgit/eigen/tree/eigen3/Eigen/src/Core/util/Memory.h?id=6507408b52e39c015ac6943bdaa002ebe31c46ce
-/*****************************************************************************
-*** Implementation of generic aligned realloc (when no realloc can be used)***
-*****************************************************************************/
-
-void* aligned_malloc(std::size_t size);
-void  aligned_free(void *ptr);
-
-/** \internal
-  * \brief Reallocates aligned memory.
-  * Allows reallocation with aligned ptr types. This implementation will
-  * always create a new memory chunk and copy the old data.
-  */
-inline void* generic_aligned_realloc(void* ptr, size_t size, size_t old_size)
-{
-  if (ptr==0)
-    return aligned_malloc(size);
-
-  if (size==0)
-  {
-    aligned_free(ptr);
-    return 0;
-  }
-
-  void* newptr = aligned_malloc(size);
-  if (newptr == 0)
-  {
-    #ifdef EIGEN_HAS_ERRNO
-    errno = ENOMEM; // according to the standard
-    #endif
-    return 0;
-  }
-
-  if (ptr != 0)
-  {
-    std::memcpy(newptr, ptr, (std::min)(size,old_size));
-    aligned_free(ptr);
-  }
-
-  return newptr;
-}

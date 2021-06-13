@@ -33,7 +33,7 @@ In ardupilot/Tools/ardupilotwaf/boards.py (chibios section at least),
 comment out:
 
 ```
-    -Werror=float-equal
+    -Werror=float-equal,
 ```
 
 Eigen3 uses direct float == comparisons, but done in a careful "legit"
