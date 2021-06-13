@@ -27,6 +27,7 @@ static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 
 void comms_t::setup() {
     serial.open(DEFAULT_BAUD, hal.serial(1));
+    // serial.set_unbuffered_writes(true);
     // serial.open(57600, hal.serial(1));
 }
 
