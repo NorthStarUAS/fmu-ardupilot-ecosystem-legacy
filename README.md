@@ -8,7 +8,15 @@ so much of it is probably wrong or terribly out dated.  The code is
 also just at a checkpoint state ... still very much a work in
 progress.
 
-Some major bullet point todo list items:
+## NOTES:
+
+* AP_HAL appears (based on timing packets on the receiving side of the
+  pipe) to only service the serial/uart output at 50hz.  This
+  effectively limits the update rate with a host computer.  It may
+  mean that inner loop pid's will need to be run on the FMU, not on
+  the host when faster update rates area needed.
+
+## Some major bullet point todo list items:
 
 - figure out/test airdata connections (no external port on pixracer?)
 - decide how best to detect and choose when multiple imu and compass
