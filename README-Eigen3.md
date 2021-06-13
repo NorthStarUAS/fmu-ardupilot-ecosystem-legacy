@@ -7,9 +7,9 @@ In order for Eigen3 to compile in the ChibiOS/AP_HAL development ecosystem:
 In your app wscript file in the bld.ap_program() section make sure
 to add 'ALLOW_DOUBLE_MATH_FUNCTIONS' to the defines=[] line:
 
-[code]
+```
     defines=['ALLOW_DOUBLE_MATH_FUNCTIONS'],
-[/code]
+```
 
 If you see compiler errors complaining abou the number of arguments to
 the pow() function this is most likely the cause.
@@ -32,9 +32,9 @@ root cause or best worksaround.
 In ardupilot/Tools/ardupilotwaf/boards.py (chibios section at least),
 comment out:
 
-[code]
+```
     -Werror=float-equal
-[/code]
+```
 
 Eigen3 uses direct float == comparisons, but done in a careful "legit"
 way.  The AP build system is rigged to flag these as compile errors,
@@ -58,7 +58,7 @@ Reference: http://hdiff.luite.com/cgit/eigen/tree/eigen3/Eigen/src/Core/util/Mem
 
 You can look at Memory.h in this project for reference.
 
-[code]
+```
 /*****************************************************************************
 *** Implementation of generic aligned realloc (when no realloc can be used)***
 *****************************************************************************/
@@ -99,7 +99,7 @@ inline void* generic_aligned_realloc(void* ptr, size_t size, size_t old_size)
 
   return newptr;
 }
-[/code]
+```
 
 
 ## Eigen-3.4 (rc1)
