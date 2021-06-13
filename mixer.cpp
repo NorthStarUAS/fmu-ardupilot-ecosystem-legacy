@@ -10,14 +10,14 @@
 
 // reset sas parameters to startup defaults
 void mixer_t::sas_defaults() {
-    config.stab_cfg.sas_rollaxis = false;
-    config.stab_cfg.sas_pitchaxis = false;
-    config.stab_cfg.sas_yawaxis = false;
+    config.stab_cfg.sas_rollaxis = true;
+    config.stab_cfg.sas_pitchaxis = true;
+    config.stab_cfg.sas_yawaxis = true;
     config.stab_cfg.sas_tune = false;
 
-    config.stab_cfg.sas_rollgain = 0.0;
-    config.stab_cfg.sas_pitchgain = 0.0;
-    config.stab_cfg.sas_yawgain = 0.0;
+    config.stab_cfg.sas_rollgain = 0.2;
+    config.stab_cfg.sas_pitchgain = 0.2;
+    config.stab_cfg.sas_yawgain = 0.2;
     config.stab_cfg.sas_max_gain = 2.0;
 };
 

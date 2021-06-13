@@ -146,12 +146,6 @@ void config_t::reset_defaults() {
     pilot.mixer.setup();
     pilot.mixer.sas_defaults();
     config.power_cfg.have_attopilot = false;
-    config.stab_cfg.sas_rollaxis = true;
-    config.stab_cfg.sas_pitchaxis = true;
-    config.stab_cfg.sas_yawaxis = true;
-    config.stab_cfg.sas_rollgain = 0.2;
-    config.stab_cfg.sas_pitchgain = 0.2;
-    config.stab_cfg.sas_yawgain = 0.2;
     config.ekf_cfg.select = message::enum_nav::nav15;
 }
 
