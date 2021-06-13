@@ -51,9 +51,7 @@ public:
     Eigen::Vector4f mags_cal = Eigen::Vector4f::Zero();
     float tempC = 0.0;
     
-    void defaults_goldy3();
-    void defaults_aura3();
-    void defaults_common();
+    void defaults();
     void set_strapdown_calibration();
     // void set_accel_calibration();
     void set_mag_calibration();

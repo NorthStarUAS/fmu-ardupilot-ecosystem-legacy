@@ -6,24 +6,7 @@
 #include <AP_HAL/AP_HAL.h>
 
 // Setup imu defaults:
-// Goldy3 has mpu9250 on SPI CS line 24
-void imu_mgr_t::defaults_goldy3() {
-    config.imu_cfg.interface = 0;       // SPI
-    config.imu_cfg.pin_or_address = 24; // CS pin
-    defaults_common();
-}
-
-// Setup imu defaults:
-// Aura3 has mpu9250 on I2C Addr 0x68
-void imu_mgr_t::defaults_aura3() {
-    config.imu_cfg.interface = 1;       // i2c
-    config.imu_cfg.pin_or_address = 0x68; // mpu9250 i2c addr
-    defaults_common();
-}
-
-// Setup imu defaults:
-// Aura3 has mpu9250 on I2C Addr 0x68
-void imu_mgr_t::defaults_common() {
+void imu_mgr_t::defaults() {
     Eigen::Matrix3f strapdown3x3 = Eigen::Matrix3f::Identity();
     for ( int i = 0; i < 9; i++ ) {
         // no need to worry about row vs. column major here (symmetrical ident)

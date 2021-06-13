@@ -177,7 +177,7 @@ void loop() {
         last_ap_state = pilot.ap_enabled();
     }
 
-    // read in any host commmands (inceptor updates, etc.)
+    // read in any host commmands (config, inceptors, etc.)
     comms.read_commands();
 
     if ( pilot.changed ) {
