@@ -89,13 +89,17 @@ void setup() {
 
 // main loop
 void loop() {
-    static uint32_t mainTimer = 0;
-    static uint32_t hbTimer = 0;
-    static uint32_t debugTimer = 0;
-       
+    static uint32_t mainTimer = AP_HAL::millis();
+    static uint32_t hbTimer = AP_HAL::millis();
+    static uint32_t debugTimer = AP_HAL::millis();
+
+    static uint32_t tempTimer = AP_HAL::millis();
+    static uint32_t counter = 0;
+
     // this is the heartbeat of the system here (DT_MILLIS)
     if ( AP_HAL::millis() - mainTimer >= DT_MILLIS ) {
         mainTimer += DT_MILLIS;
+        counter++;
         if ( AP_HAL::millis() - mainTimer >= DT_MILLIS ) {
             comms.main_loop_timer_misses++;
             mainTimer = AP_HAL::millis(); // catch up
@@ -135,6 +139,8 @@ void loop() {
             if ( imu_mgr.gyros_calibrated == 2 ) {
                 comms.write_status_info_ascii();
                 comms.write_power_ascii();
+                float elapsed_sec = (AP_HAL::millis() - tempTimer) / 1000.0;
+                console->printf("Performace = %.1f hz\n", counter / elapsed_sec);
                 console->printf("\n");
             }
         }
@@ -183,7 +189,8 @@ void loop() {
     }
 
     // blink the led
-    led.update(imu_mgr.gyros_calibrated, gps_mgr.gps);
+    led.do_policy(imu_mgr.gyros_calibrated, gps_mgr.gps);
+    led.update();
 }
 
 AP_HAL_MAIN();

@@ -10,18 +10,20 @@ progress.
 
 Some major bullet point todo list items:
 
-* figure out led's (AP_Notify)
-* figure out/test airdata connections (no external port on pixracer?)
-* decide how best to detect and choose when multiple imu and compass
+- figure out/test airdata connections (no external port on pixracer?)
+- decide how best to detect and choose when multiple imu and compass
   are available.
-* sort out how I really want to organize classes vs. singletons
+- sort out how I really want to organize classes vs. singletons
   vs. global instances vs. namespace vs. cross-wired interdependencies
   between everything.  I have some messy mixes of these due to deep
   dive, sprint development dynamics.
-  - notice that statically allocating big things avoids potentially
+  * notice that statically allocating big things avoids potentially
     blowing up the stack space on some super cramped boards.
-* look carefully at what is in setup_board.h and where this is
+- look carefully at what is in setup_board.h and where this is
   #included all about
+- look through config messages and see what needs to be changed for
+  the new systm.
+x figure out led's (AP_Notify)
 x the_gps and the_imu are not great names. (_mgr is also not great,
   but I've used it before and I hate it less ...)
 x do a round of file renaming, or figure out how to orgainize code in
