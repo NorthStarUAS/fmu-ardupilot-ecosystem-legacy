@@ -23,7 +23,6 @@
 #include "comms.h"
 
 #include <AP_HAL/AP_HAL.h>
-static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 
 void comms_t::setup() {
     serial.open(DEFAULT_BAUD, hal.serial(1));

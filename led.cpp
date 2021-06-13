@@ -3,8 +3,6 @@
 #include "config.h"
 #include "led.h"
 
-static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
-
 void led_t::setup() {
 #if defined(HAL_HAVE_PIXRACER_LED)
     console->printf("Pixracer LED\n");

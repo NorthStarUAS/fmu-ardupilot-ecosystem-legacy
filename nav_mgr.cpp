@@ -6,11 +6,9 @@
 
 #include "nav_mgr.h"
 
-static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
-
 void nav_mgr_t::setup() {
     config.ekf_cfg.select = message::enum_nav::nav15; // force (fixme)
-    #if defined(AURA_ONBOARD_EKF)
+#if defined(AURA_ONBOARD_EKF)
     console->printf("EKF: available  Current setting: ");
     if ( config.ekf_cfg.select == message::enum_nav::none ) {
         console->printf("none\n");
@@ -21,13 +19,13 @@ void nav_mgr_t::setup() {
     } else {
         console->printf("unknown setting/disabled\n");
     }
-    #else
+#else
     console->printf("EKF: not available for Teensy 3.2\n");
-    #endif
+#endif
 }
 
 void nav_mgr_t::update() {
-    #if defined(AURA_ONBOARD_EKF)
+#if defined(AURA_ONBOARD_EKF)
     IMUdata imu1;
     imu1.time = imu_mgr.imu_millis / 1000.0;
     imu1.p = imu_mgr.get_p_cal();
@@ -98,7 +96,7 @@ void nav_mgr_t::update() {
     } else {
         status = 0;             // not initialized
     }
-    #endif // AURA_ONBOARD_EKF
+#endif // AURA_ONBOARD_EKF
 }
 
 void nav_mgr_t::reinit() {

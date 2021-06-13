@@ -6,8 +6,6 @@
 #include "config.h"
 #include "pilot.h"
 
-static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
-
 // 982 - 2006 (frsky) / 1496
 static const uint16_t PWM_MIN = 982;
 static const uint16_t PWM_MAX = 2006;

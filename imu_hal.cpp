@@ -8,8 +8,6 @@
 #include "setup_board.h"
 #include "imu_hal.h"
 
-static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
-
 static AP_InertialSensor ins;
 static AP_AHRS_DCM ahrs;  // need ...
 static AP_Baro baro; // Compass tries to set magnetic model based on location.

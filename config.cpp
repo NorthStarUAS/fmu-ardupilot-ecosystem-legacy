@@ -18,7 +18,6 @@ static const uint8_t START_OF_CFG1 = 224;
 uint16_t serial_number;
 
 config_t::config_t() {
-    const AP_HAL::HAL& hal = AP_HAL::get_HAL();
     storage = hal.storage;
 }
 

@@ -2,12 +2,8 @@
 #include <AP_BattMonitor/AP_BattMonitor_Analog.h>
 
 #include "setup_board.h"
-
 #include "config.h"
-
 #include "power.h"
-
-static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 
 // fixme/configurable
 static float amps_offset = 0.0;

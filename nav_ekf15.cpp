@@ -14,11 +14,6 @@
  *
  */
 
-#include <AP_HAL/AP_HAL.h>
-
-#include "setup_board.h"
-static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
-
 #include "nav_constants.h"
 #include "nav_functions.h"
 #include "nav_ekf15.h"

@@ -1,13 +1,16 @@
 #pragma once
 
-// FIXME: some of this still needs some cleanup in the context of AP / Chibios
-
 #include <AP_HAL/AP_HAL.h>
+
 
 // Firmware rev (needs to be updated here manually to match release number)
 const int FIRMWARE_REV = 500;
 
-// Make this available for notational convenience: console->printf()
+// Make thes available for convenience (they should be declared in the
+// main source file):
+// * hal.analog, hal.rcin, etc.
+// * console->printf()
+extern const AP_HAL::HAL& hal;
 extern AP_HAL::UARTDriver *console;
 
 // it would be nice if these were dynamically detected, but they drive
