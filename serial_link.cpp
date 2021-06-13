@@ -162,6 +162,10 @@ int SerialLink::write_packet(uint8_t packet_id, uint8_t *buf, uint8_t len) {
     return len + 6;
 }
 
+// void SerialLink::set_unbuffered_writes(bool on) {
+//     _port->set_unbuffered_writes(on);
+// }
+
 bool SerialLink::close() {
     _port->end();
     return true;

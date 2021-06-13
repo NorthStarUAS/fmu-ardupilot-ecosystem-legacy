@@ -30,9 +30,11 @@ public:
     ~SerialLink();
 
     bool open( int baud, AP_HAL::UARTDriver *port );
+    // void set_unbuffered_writes(bool on);
     bool update();
     int bytes_available();
     int write_packet(uint8_t packet_id, uint8_t *buf, uint8_t len);
     bool close();
+    
     void checksum( uint8_t hdr1, uint8_t hdr2, uint8_t *buf, uint16_t size, uint8_t *cksum0, uint8_t *cksum1 );
 };
