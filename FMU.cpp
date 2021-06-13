@@ -14,7 +14,7 @@
 #include "power.h"
 
 const AP_HAL::HAL& hal = AP_HAL::get_HAL();
-static AP_BoardConfig BoardConfig; // board specific config
+static AP_BoardConfig BoardConfig;
 AP_HAL::UARTDriver *console = hal.console;
 
 // -Wmissing-declarations requires these
@@ -70,7 +70,7 @@ void setup() {
     // power sensing
     power.setup();
     
-    // led for status blinking if defined
+    // led status
     led.setup();
 
     // ekf init (just prints availability status)
@@ -128,7 +128,7 @@ void loop() {
             comms.output_counter += comms.write_imu_bin();
         }
 
-        // one second heartbeat output
+        // 10 second heartbeat console output
         if ( AP_HAL::millis() - hbTimer >= 10000 ) {
             hbTimer = AP_HAL::millis();
             if ( imu_mgr.gyros_calibrated == 2 ) {
@@ -139,6 +139,7 @@ void loop() {
                 console->printf("\n");
             }
         }
+        
         // 10hz human console output, (begins when gyros finish calibrating)
         if ( AP_HAL::millis() - debugTimer >= 100 ) {
             debugTimer = AP_HAL::millis();
