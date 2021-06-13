@@ -140,11 +140,11 @@ capabilities at a very inexpensive price point.
 
 (rev1 ... sketchy note phase ...)
 
-* git pull arduino source tree
+* git pull ardupilot source tree
 * git pull rc-fmu source tree (to an independent location)
-* cd .../arduino
+* cd .../ardupilot
 * ln -s .../path/to/rc-fmu .
-* edit arduino/wscript to include rc-fmu as a program name
+* edit ardupilot/wscript to include rc-fmu as a program name
 
 * edit …/ardupilot/libraries/AP_Vehicle/AP_Vehicle_Type.h to #define
   APM_BUILD_Subdir with a new value (I picked 101 to stay out of the
