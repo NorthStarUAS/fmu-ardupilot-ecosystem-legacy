@@ -47,10 +47,6 @@ void setup() {
         console->printf("Successfully loaded config from eeprom storage.\n");
     }
     
-    // force/hard-code a specific board config if desired
-    // config.force_config_aura3();
-    // config.force_config_goldy3();
-    
     // update imu strapdown and mag_affine matrices from config
     imu_mgr.set_strapdown_calibration();
     imu_mgr.set_mag_calibration();

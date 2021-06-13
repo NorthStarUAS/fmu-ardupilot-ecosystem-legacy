@@ -141,43 +141,6 @@ void config_t::actuator_gain_defaults() {
     }
 }
 
-// force/hard-code a specific board config if desired
-void config_t::force_config_aura3() {
-    console->printf("Forcing an aura v2 config\n");
-    config.board_cfg.board = 1;    // 0 = marmot v1, 1 = aura v2
-    imu_mgr.defaults();
-    //airdata.defaults_aura3();
-    config.power_cfg.have_attopilot = true;
-    actuator_gain_defaults();
-    pilot.mixer.setup();
-    config.stab_cfg.sas_rollaxis = true;
-    config.stab_cfg.sas_pitchaxis = true;
-    config.stab_cfg.sas_yawaxis = true;
-    config.stab_cfg.sas_rollgain = 0.2;
-    config.stab_cfg.sas_pitchgain = 0.2;
-    config.stab_cfg.sas_yawgain = 0.2;
-    config.ekf_cfg.select = message::enum_nav::none;
-    config.write_storage();
-}
-
-// force/hard-code a specific board config if desired
-void config_t::force_config_goldy3() {
-    console->printf("Forcing a bfs/marmot config\n");
-    config.board_cfg.board = 0;    // 0 = marmot v1, 1 = aura v2
-    imu_mgr.defaults();
-    //airdata.defaults_goldy3();
-    actuator_gain_defaults();
-    pilot.mixer.setup();
-    config.stab_cfg.sas_rollaxis = true;
-    config.stab_cfg.sas_pitchaxis = true;
-    config.stab_cfg.sas_yawaxis = true;
-    config.stab_cfg.sas_rollgain = 0.2;
-    config.stab_cfg.sas_pitchgain = 0.2;
-    config.stab_cfg.sas_yawgain = 0.2;
-    config.ekf_cfg.select = message::enum_nav::none;
-    config.write_storage();
-}
-
 void config_t::reset_defaults() {
     console->printf("Setting default config ...\n");
     config.board_cfg.board = 0;
@@ -186,6 +149,13 @@ void config_t::reset_defaults() {
     pilot.mixer.setup();
     pilot.mixer.sas_defaults();
     config.power_cfg.have_attopilot = false;
+    config.stab_cfg.sas_rollaxis = true;
+    config.stab_cfg.sas_pitchaxis = true;
+    config.stab_cfg.sas_yawaxis = true;
+    config.stab_cfg.sas_rollgain = 0.2;
+    config.stab_cfg.sas_pitchgain = 0.2;
+    config.stab_cfg.sas_yawgain = 0.2;
+    config.ekf_cfg.select = message::enum_nav::nav15;
 }
 
 // global shared instance
