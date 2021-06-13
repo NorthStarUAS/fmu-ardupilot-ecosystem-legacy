@@ -1,19 +1,6 @@
 #include <AP_HAL/AP_HAL.h>
 #include <AP_BoardConfig/AP_BoardConfig.h>
 
-#if HAL_OS_POSIX_IO
-#include <stdio.h>
-#endif
-
-void setup();
-void loop();
-
-const AP_HAL::HAL& hal = AP_HAL::get_HAL();
-
-static AP_BoardConfig BoardConfig; // board specific config
-
-AP_HAL::UARTDriver *console = hal.console;
-
 #include "setup_board.h"
 
 // #include "airdata.h"
@@ -25,6 +12,14 @@ AP_HAL::UARTDriver *console = hal.console;
 #include "nav_mgr.h"
 #include "pilot.h"
 #include "power.h"
+
+const AP_HAL::HAL& hal = AP_HAL::get_HAL();
+static AP_BoardConfig BoardConfig; // board specific config
+AP_HAL::UARTDriver *console = hal.console;
+
+// -Wmissing-declarations requires these
+void setup();
+void loop();
 
 void setup() {
     BoardConfig.init();         // setup any board specific drivers

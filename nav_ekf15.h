@@ -16,15 +16,12 @@
 
 #pragma once
 
-#include <stdio.h>
+#include "setup_board.h"
 
-#pragma push_macro("_GLIBCXX_USE_C99_STDIO")
-#undef _GLIBCXX_USE_C99_STDIO
 #include <math.h>
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Geometry"
 #include "eigen3/Eigen/LU"
-#pragma pop_macro("_GLIBCXX_USE_C99_STDIO")
 
 #include "nav_structs.h"
 

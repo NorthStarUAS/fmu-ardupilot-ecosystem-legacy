@@ -23,16 +23,13 @@
 
 #pragma once
 
-#include <stdio.h>
+#include <AP_HAL/AP_HAL.h>
 
-#pragma push_macro("_GLIBCXX_USE_C99_STDIO")
-#undef _GLIBCXX_USE_C99_STDIO
+#include "setup_board.h"
+
 #include <math.h>
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Geometry"
-#pragma pop_macro("_GLIBCXX_USE_C99_STDIO")
-
-#include <AP_HAL/AP_HAL.h>
 
 // Constants
 const double EarthRadius = 6378137.0;        // earth semi-major axis radius (m)

@@ -1,16 +1,9 @@
 #pragma once
 
-#pragma push_macro("_GLIBCXX_USE_C99_STDIO")
-#undef _GLIBCXX_USE_C99_STDIO
+#include "setup_board.h"
+
 #include <math.h>
 #include "eigen3/Eigen/Core"
-//#include "eigen3/Eigen/Geometry"
-//#include "eigen3/Eigen/LU"
-#pragma pop_macro("_GLIBCXX_USE_C99_STDIO")
-
-#include <math.h>
-
-#include "setup_board.h"
 
 class mixer_t {
 private:

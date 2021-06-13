@@ -4,14 +4,9 @@
 
 #include <AP_HAL/AP_HAL.h>
 
-#if HAL_OS_POSIX_IO
-#include <stdio.h>
-#endif
+#include "setup_board.h"
 
-#pragma push_macro("_GLIBCXX_USE_C99_STDIO")
-#undef _GLIBCXX_USE_C99_STDIO
 #include "eigen3/Eigen/Core"
-#pragma pop_macro("_GLIBCXX_USE_C99_STDIO")
 
 #include "imu_hal.h"
 #include "cal_temp.h"

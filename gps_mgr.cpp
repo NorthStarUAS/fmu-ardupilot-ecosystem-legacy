@@ -11,8 +11,6 @@
 #include "nav_constants.h"
 #include "gps_mgr.h"
 
-//static const AP_HAL::HAL& hal = AP_HAL::get_HAL();
-
 // Serial manager is needed for UART communications
 static AP_SerialManager serial_manager;
 

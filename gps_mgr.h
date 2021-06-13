@@ -3,19 +3,13 @@
 #pragma once
 
 #include <AP_HAL/AP_HAL.h>
+#include <AP_GPS/AP_GPS.h>
 
-#if HAL_OS_POSIX_IO
-#include <stdio.h>
-#endif
+#include "setup_board.h"
 
-#pragma push_macro("_GLIBCXX_USE_C99_STDIO")
-#undef _GLIBCXX_USE_C99_STDIO
 #include <math.h>
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Geometry"
-#pragma pop_macro("_GLIBCXX_USE_C99_STDIO")
-
-#include <AP_GPS/AP_GPS.h>
 
 class gps_mgr_t {
     

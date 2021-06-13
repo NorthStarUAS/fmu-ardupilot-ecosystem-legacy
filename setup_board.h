@@ -1,7 +1,13 @@
 #pragma once
 
 #include <AP_HAL/AP_HAL.h>
+#if HAL_OS_POSIX_IO
+#include <stdio.h>
+#endif
 
+// work around these type errors:
+//   error: 'vsnprintf' was not declared in this scope
+#undef _GLIBCXX_USE_C99_STDIO
 
 // Firmware rev (needs to be updated here manually to match release number)
 const int FIRMWARE_REV = 500;
