@@ -10,7 +10,7 @@ progress.
 
 ## Short term notes to self:
 
-* uart output on the telem ports of the Pixracer have an issue.  There
+* Uart output on the telem ports of the Pixracer have an issue.  There
   is no data loss, but my packets are getting clumped together into
   50hz chunks, not the 100hz (or whatever the main loop rate is.)  I
   chased this all around and it really looks like AP_HAL / ChibiOS are
@@ -20,6 +20,9 @@ progress.
   don't know ... the problem may be in Pixracer hardware, something
   with my ftdi cable, I don't know.  I'm giving up on it now, but know
   that I tried everything I could think of.
+
+  Note that all this works as intended if I write data out the console
+  (usb) port.
 
 ## Some major bullet point todo list items:
 
