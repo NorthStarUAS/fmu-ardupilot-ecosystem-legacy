@@ -3,11 +3,11 @@
 #pragma once
 
 #include "setup_board.h"
-#include "nav_structs.h"
+#include "nav/nav_structs.h"
 
 #if defined(AURA_ONBOARD_EKF)
-#include "nav_ekf15.h"
-#include "nav_ekf15_mag.h"
+#include "nav/ekf15.h"
+#include "nav/ekf15_mag.h"
 #endif
 
 class nav_mgr_t {

@@ -7,8 +7,8 @@
 
 #include "setup_board.h"
 
-#include "coremag.h"
-#include "nav_constants.h"
+#include "nav/coremag.h"
+#include "nav/nav_constants.h"
 #include "gps_mgr.h"
 
 // Serial manager is needed for UART communications

@@ -16,7 +16,7 @@
 
 #include "nav_constants.h"
 #include "nav_functions.h"
-#include "nav_ekf15.h"
+#include "ekf15.h"
 
 const float P_P_INIT = 10.0;
 const float P_V_INIT = 1.0;

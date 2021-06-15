@@ -15,7 +15,7 @@
 #include "nav_mgr.h"
 #include "pilot.h"
 #include "power.h"
-#include "nav_constants.h"
+#include "nav/nav_constants.h"
 #include "serial_link.h"
 #include "aura4_messages.h"
 #include "setup_board.h"
