@@ -5,7 +5,7 @@
 
 void led_t::setup() {
 #if defined(HAL_HAVE_PIXRACER_LED)
-    console->printf("Pixracer LED\n");
+    console->printf("Have Pixracer LED\n");
 #endif
 }
 

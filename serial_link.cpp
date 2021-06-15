@@ -29,7 +29,12 @@ void SerialLink::checksum( uint8_t hdr1, uint8_t hdr2, uint8_t *buf, uint16_t si
 bool SerialLink::open( int baud, AP_HAL::UARTDriver *port ) {
     console->printf("Opening comms port @ %d\n", baud);
     _port = port;
+    // uint8_t opts = _port->get_options();
+    // opts |= AP_HAL::UARTDriver::OPTION_NODMA_RX;
+    // opts |= AP_HAL::UARTDriver::OPTION_NODMA_TX;
+    // _port->set_options(opts);
     _port->begin(baud);
+    // _port->begin(baud, 2048, 2048);
     return true;
 }
 
@@ -140,6 +145,20 @@ int SerialLink::bytes_available() {
 }
 
 int SerialLink::write_packet(uint8_t packet_id, uint8_t *buf, uint8_t len) {
+    // static int min_space = _port->txspace();
+    // if ( _port->txspace() > 0 and _port->txspace() < min_space ) {
+    //     console->printf("tx space low water mark: %d\n", min_space);
+    //     min_space = _port->txspace();
+    // }
+
+    if ( ! _port->is_initialized() ) {
+        return 0;
+    }
+    if ( _port->txspace() < len + 6 ) {
+        // console->printf("tx space: %ld\n", _port->txspace());
+        return 0;
+    }
+    
     // start of message sync (2) bytes
     _port->write(START_OF_MSG0);
     _port->write(START_OF_MSG1);
@@ -161,10 +180,6 @@ int SerialLink::write_packet(uint8_t packet_id, uint8_t *buf, uint8_t len) {
 
     return len + 6;
 }
-
-// void SerialLink::set_unbuffered_writes(bool on) {
-//     _port->set_unbuffered_writes(on);
-// }
 
 bool SerialLink::close() {
     _port->end();

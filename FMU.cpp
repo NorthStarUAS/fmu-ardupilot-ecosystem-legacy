@@ -1,6 +1,9 @@
 #include <AP_HAL/AP_HAL.h>
 #include <AP_BoardConfig/AP_BoardConfig.h>
 
+// test
+#include <AP_Common/ExpandingString.h>
+
 #include "setup_board.h"
 
 // #include "airdata.h"
@@ -16,6 +19,7 @@
 const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 static AP_BoardConfig BoardConfig;
 AP_HAL::UARTDriver *console = hal.console;
+// AP_HAL::UARTDriver *console = hal.serial(1); // telemetry 1
 
 // -Wmissing-declarations requires these
 void setup();
@@ -89,15 +93,16 @@ void loop() {
 
     // this is the heartbeat of the system here (DT_MILLIS)
     if ( AP_HAL::millis() - mainTimer >= DT_MILLIS ) {
-        mainTimer += DT_MILLIS;
-        counter++;
-        if ( AP_HAL::millis() - mainTimer >= DT_MILLIS ) {
+        if ( AP_HAL::millis() - mainTimer > DT_MILLIS ) {
             comms.main_loop_timer_misses++;
             mainTimer = AP_HAL::millis(); // catch up
             if ( comms.main_loop_timer_misses % 25 == 0 ) {
                 console->printf("WARNING: main loop is not completing on time!\n");
             }
+        } else {
+            mainTimer += DT_MILLIS;
         }
+        counter++;
         
         // top priority, used for timing sync downstream.
         imu_mgr.update();
@@ -122,6 +127,7 @@ void loop() {
             // write imu message last: used as an implicit end of data
             // frame marker.
             comms.output_counter += comms.write_imu_bin();
+            hal.scheduler->delay(1);
         }
 
         // 10 second heartbeat console output
@@ -131,8 +137,26 @@ void loop() {
                 comms.write_status_info_ascii();
                 comms.write_power_ascii();
                 float elapsed_sec = (AP_HAL::millis() - tempTimer) / 1000.0;
+                console->printf("Available mem: %ld bytes\n",
+                                hal.util->available_memory());
                 console->printf("Performace = %.1f hz\n", counter / elapsed_sec);
                 console->printf("\n");
+
+                if ( false ) {
+                    // system info
+                    ExpandingString dma_info {};
+                    ExpandingString mem_info {};
+                    ExpandingString uart_info {};
+                    ExpandingString thread_info {};
+                    hal.util->dma_info(dma_info);
+                    hal.util->mem_info(mem_info);
+                    hal.util->uart_info(uart_info);
+                    hal.util->thread_info(thread_info);
+                    console->printf("dma info:\n%s\n", dma_info.get_string());
+                    console->printf("mem info:\n%s\n", mem_info.get_string());
+                    console->printf("uart info:\n%s\n", uart_info.get_string());
+                    // console->printf("thread info:\n%s\n", thread_info.get_string());
+                }
             }
         }
         
@@ -160,29 +184,29 @@ void loop() {
 
         // suck in any available gps messages
         gps_mgr.update();
-    }
 
-    if ( pilot.read() ) {
-        static bool last_ap_state = pilot.ap_enabled();
-        if ( pilot.ap_enabled() and !last_ap_state ) {
-            console->printf("ap enabled\n");
-        } else if ( !pilot.ap_enabled() and last_ap_state ) {
-            console->printf("ap disabled (manaul flight)\n");
+        if ( pilot.read() ) {
+            static bool last_ap_state = pilot.ap_enabled();
+            if ( pilot.ap_enabled() and !last_ap_state ) {
+                console->printf("ap enabled\n");
+            } else if ( !pilot.ap_enabled() and last_ap_state ) {
+                console->printf("ap disabled (manaul flight)\n");
+            }
+            // pwm.update();
+            last_ap_state = pilot.ap_enabled();
         }
-        // pwm.update();
-        last_ap_state = pilot.ap_enabled();
+
+        // read in any host commmands (config, inceptors, etc.)
+        comms.read_commands();
+
+        if ( pilot.changed ) {
+            pilot.write();
+        }
+
+        // blink the led
+        led.do_policy(imu_mgr.gyros_calibrated, gps_mgr.gps);
+        led.update();
     }
-
-    // read in any host commmands (config, inceptors, etc.)
-    comms.read_commands();
-
-    if ( pilot.changed ) {
-        pilot.write();
-    }
-
-    // blink the led
-    led.do_policy(imu_mgr.gyros_calibrated, gps_mgr.gps);
-    led.update();
 }
 
 AP_HAL_MAIN();

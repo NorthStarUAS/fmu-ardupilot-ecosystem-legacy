@@ -25,9 +25,9 @@
 #include <AP_HAL/AP_HAL.h>
 
 void comms_t::setup() {
-    serial.open(DEFAULT_BAUD, hal.serial(1));
-    // serial.set_unbuffered_writes(true);
-    // serial.open(57600, hal.serial(1));
+    // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
+    serial.open(DEFAULT_BAUD, hal.serial(1)); // telemetry 1
+    // serial.open(DEFAULT_BAUD, hal.serial(2)); // telemetry 2
 }
 
 bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size )
@@ -237,7 +237,8 @@ int comms_t::write_imu_bin()
     imu1.cal[8] = imu_mgr.get_hz_cal() / magScale;
     imu1.cal[9] = imu_mgr.get_tempC() / tempScale;
     imu1.pack();
-    return serial.write_packet( imu1.id, imu1.payload, imu1.len );
+    int result = serial.write_packet( imu1.id, imu1.payload, imu1.len );
+    return result;
 }
 
 void comms_t::write_imu_ascii()
