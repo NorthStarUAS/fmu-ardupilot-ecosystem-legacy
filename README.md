@@ -10,11 +10,16 @@ progress.
 
 ## Short term notes to self:
 
-* AP_HAL appears (based on timing packets on the receiving side of the
-  pipe) to only service the serial/uart output at 50hz.  This
-  effectively limits the update rate with a host computer.  It may
-  mean that inner loop pid's will need to be run on the FMU, not on
-  the host when faster update rates area needed.
+* uart output on the telem ports of the Pixracer have an issue.  There
+  is no data loss, but my packets are getting clumped together into
+  50hz chunks, not the 100hz (or whatever the main loop rate is.)  I
+  chased this all around and it really looks like AP_HAL / ChibiOS are
+  doing everything right and flushing out the buffers to DMA and
+  getting a signal back from DMA that the work is done.  The tx buffer
+  is empty at the start of every main loop iteration (100hz.)  So I
+  don't know ... the problem may be in Pixracer hardware, something
+  with my ftdi cable, I don't know.  I'm giving up on it now, but know
+  that I tried everything I could think of.
 
 ## Some major bullet point todo list items:
 
