@@ -1,5 +1,6 @@
 #pragma once
 
+#include "props2.h"
 #include "serial_link.h"
 
 class comms_t {
@@ -31,6 +32,7 @@ public:
     void read_commands();
     
 private:
+    PropertyNode power_node;
     unsigned long int gps_last_millis = 0;
 };
 

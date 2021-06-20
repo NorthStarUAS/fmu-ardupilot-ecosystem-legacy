@@ -15,6 +15,7 @@
 #include "nav_mgr.h"
 #include "pilot.h"
 #include "power.h"
+#include "props2.h"
 
 const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 static AP_BoardConfig BoardConfig;
@@ -140,6 +141,7 @@ void loop() {
                 console->printf("Available mem: %ld bytes\n",
                                 hal.util->available_memory());
                 console->printf("Performace = %.1f hz\n", counter / elapsed_sec);
+                PropertyNode("/").pretty_print();
                 console->printf("\n");
 
                 if ( false ) {

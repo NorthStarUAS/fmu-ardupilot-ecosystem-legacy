@@ -6,6 +6,8 @@
  * Following that is a two byte check sum.  The check sum includes the packet id and size as well as the data.
  */
 
+#include "setup_board.h"
+
 #include "airdata.h"
 #include "config.h"
 #include "gps_mgr.h"
@@ -18,13 +20,13 @@
 #include "nav/nav_constants.h"
 #include "serial_link.h"
 #include "aura4_messages.h"
-#include "setup_board.h"
 
 #include "comms.h"
 
 #include <AP_HAL/AP_HAL.h>
 
 void comms_t::setup() {
+    power_node = PropertyNode("/sensors/power");
     // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
     serial.open(DEFAULT_BAUD, hal.serial(1)); // telemetry 1
     // serial.open(DEFAULT_BAUD, hal.serial(2)); // telemetry 2
@@ -405,9 +407,9 @@ void comms_t::write_airdata_ascii()
 int comms_t::write_power_bin()
 {
     static message::power_t power1;
-    power1.avionics_v = power.avionics_v;
-    power1.int_main_v = power.battery_volts;
-    power1.ext_main_amp = power.battery_amps;
+    power1.avionics_v = power_node.getFloat("avionics_v");
+    power1.int_main_v = power_node.getFloat("battery_volts");
+    power1.ext_main_amp = power_node.getFloat("battery_amps");
     power1.pack();
     return serial.write_packet( power1.id, power1.payload, power1.len );
 }
@@ -415,7 +417,9 @@ int comms_t::write_power_bin()
 void comms_t::write_power_ascii()
 {
     console->printf("Avionics v: %.2f  Batt v: %.2f  Batt amp: %.2f\n",
-                    power.avionics_v, power.battery_volts, power.battery_amps);
+                    power_node.getFloat("avionics_v"),
+                    power_node.getFloat("battery_volts"),
+                    power_node.getFloat("battery_amps"));
 }
 
 // output a binary representation of various status and config information

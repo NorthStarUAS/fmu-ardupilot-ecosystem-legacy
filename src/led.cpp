@@ -1,6 +1,5 @@
 #include "setup_board.h"
 
-#include "config.h"
 #include "led.h"
 
 void led_t::setup() {
