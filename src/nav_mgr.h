@@ -3,6 +3,7 @@
 #pragma once
 
 #include "setup_board.h"
+#include "props2.h"
 #include "nav/nav_structs.h"
 
 #if defined(AURA_ONBOARD_EKF)
@@ -19,6 +20,7 @@ private:
     EKF15 ekf;
     EKF15_mag ekf_mag;
 #endif
+    PropertyNode config_ekf_node;
     
 public:
     NAVdata data;

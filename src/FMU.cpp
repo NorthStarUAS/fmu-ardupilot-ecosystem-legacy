@@ -22,6 +22,8 @@ static AP_BoardConfig BoardConfig;
 AP_HAL::UARTDriver *console = hal.console;
 // AP_HAL::UARTDriver *console = hal.serial(1); // telemetry 1
 
+static PropertyNode config_ekf_node;
+
 // -Wmissing-declarations requires these
 void setup();
 void loop();
@@ -46,6 +48,7 @@ void setup() {
     hal.scheduler->delay(100);
 
     config.setup();             // load config from sd card
+    config_ekf_node = PropertyNode("/config/ekf");
     
     if ( !config.read_storage() ) {
         console->printf("Resetting eeprom to default values.");
@@ -111,7 +114,7 @@ void loop() {
         // top priority, used for timing sync downstream.
         imu_mgr.update();
 
-        if ( config.ekf_cfg.select != message::enum_nav::none ) {
+        if ( config_ekf_node.getString("selected") != "none" ) {
             nav_mgr.update();
         }
 
@@ -125,7 +128,7 @@ void loop() {
             // that gets ignored if we do the math in one step)
             uint8_t result = comms.write_status_info_bin();
             comms.output_counter += result;
-            if ( config.ekf_cfg.select != message::enum_nav::none ) {
+            if ( config_ekf_node.getString("select") != "none" ) {
                 comms.output_counter += comms.write_nav_bin();
             }
             // write imu message last: used as an implicit end of data

@@ -439,7 +439,7 @@ int comms_t::write_status_info_bin()
         counter = MASTER_HZ * 1 - 1; // a message every 1 seconds (-1 so we aren't off by one frame) 
     }
 
-    status.serial_number = config.serial_number;
+    status.serial_number = config_node.getInt("serial_number");
     status.firmware_rev = FIRMWARE_REV;
     status.master_hz = MASTER_HZ;
     status.baud = DEFAULT_BAUD;
@@ -462,8 +462,7 @@ void comms_t::write_status_info_ascii()
     // This info is static so we don't need to send it at a high rate ... once every 10 seconds (?)
     // with an immediate message at the start.
     console->printf("Uptime: %ld(sec)", AP_HAL::millis() / 1000);
-    console->printf(" SN: %d", config.read_serial_number());
-    console->printf(" SN(props): %d", config_node.getInt("serial_number"));
+    console->printf(" SN: %d", config_node.getInt("serial_number"));
     console->printf(" Firmware: %d", FIRMWARE_REV);
     console->printf(" Main loop hz: %d", MASTER_HZ);
     console->printf(" Baud: %d\n", DEFAULT_BAUD);

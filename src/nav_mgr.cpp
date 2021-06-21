@@ -1,24 +1,22 @@
 #include <math.h>
 
-#include "config.h"
 #include "gps_mgr.h"
 #include "imu_mgr.h"
 
 #include "nav_mgr.h"
 
 void nav_mgr_t::setup() {
-    config.ekf_cfg.select = message::enum_nav::nav15; // force (fixme)
-#if defined(AURA_ONBOARD_EKF)
-    console->printf("EKF: available  Current setting: ");
-    if ( config.ekf_cfg.select == message::enum_nav::none ) {
-        console->printf("none\n");
-    } else if ( config.ekf_cfg.select == message::enum_nav::nav15 ) {
-        console->printf("15 state ins/gns\n");
-    } else if ( config.ekf_cfg.select == message::enum_nav::nav15_mag ) {
-        console->printf("15 state ins/gns/mag\n");
+    config_ekf_node = PropertyNode("/config/ekf");
+    string selected = config_ekf_node.getString("select");
+    // fix me ...
+    if ( selected == ""  ) {
+        selected = "none";
+        config_ekf_node.setString("select", selected);
     } else {
-        console->printf("unknown setting/disabled\n");
+        selected = "nav15";         // force (fixme)
     }
+#if defined(AURA_ONBOARD_EKF)
+    console->printf("EKF: selected: %s\n", selected.c_str());
 #else
     console->printf("EKF: not available for Teensy 3.2\n");
 #endif
@@ -50,33 +48,34 @@ void nav_mgr_t::update() {
     gps1.ve = vel.y;
     gps1.vd = vel.z;
     gps1.unix_sec = gps_mgr.unix_sec;
-    
+
+    string selected = config_ekf_node.getString("selected");
     if ( !ekf_inited and gps_mgr.settle() ) {
-        if ( config.ekf_cfg.select == message::enum_nav::nav15 ) {
+        if ( selected == "nav15" ) {
             ekf.init(imu1, gps1);
-        } else if ( config.ekf_cfg.select == message::enum_nav::nav15_mag ) {
+        } else if ( selected == "nav15_mag" ) {
             ekf_mag.init(imu1, gps1);
         }
         ekf_inited = true;
         console->printf("EKF: initialized\n");
     } else if ( ekf_inited ) {
-        if ( config.ekf_cfg.select == message::enum_nav::nav15 ) {
+        if ( selected == "nav15" ) {
             ekf.time_update(imu1);
-        } else if ( config.ekf_cfg.select == message::enum_nav::nav15_mag ) {
+        } else if ( selected == "nav15_mag" ) {
             ekf_mag.time_update(imu1);
         }
         if ( gps_mgr.gps_millis > gps_last_millis ) {
             gps_last_millis = gps_mgr.gps_millis;
-            if ( config.ekf_cfg.select == message::enum_nav::nav15 ) {
+            if ( selected == "nav15" ) {
                 ekf.measurement_update(gps1);
-            } else if ( config.ekf_cfg.select == message::enum_nav::nav15_mag ) {
+            } else if ( selected == "nav15_mag" ) {
                 ekf_mag.measurement_update(imu1, gps1);
             }
             status = 2;         // ok
         }
-        if ( config.ekf_cfg.select == message::enum_nav::nav15 ) {
+        if ( selected == "nav15" ) {
             data = ekf.get_nav();
-        } else if ( config.ekf_cfg.select == message::enum_nav::nav15_mag ) {
+        } else if ( selected == "nav15_mag" ) {
             data = ekf_mag.get_nav();
         }
 
