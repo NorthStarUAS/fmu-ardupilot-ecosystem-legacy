@@ -1,10 +1,13 @@
 #pragma once
 
 #include "setup_board.h"
+#include "props2.h"
+
 #include "aura4_messages.h"
 #include "mixer.h"
 
 class pilot_t {
+    
 private:
     // define if a channel is symmetrical or not (i.e. mapped to [0,1] for
     // everything but throttle, flaps, gear
@@ -14,6 +17,8 @@ private:
     uint16_t norm2pwm(float norm_val, uint8_t i);
 
     uint32_t last_input = 0;
+
+    PropertyNode eff_gains;
 
 public:
     uint16_t pwm_inputs[MAX_RCIN_CHANNELS];

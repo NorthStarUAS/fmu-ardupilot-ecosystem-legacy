@@ -4,6 +4,7 @@
 
 #include <AP_HAL/AP_HAL.h>
 
+#include "props2.h"
 #include "aura4_messages.h"
 
 class config_t {
@@ -13,7 +14,6 @@ private:
     AP_HAL::Storage *storage = NULL;
     
     int config_size = 0;
-    
     struct packed_config_t {
         message::config_airdata_t::_compact_t airdata;
         message::config_board_t::_compact_t board;
@@ -25,7 +25,7 @@ private:
         message::config_stability_damping_t::_compact_t stab;
     };
 
-    void update_byte_if_changed(uint16_t addr, uint8_t val);
+    PropertyNode config_node;
     
  public:
     
@@ -50,6 +50,8 @@ private:
     void force_config_aura3();
     void force_config_goldy3();
     void reset_defaults();
+
+    void setup();               // load config.json from sd card
 };
 
 extern config_t config;

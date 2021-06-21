@@ -26,6 +26,7 @@
 #include <AP_HAL/AP_HAL.h>
 
 void comms_t::setup() {
+    config_node = PropertyNode("/config");
     power_node = PropertyNode("/sensors/power");
     // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
     serial.open(DEFAULT_BAUD, hal.serial(1)); // telemetry 1
@@ -462,6 +463,7 @@ void comms_t::write_status_info_ascii()
     // with an immediate message at the start.
     console->printf("Uptime: %ld(sec)", AP_HAL::millis() / 1000);
     console->printf(" SN: %d", config.read_serial_number());
+    console->printf(" SN(props): %d", config_node.getInt("serial_number"));
     console->printf(" Firmware: %d", FIRMWARE_REV);
     console->printf(" Main loop hz: %d", MASTER_HZ);
     console->printf(" Baud: %d\n", DEFAULT_BAUD);

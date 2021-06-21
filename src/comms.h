@@ -32,6 +32,7 @@ public:
     void read_commands();
     
 private:
+    PropertyNode config_node;
     PropertyNode power_node;
     unsigned long int gps_last_millis = 0;
 };

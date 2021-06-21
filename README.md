@@ -22,7 +22,7 @@ progress.
   that I tried everything I could think of.
 
   Note that all this works as intended if I write data out the console
-  (usb) port.
+  (usb) port on the Pixracer.
 
 ## Some major bullet point todo list items:
 
@@ -33,6 +33,8 @@ progress.
   the new system. (new rc-flight driver to match this updated so we
   can continue to support the goldy3 variant separately as long as we
   have that hardware in play.)
+* (x) figure out the wscript magic to allow me to organize my code in
+  subdirectories
 * (x) sort out how I really want to organize classes vs. singletons
   vs. global instances vs. namespace vs. cross-wired interdependencies
   between everything.  I have some messy mixes of these due to deep

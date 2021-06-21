@@ -1,9 +1,7 @@
 #include <AP_HAL/AP_HAL.h>
-// #include <AP_IOMCU/AP_IOMCU.h>
 
 #include "setup_board.h"
 
-#include "config.h"
 #include "pilot.h"
 
 // 982 - 2006 (frsky) / 1496
@@ -42,6 +40,8 @@ uint16_t pilot_t::norm2pwm(float norm_val, uint8_t i) {
 }
 
 void pilot_t::setup() {
+    eff_gains = PropertyNode("/config/pwm");
+    
     manual_inputs[0] = ap_inputs[0] = -1.0; // autopilot disabled (manual)
     manual_inputs[1] = ap_inputs[1] = -1.0; // throttle safety enabled
     for ( int i = 2; i < MAX_RCIN_CHANNELS; i++ ) {
@@ -80,7 +80,8 @@ void pilot_t::write() {
     // before outputing the effector commands.
     mixer.update();
     for ( uint8_t i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
-        float norm_val = mixer.outputs[i] * config.pwm_cfg.act_gain[i];
+        // float norm_val = mixer.outputs[i] * config.pwm_cfg.act_gain[i];
+        float norm_val = mixer.outputs[i] * eff_gains.getFloat("gains", i);
         uint16_t pwm_val = norm2pwm(norm_val, i);
         hal.rcout->write(i, pwm_val);
     }

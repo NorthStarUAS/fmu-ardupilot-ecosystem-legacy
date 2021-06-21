@@ -1,5 +1,9 @@
 #include "setup_board.h"
 
+#include <AP_Common/ExpandingString.h>
+#include <AP_Filesystem/AP_Filesystem.h>
+#include <stdio.h>
+
 #include "airdata.h"
 #include "comms.h"
 #include "config.h"
@@ -23,6 +27,12 @@ uint16_t config_t::read_serial_number() {
     storage->read_block(buf, 0, 2);
     // Serial.printf(" raw serial number read %d %d\n", hi, lo);
     serial_number = *(uint16_t *)(&buf);
+
+    if ( config_node.isNull() ) {
+        config_node = PropertyNode("/config");
+    }
+    config_node.setInt("serial_number", serial_number);
+    
     return serial_number;
 };
 
@@ -43,6 +53,10 @@ static int mycopy(uint8_t *src, uint8_t *dst, int len) {
 }
 
 int config_t::read_storage() {
+    if ( config_node.isNull() ) {
+        config_node = PropertyNode("/config");
+    }
+    
     // call pack to initialize internal stucture len's
     airdata_cfg.pack(); 
     board_cfg.pack();
@@ -147,6 +161,67 @@ void config_t::reset_defaults() {
     pilot.mixer.sas_defaults();
     config.power_cfg.have_attopilot = false;
     config.ekf_cfg.select = message::enum_nav::nav15;
+}
+
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/error/en.h"
+void config_t::setup() {
+    if ( config_node.isNull() ) {
+        config_node = PropertyNode("/config");
+    }
+    
+    char read_buf[4096];
+    const char *file_path = "config.json";
+
+    console->printf("reading from %s\n", file_path);
+    
+    // open a file in read mode
+    const int open_fd = AP::FS().open(file_path, O_RDONLY);
+    if (open_fd == -1) {
+        console->printf("Open %s failed\n", file_path);
+        return;
+    }
+
+    // read from file
+    ssize_t read_size;
+    read_size = AP::FS().read(open_fd, read_buf, sizeof(read_buf));
+    if ( read_size == -1 ) {
+        console->printf("Read failed - %s\n", strerror(errno));
+        return;
+    }
+
+    // close file after reading
+    AP::FS().close(open_fd);
+
+    if ( read_size >= 0 ) {
+        read_buf[read_size] = 0; // null terminate
+    }
+    console->printf("Read %d bytes.\nstring: %s\n", read_size, read_buf);
+    hal.scheduler->delay(100);
+
+    Document tmpdoc(&doc.GetAllocator());
+    tmpdoc.Parse(read_buf);
+    if ( tmpdoc.HasParseError() ){
+        printf("json parse err: %d (%s)\n",
+               tmpdoc.GetParseError(),
+               GetParseError_En(tmpdoc.GetParseError()));
+        return;
+    }
+
+    // /config already exists so merge each config member individually
+    for (Value::ConstMemberIterator itr = tmpdoc.MemberBegin(); itr != tmpdoc.MemberEnd(); ++itr) {
+        console->printf(" merging: %s\n", itr->name.GetString());
+        Value key;
+        key.SetString(itr->name.GetString(), itr->name.GetStringLength(), doc.GetAllocator());
+        Value &v = tmpdoc[itr->name.GetString()];
+        config_node.get_valptr()->AddMember(key, v, doc.GetAllocator());
+    }
+    
+    StringBuffer buffer;
+    Writer<StringBuffer> writer(buffer);
+    doc.Accept(writer);
+    console->printf("Parsed json: %s\n", buffer.GetString());
 }
 
 // global shared instance

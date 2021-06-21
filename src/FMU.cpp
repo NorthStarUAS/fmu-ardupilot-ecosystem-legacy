@@ -38,12 +38,15 @@ void setup() {
     
     // The following code (when enabled) will force setting a specific
     // device serial number when the device boots:
-    // config.set_serial_number(117);
+    if ( false ) {
+        config.set_serial_number(117);
+    }
     config.read_serial_number();
-    
     console->printf("Serial Number: %d\n", config.read_serial_number());
     hal.scheduler->delay(100);
 
+    config.setup();             // load config from sd card
+    
     if ( !config.read_storage() ) {
         console->printf("Resetting eeprom to default values.");
         config.reset_defaults();
