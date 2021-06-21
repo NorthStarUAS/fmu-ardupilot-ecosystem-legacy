@@ -15,6 +15,14 @@
 #ifndef RAPIDJSON_ALLOCATORS_H_
 #define RAPIDJSON_ALLOCATORS_H_
 
+#if defined(ARDUPILOT_BUILD)
+#  include <AP_HAL/AP_HAL.h>
+   extern const AP_HAL::HAL& hal;
+#  define REALLOC(X, Y) hal.util->std_realloc( (X), (Y) )
+#else
+#  define REALLOC(X, Y) std::realloc( (X), (Y) )
+#endif
+
 #include "rapidjson.h"
 
 RAPIDJSON_NAMESPACE_BEGIN
@@ -69,12 +77,14 @@ public:
             return NULL; // standardize to returning NULL.
     }
     void* Realloc(void* originalPtr, size_t originalSize, size_t newSize) {
+        // hal.console->printf("Realloc: originalPtr: %d newSize: %d\n",
+        //                     (int)originalPtr, newSize);
         (void)originalSize;
         if (newSize == 0) {
             std::free(originalPtr);
             return NULL;
         }
-        return std::realloc(originalPtr, newSize);
+        return REALLOC(originalPtr, newSize);
     }
     static void Free(void *ptr) { std::free(ptr); }
 };
@@ -248,7 +258,8 @@ private:
             return false;
     }
 
-    static const int kDefaultChunkCapacity = 64 * 1024; //!< Default chunk capacity.
+    // static const int kDefaultChunkCapacity = 64 * 1024; //!< Default chunk capacity.
+    static const int kDefaultChunkCapacity = 1 * 1024; //!< Adjusted chunk capacity for smaller systems.
 
     //! Chunk header for perpending to each chunk.
     /*! Chunks are stored as a singly linked list.
