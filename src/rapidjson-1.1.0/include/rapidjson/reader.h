@@ -1231,7 +1231,7 @@ private:
         // Force double for big integer
         if (useDouble) {
             while (RAPIDJSON_LIKELY(s.Peek() >= '0' && s.Peek() <= '9')) {
-                if (RAPIDJSON_UNLIKELY(d >= 1.7976931348623157e307)) // DBL_MAX / 10.0
+                if (RAPIDJSON_UNLIKELY(d >= 1.7976931348623157e307l)) // DBL_MAX / 10.0
                     RAPIDJSON_PARSE_ERROR(kParseErrorNumberTooBig, startOffset);
                 d = d * 10 + (s.TakePush() - '0');
             }
