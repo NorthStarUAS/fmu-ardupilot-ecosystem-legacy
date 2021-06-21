@@ -1184,14 +1184,22 @@ public:
         \note Amortized Constant time complexity.
     */
     GenericValue& AddMember(GenericValue& name, GenericValue& value, Allocator& allocator) {
+        // printf("In AddMember()\n");
         RAPIDJSON_ASSERT(IsObject());
         RAPIDJSON_ASSERT(name.IsString());
 
         ObjectData& o = data_.o;
+        // printf("o.size: %d o.capacity: %d\n", o.size, o.capacity);
         if (o.size >= o.capacity) {
             if (o.capacity == 0) {
                 o.capacity = kDefaultObjectCapacity;
-                SetMembersPointer(reinterpret_cast<Member*>(allocator.Malloc(o.capacity * sizeof(Member))));
+                // printf("  o.capacity: %d sizeof(Member): %d member ptr: %p\n",
+                //        o.capacity, sizeof(Member), GetMembersPointer());
+                size_t num = o.capacity * sizeof(Member);
+                // printf("  about to ask for %d bytes, sizeof(size_t): %d\n", num, sizeof(size_t));
+                SetMembersPointer(reinterpret_cast<Member*>(allocator.Malloc(num)));
+                // printf("  o.capacity: %d sizeof(Member): %d member ptr: %p\n",
+                //        o.capacity, sizeof(Member), GetMembersPointer());
             }
             else {
                 SizeType oldCapacity = o.capacity;
@@ -1200,6 +1208,7 @@ public:
             }
         }
         Member* members = GetMembersPointer();
+        // printf("  members ptr: %p\n", members);
         members[o.size].name.RawAssign(name);
         members[o.size].value.RawAssign(value);
         o.size++;
@@ -2050,6 +2059,7 @@ public:
     GenericDocument(Allocator* allocator = 0, size_t stackCapacity = kDefaultStackCapacity, StackAllocator* stackAllocator = 0) : 
         allocator_(allocator), ownAllocator_(0), stack_(stackAllocator, stackCapacity), parseResult_()
     {
+        RAPIDJSON_NEW(Allocator());
         if (!allocator_)
             ownAllocator_ = allocator_ = RAPIDJSON_NEW(Allocator());
     }
