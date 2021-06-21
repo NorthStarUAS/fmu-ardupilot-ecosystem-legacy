@@ -1,9 +1,5 @@
 #include "setup_board.h"
 
-#include <AP_Common/ExpandingString.h>
-#include <AP_Filesystem/AP_Filesystem.h>
-#include <stdio.h>
-
 #include "airdata.h"
 #include "comms.h"
 #include "config.h"
@@ -163,65 +159,14 @@ void config_t::reset_defaults() {
     config.ekf_cfg.select = message::enum_nav::nav15;
 }
 
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/prettywriter.h"
-#include "rapidjson/error/en.h"
 void config_t::setup() {
     if ( config_node.isNull() ) {
         config_node = PropertyNode("/config");
     }
-    
-    char read_buf[4096];
     const char *file_path = "config.json";
-
-    console->printf("reading from %s\n", file_path);
-    
-    // open a file in read mode
-    const int open_fd = AP::FS().open(file_path, O_RDONLY);
-    if (open_fd == -1) {
-        console->printf("Open %s failed\n", file_path);
-        return;
+    if ( !config_node.load(file_path) ) {
+        console->printf("Config file loading failed: %s\n", file_path);
     }
-
-    // read from file
-    ssize_t read_size;
-    read_size = AP::FS().read(open_fd, read_buf, sizeof(read_buf));
-    if ( read_size == -1 ) {
-        console->printf("Read failed - %s\n", strerror(errno));
-        return;
-    }
-
-    // close file after reading
-    AP::FS().close(open_fd);
-
-    if ( read_size >= 0 ) {
-        read_buf[read_size] = 0; // null terminate
-    }
-    console->printf("Read %d bytes.\nstring: %s\n", read_size, read_buf);
-    hal.scheduler->delay(100);
-
-    Document tmpdoc(&doc.GetAllocator());
-    tmpdoc.Parse(read_buf);
-    if ( tmpdoc.HasParseError() ){
-        printf("json parse err: %d (%s)\n",
-               tmpdoc.GetParseError(),
-               GetParseError_En(tmpdoc.GetParseError()));
-        return;
-    }
-
-    // /config already exists so merge each config member individually
-    for (Value::ConstMemberIterator itr = tmpdoc.MemberBegin(); itr != tmpdoc.MemberEnd(); ++itr) {
-        console->printf(" merging: %s\n", itr->name.GetString());
-        Value key;
-        key.SetString(itr->name.GetString(), itr->name.GetStringLength(), doc.GetAllocator());
-        Value &v = tmpdoc[itr->name.GetString()];
-        config_node.get_valptr()->AddMember(key, v, doc.GetAllocator());
-    }
-    
-    StringBuffer buffer;
-    Writer<StringBuffer> writer(buffer);
-    doc.Accept(writer);
-    console->printf("Parsed json: %s\n", buffer.GetString());
 }
 
 // global shared instance

@@ -1,4 +1,6 @@
-#if defined(ARDUINO_BUILD)
+
+#if defined(ARDUPILOT_BUILD)
+#  include <AP_Filesystem/AP_Filesystem.h>
 #  undef _GLIBCXX_USE_C99_STDIO   // vsnprintf() not defined
 #  include "setup_board.h"
 #endif
@@ -10,6 +12,7 @@
 using std::vector;
 using std::string;
 
+#include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/prettywriter.h"
 
@@ -48,24 +51,6 @@ static bool extend_array(Value *node, int size) {
 PropertyNode::PropertyNode() {
 }
 
-// PropertyNode::PropertyNode(string abs_path, bool create) {
-//     printf("PropertyNode(%s)\n", abs_path.c_str());
-//     p = Pointer(abs_path.c_str());
-//     Value *val = p.Get(doc);
-//     if ( val == nullptr and create ) {
-//         printf("  creating\n");
-//         p.Create(doc);
-//     }
-//     val = p.Get(doc);
-//     if (val == nullptr) {
-//         printf("  val is still null\n");
-//     }
-//     if ( !val->IsObject() ) {
-//         printf("  setting as object\n");
-//         val->SetObject();
-//     }
-// }
-
 static Value *find_node_from_path(Value *start_node, string path, bool create) {
     Value *node = start_node;
     printf("PropertyNode(%s)\n", path.c_str());
@@ -80,25 +65,25 @@ static Value *find_node_from_path(Value *start_node, string path, bool create) {
         if ( tokens[i].length() == 0 ) {
             continue;
         }
-        printf("  token: %s\n", tokens[i].c_str());
+        // printf("  token: %s\n", tokens[i].c_str());
         if ( is_integer(tokens[i]) ) {
             // array reference
             int index = std::stoi(tokens[i].c_str());
             extend_array(node, index+1);
-            printf("Array size: %d\n", node->Size());
+            // printf("Array size: %d\n", node->Size());
             node = &(*node)[index];
         } else {
             if ( node->HasMember(tokens[i].c_str()) ) {
-                printf("    has %s\n", tokens[i].c_str());
+                // printf("    has %s\n", tokens[i].c_str());
                 node = &(*node)[tokens[i].c_str()];
             } else if ( create ) {
-                printf("    creating\n");
+                printf("    creating %s\n", tokens[i].c_str());
                 Value key;
                 key.SetString(tokens[i].c_str(), tokens[i].length(), doc.GetAllocator());
                 Value newobj(kObjectType);
                 node->AddMember(key, newobj, doc.GetAllocator());
                 node = &(*node)[tokens[i].c_str()];
-                printf("  new node: %p\n", node);
+                // printf("  new node: %p\n", node);
             } else {
                 return nullptr;
             }
@@ -110,12 +95,12 @@ static Value *find_node_from_path(Value *start_node, string path, bool create) {
             node = &(*node)[0];
         }
     }
-    printf(" found/create node->%d\n", (int)node);
+    // printf(" found/create node->%d\n", (int)node);
     return node;
 }
 
 PropertyNode::PropertyNode(string abs_path, bool create) {
-    printf("PropertyNode(%s) %d\n", abs_path.c_str(), (int)&doc);
+    // printf("PropertyNode(%s) %d\n", abs_path.c_str(), (int)&doc);
     if ( abs_path[0] != '/' ) {
         printf("  not an absolute path\n");
         return;
@@ -151,7 +136,6 @@ bool PropertyNode::isNull() {
 }
 
 int PropertyNode::getLen() {
-    printf("getLen()\n");
     if ( val->IsArray() ) {
         return val->Size();
     } else {
@@ -293,7 +277,7 @@ static string getValueAsString( Value &v ) {
     } else if ( v.IsUint64() ) {
         return std::to_string(v.GetUint64());
     } else if ( v.IsFloat() ) {
-#if defined(ARDUINO_BUILD)
+#if defined(ARDUPILOT_BUILD)
         char buf[30];
         hal.util->snprintf(buf, 30, "%f", v.GetFloat());
         return buf;
@@ -301,7 +285,7 @@ static string getValueAsString( Value &v ) {
         return std::to_string(v.GetFloat());
 #endif
     } else if ( v.IsDouble() ) {
-#if defined(ARDUINO_BUILD)
+#if defined(ARDUPILOT_BUILD)
         char buf[30];
         hal.util->snprintf(buf, 30, "%lf", v.GetDouble());
         return buf;
@@ -455,6 +439,59 @@ bool PropertyNode::setString( const char *name, string s ) {
         // printf("%s already exists\n", name);
     }
     (*val)[name].SetString(s.c_str(), s.length());
+    return true;
+}
+
+bool PropertyNode::load( const char *file_path ) {
+    char read_buf[4096];
+    printf("reading from %s\n", file_path);
+    
+    // open a file in read mode
+    const int open_fd = AP::FS().open(file_path, O_RDONLY);
+    if (open_fd == -1) {
+        printf("Open %s failed\n", file_path);
+        return false;
+    }
+
+    // read from file
+    ssize_t read_size;
+    read_size = AP::FS().read(open_fd, read_buf, sizeof(read_buf));
+    if ( read_size == -1 ) {
+        printf("Read failed - %s\n", strerror(errno));
+        return false;
+    }
+
+    // close file after reading
+    AP::FS().close(open_fd);
+
+    if ( read_size >= 0 ) {
+        read_buf[read_size] = 0; // null terminate
+    }
+    printf("Read %d bytes.\nstring: %s\n", read_size, read_buf);
+    hal.scheduler->delay(100);
+
+    Document tmpdoc(&doc.GetAllocator());
+    tmpdoc.Parse(read_buf);
+    if ( tmpdoc.HasParseError() ){
+        printf("json parse err: %d (%s)\n",
+               tmpdoc.GetParseError(),
+               GetParseError_En(tmpdoc.GetParseError()));
+        return false;
+    }
+
+    // merge each new top level member individually
+    for (Value::ConstMemberIterator itr = tmpdoc.MemberBegin(); itr != tmpdoc.MemberEnd(); ++itr) {
+        printf(" merging: %s\n", itr->name.GetString());
+        Value key;
+        key.SetString(itr->name.GetString(), itr->name.GetStringLength(), doc.GetAllocator());
+        Value &v = tmpdoc[itr->name.GetString()];
+        val->AddMember(key, v, doc.GetAllocator());
+    }
+
+    printf("Updated node contents:\n");
+    pretty_print();
+    printf("\n");
+
     return true;
 }
 

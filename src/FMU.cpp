@@ -146,8 +146,8 @@ void loop() {
                 float elapsed_sec = (AP_HAL::millis() - tempTimer) / 1000.0;
                 console->printf("Available mem: %ld bytes\n",
                                 hal.util->available_memory());
-                console->printf("Performace = %.1f hz\n", counter / elapsed_sec);
-                PropertyNode("/").pretty_print();
+                console->printf("Performance = %.1f hz\n", counter/elapsed_sec);
+                //PropertyNode("/").pretty_print();
                 console->printf("\n");
 
                 if ( false ) {

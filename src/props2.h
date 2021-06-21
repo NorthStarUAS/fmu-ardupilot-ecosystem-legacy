@@ -11,15 +11,7 @@
 using std::string;
 using std::vector;
 
-#if defined(ARDUPILOT_BUILD)
-#  pragma GCC optimize("O1")
-#endif
-
 #include "rapidjson/document.h"
-
-#if defined(ARDUPILOT_BUILD)
-#  pragma GCC reset_options
-#endif
 #include "rapidjson/pointer.h"
 using namespace rapidjson;
 
@@ -80,6 +72,9 @@ public:
 
     // indexed value setters
     bool setDouble( const char *name, int index, double val  ); // returns true if successful
+
+    // load/merge json file under this node
+    bool load( const char *file_path );
     
     // void print();
     void pretty_print();
