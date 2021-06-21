@@ -1,7 +1,6 @@
 #include "imu_mgr.h"
 
 #include "setup_board.h"
-#include "config.h"
 
 #include <AP_HAL/AP_HAL.h>
 
@@ -9,41 +8,40 @@
 void imu_mgr_t::defaults() {
     Eigen::Matrix3f strapdown3x3 = Eigen::Matrix3f::Identity();
     for ( int i = 0; i < 9; i++ ) {
-        // no need to worry about row vs. column major here (symmetrical ident)
-        config.imu_cfg.strapdown_calib[i] = strapdown3x3.data()[i];
+        imu_calib_node.setFloat("strapdown", i, strapdown3x3.data()[i]);
     }
     strapdown = Eigen::Matrix4f::Identity();
 
     for ( int i = 0; i < 3; i++ ) {
-        config.imu_cfg.accel_scale[i] = 1.0;
+        imu_calib_node.setFloat("accel_scale", i, 1.0);
     }
     for ( int i = 0; i < 3; i++ ) {
-        config.imu_cfg.accel_translate[i] = 0.0;
+        imu_calib_node.setFloat("accel_translate", i, 0.0);
     }
     accel_affine = Eigen::Matrix4f::Identity();
     
     mag_affine = Eigen::Matrix4f::Identity();
     for ( int i = 0; i < 16; i++ ) {
-        // no need to worry about row vs. column major here (symmetrical ident)
-        config.imu_cfg.mag_affine[i] = mag_affine.data()[i];
+        imu_calib_node.setFloat("mag_affine", i, mag_affine.data()[i]);
     }
 }
 
 // Update the R matrix (called after loading/receiving any new config message)
 void imu_mgr_t::set_strapdown_calibration() {
-    // config.imu_cfg.orientation is row major, but internally Eigen defaults
-    // to column major.
-    Eigen::Matrix3f strapdown3x3 = Eigen::Matrix<float, 3, 3, Eigen::RowMajor>(config.imu_cfg.strapdown_calib);
     strapdown = Eigen::Matrix4f::Identity();
-    strapdown.block(0,0,3,3) = strapdown3x3;
+    for ( int i = 0; i < 3; i++ ) {
+        for ( int j = 0; j < 3; j++ ) {
+            strapdown(i,j) = imu_calib_node.getFloat("strapdown", i*3+j);
+        }
+    }
     Eigen::Matrix4f scale = Eigen::Matrix4f::Identity();
     for (int i = 0; i < 3; i++ ) {
-        scale(i,i) = config.imu_cfg.accel_scale[i];
+        scale(i,i) = imu_calib_node.getFloat("accel_scale", i);
     }
     Eigen::Matrix4f translate = Eigen::Matrix4f::Identity();
     for (int i = 0; i < 3; i++ ) {
         // column major
-        translate(i,3) = config.imu_cfg.accel_translate[i];
+        translate(i,3) = imu_calib_node.getFloat("accel_translate", i);
     }
     accel_affine = translate * strapdown * scale;
     console->printf("Accel affine calibration matrix:\n");
@@ -64,18 +62,15 @@ void imu_mgr_t::set_strapdown_calibration() {
     }
 }
 
-// setup accel temp calibration
-//void imu_mgr_t::set_accel_calibration() {
-    //ax_cal.init(config.imu_cfg.ax_coeff, config.imu_cfg.min_temp, config.imu_cfg.max_temp);
-    //ay_cal.init(config.imu_cfg.ay_coeff, config.imu_cfg.min_temp, config.imu_cfg.max_temp);
-    //az_cal.init(config.imu_cfg.az_coeff, config.imu_cfg.min_temp, config.imu_cfg.max_temp);
-//}
-
 // update the mag calibration matrix from the config structur
 void imu_mgr_t::set_mag_calibration() {
     mag_affine = Eigen::Matrix4f::Identity();
-    mag_affine = Eigen::Matrix<float, 4, 4, Eigen::RowMajor>(config.imu_cfg.mag_affine);
-    
+    for ( int i = 0; i < 4; i++ ) {
+        for ( int j = 0; j < 4; j++ ) {
+            mag_affine(i,j) = imu_calib_node.getFloat("mag_affine", i*4+j);
+        }
+    }
+
     console->printf("Magnetometer affine matrix:\n");
     for ( int i = 0; i < 4; i++ ) {
         console->printf("  ");
@@ -88,6 +83,7 @@ void imu_mgr_t::set_mag_calibration() {
 
 // configure the IMU settings and setup the ISR to aquire the data
 void imu_mgr_t::setup() {
+    imu_calib_node = PropertyNode("/config/imu/calibration");
     imu_hal.setup();
 }
 

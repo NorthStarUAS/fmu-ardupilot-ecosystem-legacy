@@ -8,6 +8,8 @@
 
 #include "eigen3/Eigen/Core"
 
+#include "props2.h"
+
 #include "imu_hal.h"
 #include "cal_temp.h"
 
@@ -32,6 +34,8 @@ private:
     CalTemp ax_cal;
     CalTemp ay_cal;
     CalTemp az_cal;
+
+    PropertyNode imu_calib_node;
 
 public:
     

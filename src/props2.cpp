@@ -442,6 +442,30 @@ bool PropertyNode::setString( const char *name, string s ) {
     return true;
 }
 
+bool PropertyNode::setFloat( const char *name, int index, float x ) {
+    if ( !val->IsObject() ) {
+        printf("  converting value to object\n");
+        // hal.scheduler->delay(100);
+        val->SetObject();
+    }
+    Value a(kArrayType);
+    if ( !val->HasMember(name) ) {
+        printf("creating %s\n", name);
+        Value key(name, doc.GetAllocator());
+        val->AddMember(key, a, doc.GetAllocator());
+    } else {
+        // printf("%s already exists\n", name);
+        a = (*val)[name];
+        if ( ! a.IsArray() ) {
+            printf("converting member to array\n");
+            a.SetArray();
+        }
+    }
+    extend_array(&a, index);    // protect against out of range
+    a[index] = x;
+    return true;
+}
+
 static bool load_json( const char *file_path, Value *v ) {
     char read_buf[4096];
     printf("reading from %s\n", file_path);

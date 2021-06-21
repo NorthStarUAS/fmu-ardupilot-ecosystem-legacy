@@ -71,7 +71,7 @@ public:
     bool setString( const char *name, string s ); // returns true if successful
 
     // indexed value setters
-    bool setDouble( const char *name, int index, double val  ); // returns true if successful
+    bool setFloat( const char *name, int index, float x ); // returns true if successful
 
     // load/merge json file under this node
     bool load( const char *file_path );

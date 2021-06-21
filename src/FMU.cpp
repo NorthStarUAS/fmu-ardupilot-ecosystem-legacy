@@ -58,13 +58,12 @@ void setup() {
         console->printf("Successfully loaded config from eeprom storage.\n");
     }
     
+    // initialize the IMU
+    imu_mgr.setup();
     // update imu strapdown and mag_affine matrices from config
     imu_mgr.set_strapdown_calibration();
     imu_mgr.set_mag_calibration();
     
-    // initialize the IMU
-    imu_mgr.setup();
-
     // initialize the pilot interface (RC in, out & mixer)
     pilot.setup();
 
