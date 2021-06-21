@@ -442,7 +442,7 @@ bool PropertyNode::setString( const char *name, string s ) {
     return true;
 }
 
-bool PropertyNode::load( const char *file_path ) {
+static bool load_json( const char *file_path, Value *v ) {
     char read_buf[4096];
     printf("reading from %s\n", file_path);
     
@@ -484,10 +484,36 @@ bool PropertyNode::load( const char *file_path ) {
         printf(" merging: %s\n", itr->name.GetString());
         Value key;
         key.SetString(itr->name.GetString(), itr->name.GetStringLength(), doc.GetAllocator());
-        Value &v = tmpdoc[itr->name.GetString()];
-        val->AddMember(key, v, doc.GetAllocator());
+        Value &newval = tmpdoc[itr->name.GetString()];
+        v->AddMember(key, newval, doc.GetAllocator());
     }
 
+    return true;
+}
+
+// fixme: currently no mechanism to override include values
+static void recursively_expand_includes(Value *v) {
+    if ( v->IsObject() ) {
+        if ( v->HasMember("include") and (*v)["include"].IsString() ) {
+            printf("Need to include: %s\n", (*v)["include"].GetString());
+            load_json( (*v)["include"].GetString(), v );
+            v->RemoveMember("include");
+        } else {
+            for (Value::MemberIterator itr = v->MemberBegin(); itr != v->MemberEnd(); ++itr) {
+                if ( itr->value.IsObject() ) {
+                    recursively_expand_includes( &itr->value );
+                }
+            }
+        }
+    }
+}
+
+bool PropertyNode::load( const char *file_path ) {
+    if ( !load_json(file_path, val) ) {
+        return false;
+    }
+    recursively_expand_includes(val);
+    
     printf("Updated node contents:\n");
     pretty_print();
     printf("\n");

@@ -85,25 +85,3 @@ private:
     // Pointer p;
     Value *val = nullptr;
 };
-
-
-// This function must be called before any rjPropertyNode usage. It
-// imports the python props and props_xml/json modules.
-extern void pyPropsInit();
-
-// This function can be called at exit to properly free resources
-// requested by init()
-extern void pyPropsCleanup(void);
-
-// Return a rjPropertyNode object that points to the specified path in
-// the property tree.  This is a 'heavier' operation so it is
-// recommended to call this function from initialization routines and
-// save the result.  Then use the rjPropertyNode for direct read/write
-// access in your update routines.
-// extern PropertyNode GetNode(string abs_path, bool create=false);
-
-// Read a json file and place the results at specified node
-extern bool readJSON(string filename, PropertyNode *node);
-    
-// Write a json file beginning with the specified node
-extern bool writeJSON(string filename, PropertyNode *node);
