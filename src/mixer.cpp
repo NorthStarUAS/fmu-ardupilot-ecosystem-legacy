@@ -1,13 +1,11 @@
 // Module to handle actuator input/output and mixing.
 
+#include "setup_board.h"
 #include "props2.h"
 
-#include "imu_mgr.h"
 #include "pilot.h"
-
 #include "mixer.h"
 
-#include "setup_board.h"
 
 // reset sas parameters to startup defaults
 void mixer_t::sas_defaults() {
@@ -90,6 +88,7 @@ void mixer_t::print_mixer_matrix() {
     }
 }
 void mixer_t::setup() {
+    imu_node = PropertyNode("/sensors/imu");
     stab_roll_node = PropertyNode("/config/stability_damper/roll");
     stab_pitch_node = PropertyNode("/config/stability_damper/pitch");
     stab_yaw_node = PropertyNode("/config/stability_damper/yaw");
@@ -118,13 +117,16 @@ void mixer_t::sas_update() {
     }
 
     if ( stab_roll_node.getBool("enable") ) {
-        inputs[1] -= tune * stab_roll_node.getFloat("gain") * imu_mgr.get_p_cal();
+        inputs[1] -= tune * stab_roll_node.getFloat("gain")
+            * imu_node.getFloat("p_rps");
     }
     if ( stab_pitch_node.getBool("enable") ) {
-        inputs[2] += tune * stab_pitch_node.getFloat("gain") * imu_mgr.get_q_cal();
+        inputs[2] += tune * stab_pitch_node.getFloat("gain")
+            * imu_node.getFloat("q_rps");
     }
     if ( stab_yaw_node.getBool("enable") ) {
-        inputs[3] += tune * stab_yaw_node.getFloat("gain") * imu_mgr.get_r_cal();
+        inputs[3] += tune * stab_yaw_node.getFloat("gain")
+            * imu_node.getFloat("r_rps");
     }
 }
 

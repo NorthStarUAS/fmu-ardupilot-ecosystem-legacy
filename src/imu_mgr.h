@@ -35,6 +35,7 @@ private:
     CalTemp ay_cal;
     CalTemp az_cal;
 
+    PropertyNode imu_node;
     PropertyNode imu_calib_node;
 
 public:

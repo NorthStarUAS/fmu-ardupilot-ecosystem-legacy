@@ -14,6 +14,7 @@ private:
     void sas_update();
     void mixing_update();
 
+    PropertyNode imu_node;
     PropertyNode stab_roll_node;
     PropertyNode stab_pitch_node;
     PropertyNode stab_yaw_node;

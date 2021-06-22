@@ -83,6 +83,7 @@ void imu_mgr_t::set_mag_calibration() {
 
 // configure the IMU settings and setup the ISR to aquire the data
 void imu_mgr_t::setup() {
+    imu_node = PropertyNode("/sensors/imu");
     imu_calib_node = PropertyNode("/config/imu/calibration");
     imu_hal.setup();
 }
@@ -97,6 +98,7 @@ void imu_mgr_t::update() {
     
     accels_raw << imu_hal.accel.x, imu_hal.accel.y, imu_hal.accel.z, 1.0;
     gyros_raw << imu_hal.gyro.x, imu_hal.gyro.y, imu_hal.gyro.z, 1.0;
+    tempC = imu_hal.tempC;
 
     Eigen::Vector4f mags_precal;
     mags_precal << imu_hal.mag.x, imu_hal.mag.y, imu_hal.mag.z, 1.0;
@@ -116,6 +118,27 @@ void imu_mgr_t::update() {
     } else {
         gyros_cal.segment(0,3) -= gyro_startup_bias;
     }
+
+    // publish
+    imu_node.setFloat("ax_raw", accels_raw(0));
+    imu_node.setFloat("ay_raw", accels_raw(1));
+    imu_node.setFloat("az_raw", accels_raw(2));
+    imu_node.setFloat("p_raw", gyros_raw(0));
+    imu_node.setFloat("q_raw", gyros_raw(1));
+    imu_node.setFloat("r_raw", gyros_raw(2));
+    imu_node.setFloat("hx_raw", mags_raw(0));
+    imu_node.setFloat("hy_raw", mags_raw(1));
+    imu_node.setFloat("hz_raw", mags_raw(2));
+    imu_node.setFloat("ax_mps2", accels_cal(0));
+    imu_node.setFloat("ay_mps2", accels_cal(1));
+    imu_node.setFloat("az_mps2", accels_cal(2));
+    imu_node.setFloat("p_rps", gyros_cal(0));
+    imu_node.setFloat("q_rps", gyros_cal(1));
+    imu_node.setFloat("r_rps", gyros_cal(2));
+    imu_node.setFloat("hx", mags_cal(0));
+    imu_node.setFloat("hy", mags_cal(1));
+    imu_node.setFloat("hz", mags_cal(2));
+    imu_node.setFloat("tempC", tempC);
 }
 
 

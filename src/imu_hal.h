@@ -11,6 +11,7 @@ public:
     uint32_t raw_millis;
     Vector3f accel;
     Vector3f gyro;
+    float tempC;
     Vector3f mag;
     
     void setup();
