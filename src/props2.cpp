@@ -512,8 +512,9 @@ static bool load_json( const char *file_path, Value *v ) {
     if ( read_size >= 0 ) {
         read_buf[read_size] = 0; // null terminate
     }
-    printf("Read %d bytes.\nstring: %s\n", read_size, read_buf);
-    hal.scheduler->delay(100);
+    printf("Read %d bytes.\n", read_size);
+    // printf("Read %d bytes.\nstring: %s\n", read_size, read_buf);
+    // hal.scheduler->delay(100);
 
     Document tmpdoc(&doc.GetAllocator());
     tmpdoc.Parse(read_buf);
