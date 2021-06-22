@@ -13,6 +13,11 @@ private:
     
     void sas_update();
     void mixing_update();
+
+    PropertyNode stab_roll_node;
+    PropertyNode stab_pitch_node;
+    PropertyNode stab_yaw_node;
+    PropertyNode stab_tune_node;
     
 public:
     Eigen::Matrix<float, MAX_RCOUT_CHANNELS, 1> outputs;

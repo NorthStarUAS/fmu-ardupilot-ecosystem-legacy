@@ -78,23 +78,18 @@
         }
     }, 
     "stability_damper": {
-        "axis": [
-            {
-                "enable": "True", 
-                "gain": "0.2", 
-                "mode": "roll"
-            }, 
-            {
-                "enable": "True", 
-                "gain": "0.3", 
-                "mode": "pitch"
-            }, 
-            {
-                "enable": "True", 
-                "gain": "-0.2", 
-                "mode": "yaw"
-            }
-        ], 
+        "roll": {
+            "enable": "True",
+            "gain": "0.2"
+        }, 
+        "pitch": {
+            "enable": "True",
+            "gain": "0.3"
+        }, 
+        "yaw": {
+            "enable": "True",
+            "gain": "-0.2"
+        },
         "pilot_tune": {
             "enable": "True"
         }

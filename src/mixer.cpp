@@ -24,31 +24,6 @@ void mixer_t::sas_defaults() {
 };
 
 
-// reset mixing parameters to startup defaults
-// void mixer_t::mixing_defaults() {
-//     config.actuators.mix_autocoord = false;
-//     config.actuators.mix_throttle_trim = false;
-//     config.actuators.mix_flap_trim = false;
-//     config.actuators.mix_elevon = false;
-//     config.actuators.mix_flaperon = false;
-//     config.actuators.mix_vtail = false;
-//     config.actuators.mix_diff_thrust = false;
-
-//     config.actuators.mix_Gac = 0.5;       // aileron gain for autocoordination
-//     config.actuators.mix_Get = -0.1;      // elevator trim w/ throttle gain
-//     config.actuators.mix_Gef = 0.1;       // elevator trim w/ flap gain
-
-//     config.actuators.mix_Gea = 1.0;       // aileron gain for elevons
-//     config.actuators.mix_Gee = 1.0;       // elevator gain for elevons
-//     config.actuators.mix_Gfa = 1.0;       // aileron gain for flaperons
-//     config.actuators.mix_Gff = 1.0;       // flaps gain for flaperons
-//     config.actuators.mix_Gve = 1.0;       // elevator gain for vtail
-//     config.actuators.mix_Gvr = 1.0;       // rudder gain for vtail
-//     config.actuators.mix_Gtt = 1.0;       // throttle gain for diff thrust
-//     config.actuators.mix_Gtr = 0.1;       // rudder gain for diff thrust
-// };
-
-
 void mixer_t::update_matrix(message::config_mixer_t *mix_config ) {
     M.setIdentity();            // straight pass through default
 
@@ -118,8 +93,13 @@ void mixer_t::print_mixer_matrix() {
     }
 }
 void mixer_t::setup() {
+    stab_roll_node = PropertyNode("/config/stability_damper/roll");
+    stab_pitch_node = PropertyNode("/config/stability_damper/pitch");
+    stab_yaw_node = PropertyNode("/config/stability_damper/yaw");
+    stab_tune_node = PropertyNode("/config/stability_damper/pilot_tune");
+    
     outputs.setZero();
-    M = Eigen::Matrix<float, MAX_RCOUT_CHANNELS, MAX_RCOUT_CHANNELS, Eigen::RowMajor>(config.mixer_matrix_cfg.matrix);
+    M = Eigen::Matrix<float, MAX_RCOUT_CHANNELS, MAX_RCOUT_CHANNELS, Eigen::RowMajor>();
     M.setIdentity();
     message::config_mixer_t config_mixer;
     update_matrix(&config_mixer);
@@ -131,23 +111,24 @@ void mixer_t::setup() {
 // which simplifies mixing later
 void mixer_t::sas_update() {
     float tune = 1.0;
-    if ( config.stab_cfg.sas_tune ) {
-        tune = config.stab_cfg.sas_max_gain * pilot.manual_inputs[7];
+    float max_tune = 2.0;
+    if ( stab_tune_node.getBool("enable") ) {
+        tune = max_tune * pilot.manual_inputs[7];
         if ( tune < 0.0 ) {
             tune = 0.0;
-        } else if ( tune > 2.0 ) {
-            tune = 2.0;
+        } else if ( tune > max_tune ) {
+            tune = max_tune;
         }
     }
 
-    if ( config.stab_cfg.sas_rollaxis ) {
-        inputs[1] -= tune * config.stab_cfg.sas_rollgain * imu_mgr.get_p_cal();
+    if ( stab_roll_node.getBool("enable") ) {
+        inputs[1] -= tune * stab_roll_node.getFloat("gain") * imu_mgr.get_p_cal();
     }
-    if ( config.stab_cfg.sas_pitchaxis ) {
-        inputs[2] += tune * config.stab_cfg.sas_pitchgain * imu_mgr.get_q_cal();
+    if ( stab_pitch_node.getBool("enable") ) {
+        inputs[2] += tune * stab_pitch_node.getFloat("gain") * imu_mgr.get_q_cal();
     }
-    if ( config.stab_cfg.sas_yawaxis ) {
-        inputs[3] += tune * config.stab_cfg.sas_yawgain * imu_mgr.get_r_cal();
+    if ( stab_yaw_node.getBool("enable") ) {
+        inputs[3] += tune * stab_yaw_node.getFloat("gain") * imu_mgr.get_r_cal();
     }
 }
 
