@@ -1,12 +1,12 @@
 #include <math.h>
 
 #include "gps_mgr.h"
-#include "imu_mgr.h"
 
 #include "nav_mgr.h"
 
 void nav_mgr_t::setup() {
     config_ekf_node = PropertyNode("/config/ekf");
+    imu_node = PropertyNode("/sensors/imu");
     string selected = config_ekf_node.getString("select");
     // fix me ...
     if ( selected == ""  ) {
@@ -25,19 +25,19 @@ void nav_mgr_t::setup() {
 void nav_mgr_t::update() {
 #if defined(AURA_ONBOARD_EKF)
     IMUdata imu1;
-    imu1.time = imu_mgr.imu_millis / 1000.0;
-    imu1.p = imu_mgr.get_p_cal();
-    imu1.q = imu_mgr.get_q_cal();
-    imu1.r = imu_mgr.get_r_cal();
-    imu1.ax = imu_mgr.get_ax_cal();
-    imu1.ay = imu_mgr.get_ay_cal();
-    imu1.az = imu_mgr.get_az_cal();
-    imu1.hx = imu_mgr.get_hx_cal();
-    imu1.hy = imu_mgr.get_hy_cal();
-    imu1.hz = imu_mgr.get_hz_cal();
+    imu1.time = imu_node.getFloat("timestamp");
+    imu1.p = imu_node.getFloat("p_rps");
+    imu1.q = imu_node.getFloat("q_rps");
+    imu1.r = imu_node.getFloat("r_rps");
+    imu1.ax = imu_node.getFloat("ax_mps2");
+    imu1.ay = imu_node.getFloat("ay_mps2");
+    imu1.az = imu_node.getFloat("az_mps2");
+    imu1.hx = imu_node.getFloat("hx");
+    imu1.hy = imu_node.getFloat("hy");
+    imu1.hz = imu_node.getFloat("hz");
     
     GPSdata gps1;
-    gps1.time = imu_mgr.imu_millis / 1000.0;
+    gps1.time = imu_node.getFloat("timestamp"); // fixme
     gps1.unix_sec = gps1.time;
     const Location &loc = gps_mgr.gps.location();
     gps1.lat = loc.lat / 10000000.0;
