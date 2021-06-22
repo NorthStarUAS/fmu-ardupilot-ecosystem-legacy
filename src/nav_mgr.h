@@ -22,6 +22,7 @@ private:
 #endif
     PropertyNode config_ekf_node;
     PropertyNode imu_node;
+    PropertyNode gps_node;
     
 public:
     NAVdata data;

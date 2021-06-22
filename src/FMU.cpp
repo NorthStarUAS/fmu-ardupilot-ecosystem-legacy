@@ -24,6 +24,7 @@ AP_HAL::UARTDriver *console = hal.console;
 
 static PropertyNode config_ekf_node;
 
+static gps_mgr_t gps_mgr;
 static led_t led;
 
 // -Wmissing-declarations requires these

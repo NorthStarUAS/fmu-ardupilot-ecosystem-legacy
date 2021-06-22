@@ -1,11 +1,10 @@
 #include <math.h>
 
-#include "gps_mgr.h"
-
 #include "nav_mgr.h"
 
 void nav_mgr_t::setup() {
     config_ekf_node = PropertyNode("/config/ekf");
+    gps_node = PropertyNode("/sensors/gps");
     imu_node = PropertyNode("/sensors/imu");
     string selected = config_ekf_node.getString("select");
     // fix me ...
@@ -37,20 +36,17 @@ void nav_mgr_t::update() {
     imu1.hz = imu_node.getFloat("hz");
     
     GPSdata gps1;
-    gps1.time = imu_node.getFloat("timestamp"); // fixme
-    gps1.unix_sec = gps1.time;
-    const Location &loc = gps_mgr.gps.location();
-    gps1.lat = loc.lat / 10000000.0l;
-    gps1.lon = loc.lng / 10000000.0l;
-    gps1.alt = loc.alt / 100.0;
-    const Vector3f vel = gps_mgr.gps.velocity();
-    gps1.vn = vel.x;
-    gps1.ve = vel.y;
-    gps1.vd = vel.z;
-    gps1.unix_sec = gps_mgr.unix_sec;
+    gps1.time = gps_node.getFloat("timestamp");
+    gps1.unix_sec = gps_node.getFloat("unix_sec");
+    gps1.lat = gps_node.getDouble("latitude_deg");
+    gps1.lon = gps_node.getDouble("longitude_deg");
+    gps1.alt = gps_node.getFloat("altitude_m");
+    gps1.vn = gps_node.getFloat("vn_mps");
+    gps1.ve = gps_node.getFloat("ve_mps");
+    gps1.vd = gps_node.getFloat("vd_mps");
 
     string selected = config_ekf_node.getString("selected");
-    if ( !ekf_inited and gps_mgr.settle() ) {
+    if ( !ekf_inited and gps_node.getBool("settle") ) {
         if ( selected == "nav15" ) {
             ekf.init(imu1, gps1);
         } else if ( selected == "nav15_mag" ) {
@@ -64,8 +60,8 @@ void nav_mgr_t::update() {
         } else if ( selected == "nav15_mag" ) {
             ekf_mag.time_update(imu1);
         }
-        if ( gps_mgr.gps_millis > gps_last_millis ) {
-            gps_last_millis = gps_mgr.gps_millis;
+        if ( gps_node.getUInt("millis") > gps_last_millis ) {
+            gps_last_millis = gps_node.getUInt("millis");
             if ( selected == "nav15" ) {
                 ekf.measurement_update(gps1);
             } else if ( selected == "nav15_mag" ) {

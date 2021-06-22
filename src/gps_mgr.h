@@ -22,6 +22,7 @@ public:
     uint32_t gps_millis = 0;
     bool gps_acquired = false;
     uint32_t gps_settle_timer = 0;
+    bool gps_settled = false;
     // ublox8_nav_pvt_t gps_data;
     double unix_sec;
     float magvar_rad;
@@ -29,12 +30,9 @@ public:
 
     void setup();
     void update();
-    bool settle();
     
 private:
     PropertyNode gps_node;
     void update_unix_sec();
     void update_magvar();
 };
-
-extern gps_mgr_t gps_mgr;

@@ -9,7 +9,6 @@
 #include "setup_board.h"
 
 #include "airdata.h"
-#include "gps_mgr.h"
 #include "imu_mgr.h"
 #include "mixer.h"
 #include "nav_mgr.h"
@@ -25,6 +24,7 @@
 
 void comms_t::setup() {
     config_node = PropertyNode("/config");
+    gps_node = PropertyNode("/sensors/gps");
     imu_node = PropertyNode("/sensors/imu");
     power_node = PropertyNode("/sensors/power");
     // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
@@ -199,9 +199,9 @@ void comms_t::write_imu_ascii()
 // output a binary representation of the GPS data
 int comms_t::write_gps_bin()
 {
-    if ( gps_mgr.gps_millis != gps_last_millis ) {
+    if ( gps_node.getUInt("millis") != gps_last_millis ) {
 #if 0 // fixme
-        gps_last_millis = gps_mgr.gps_millis;
+        gps_last_millis = gps_node.getUInt("millis");
         return serial.write_packet( message::aura_nav_pvt_id,
                                     (uint8_t *)(&(gps_mgr.gps_data)),
                                     sizeof(gps_mgr.gps_data) );
@@ -214,20 +214,16 @@ int comms_t::write_gps_bin()
 }
 
 void comms_t::write_gps_ascii() {
-    const Location &loc = gps_mgr.gps.location();
     console->printf("GPS:");
-    console->printf(" Lat: %.7f", (double)loc.lat / 10000000.0);
-    //console->print(gps_mgr.gps_data.lat);
-    console->printf(" Lon: %.7f", (double)loc.lng / 10000000.0);
-    //console->print(gps_mgr.gps_data.lon);
-    console->printf(" Alt: %.1f", (float)loc.alt / 100.0);
-    const Vector3f vel = gps_mgr.gps.velocity();
+    console->printf(" Lat: %.7f", gps_node.getDouble("latitude_deg"));
+    console->printf(" Lon: %.7f", gps_node.getDouble("longitude_deg"));
+    console->printf(" Alt: %.1f", gps_node.getFloat("altitude_m"));
     console->printf(" Vel: %.1f %.1f %.1f",
-                    vel.x, vel.y, vel.z);
-    console->printf(" GSP: %.1f", gps_mgr.gps.ground_speed());
-    console->printf(" COG: %.1f", gps_mgr.gps.ground_course());
-    console->printf(" SAT: %d", gps_mgr.gps.num_sats());
-    console->printf(" FIX: %d", gps_mgr.gps.status());
+                    gps_node.getFloat("vn_mps"),
+                    gps_node.getFloat("ve_mps"),
+                    gps_node.getFloat("vd_mps"));
+    console->printf(" SAT: %d", gps_node.getInt("satellites"));
+    console->printf(" FIX: %d", gps_node.getInt("status"));
 #if 0
     // example of using gmtime() to get these values here:
     // https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_NMEA_Output/AP_NMEA_Output.cpp#L86

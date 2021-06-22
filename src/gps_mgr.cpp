@@ -36,24 +36,34 @@ void gps_mgr_t::update() {
         gps_millis = gps.last_message_time_ms();
         unix_sec = gps.time_epoch_usec() / 1000000.0;
         // update_unix_sec();
-        if ( !gps_acquired and gps.status() >= AP_GPS::GPS_Status::GPS_OK_FIX_3D ) {
-            // first 3d fix
-            gps_acquired = true;
-            gps_settle_timer = AP_HAL::millis();
-            update_magvar();
-            console->printf("GPS: 3d fix acquired.\n");
-            console->printf("GPS: unix time = %ld\n", (uint32_t)(gps.time_epoch_usec() / 1000000.0));
-            console->printf("Local magvar (deg) = %.1f\n", magvar_rad*R2D);
+        if ( gps.status() >= AP_GPS::GPS_Status::GPS_OK_FIX_3D ) {
+            if ( !gps_acquired ) {
+                // first 3d fix
+                gps_acquired = true;
+                gps_settle_timer = AP_HAL::millis();
+                update_magvar();
+                console->printf("GPS: 3d fix acquired.\n");
+                console->printf("GPS: unix time = %ld\n", (uint32_t)(gps.time_epoch_usec() / 1000000.0));
+                console->printf("Local magvar (deg) = %.1f\n", magvar_rad*R2D);
+            } else if ( gps_acquired and !gps_settled ) {
+                if ( AP_HAL::millis() - gps_settle_timer > 10000 ) {
+                    // 10 seconds
+                    gps_settled = true;
+                }
+            }
         }
+        
         // publish
         gps_node.setUInt("millis", gps_millis);
         gps_node.setFloat("timestamp", gps_millis / 1000.0);
         gps_node.setFloat("unix_sec", unix_sec);
         const Location &loc = gps.location();
+        gps_node.setInt("latitude_raw", loc.lat);
+        gps_node.setInt("longitude_raw", loc.lng);
         gps_node.setDouble("latitude_deg", loc.lat / 10000000.0l);
         gps_node.setDouble("longitude_deg", loc.lng / 10000000.0l);
         gps_node.setFloat("altitude_m", loc.alt / 100.0);
-        const Vector3f vel = gps_mgr.gps.velocity();
+        const Vector3f vel = gps.velocity();
         gps_node.setFloat("vn_mps", vel.x);
         gps_node.setFloat("ve_mps", vel.y);
         gps_node.setFloat("vd_mps", vel.z);
@@ -67,14 +77,7 @@ void gps_mgr_t::update() {
         gps_node.setFloat("vertical_accuracy_m", vacc);
         gps_node.setFloat("hdop", gps.get_hdop() / 100.0);
         gps_node.setFloat("vdop", gps.get_vdop() / 100.0);
-    }
-}
-
-bool gps_mgr_t::settle() {
-    if ( gps_acquired ) {
-        return AP_HAL::millis() - gps_settle_timer > 10000; // 10 seconds
-    } else {
-        return false;
+        gps_node.setBool("settle", gps_settled);
     }
 }
 
@@ -111,6 +114,3 @@ void gps_mgr_t::update_magvar() {
     console->printf("GPS: ideal mag vector = %.3f %.3f %.3f\n",
                     mag_ned(0), mag_ned(1), mag_ned(2));
 }
-
-// shared global instance
-gps_mgr_t gps_mgr;
