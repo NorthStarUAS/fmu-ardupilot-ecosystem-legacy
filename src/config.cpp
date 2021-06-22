@@ -4,7 +4,6 @@
 #include "comms.h"
 #include "config.h"
 #include "imu_mgr.h"
-#include "led.h"
 #include "pilot.h"
 #include "power.h"
 

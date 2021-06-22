@@ -11,6 +11,8 @@
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Geometry"
 
+#include "props2.h"
+
 class gps_mgr_t {
     
 public:
@@ -30,6 +32,7 @@ public:
     bool settle();
     
 private:
+    PropertyNode gps_node;
     void update_unix_sec();
     void update_magvar();
 };

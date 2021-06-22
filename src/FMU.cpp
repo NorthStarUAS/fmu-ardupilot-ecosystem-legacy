@@ -24,6 +24,8 @@ AP_HAL::UARTDriver *console = hal.console;
 
 static PropertyNode config_ekf_node;
 
+static led_t led;
+
 // -Wmissing-declarations requires these
 void setup();
 void loop();
@@ -210,7 +212,7 @@ void loop() {
         }
 
         // blink the led
-        led.do_policy(imu_mgr.gyros_calibrated, gps_mgr.gps);
+        led.do_policy(imu_mgr.gyros_calibrated);
         led.update();
     }
 }

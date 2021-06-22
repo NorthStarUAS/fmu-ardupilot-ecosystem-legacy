@@ -2,19 +2,20 @@
 
 #pragma once
 
-#include <AP_HAL/AP_HAL.h>
-#include <AP_GPS/AP_GPS.h>
+#include "props2.h"
 
 class led_t {
+    
 private:
     uint32_t blinkTimer = 0;
     unsigned int blink_rate = 100;
     bool blink_state = false;
     uint8_t r = 0, g = 0, b = 0;
+    PropertyNode gps_node;
     
 public:
     void setup();
-    void do_policy(int gyros_calibrated, const AP_GPS &gps);
+    void do_policy(int gyros_calibrated);
     void update();
 
     inline void set_blink_rate(uint16_t rate_ms) {
@@ -27,5 +28,3 @@ public:
         g = green_val;
     }
 };
-
-extern led_t led;

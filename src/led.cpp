@@ -1,3 +1,5 @@
+#include <AP_HAL/AP_HAL.h>
+
 #include "setup_board.h"
 
 #include "led.h"
@@ -6,6 +8,7 @@ void led_t::setup() {
 #if defined(HAL_HAVE_PIXRACER_LED)
     console->printf("Have Pixracer LED\n");
 #endif
+    gps_node = PropertyNode("/sensors/gps");
 }
 
 void led_t::update() {
@@ -30,12 +33,12 @@ void led_t::update() {
         // console->printf("LED: %d\n", blink_state);
     }
 }
-        
-void led_t::do_policy(int gyros_calibrated, const AP_GPS &gps) {
+
+void led_t::do_policy(int gyros_calibrated) {
     if ( gyros_calibrated < 2 ) {
         set_color(255, 255, 0); // orange
         set_blink_rate(50);
-    } else if ( gps.status() < AP_GPS::GPS_Status::GPS_OK_FIX_3D ) {
+    } else if ( gps_node.getInt("status") < 3 ) {
         set_color(0, 0, 255);   // blue
         set_blink_rate(200);
     } else {
@@ -43,6 +46,3 @@ void led_t::do_policy(int gyros_calibrated, const AP_GPS &gps) {
         set_blink_rate(800);
     }
 }
-
-// global shared instance
-led_t led;

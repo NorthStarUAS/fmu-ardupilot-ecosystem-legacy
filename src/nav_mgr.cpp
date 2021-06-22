@@ -40,8 +40,8 @@ void nav_mgr_t::update() {
     gps1.time = imu_node.getFloat("timestamp"); // fixme
     gps1.unix_sec = gps1.time;
     const Location &loc = gps_mgr.gps.location();
-    gps1.lat = loc.lat / 10000000.0;
-    gps1.lon = loc.lng / 10000000.0;
+    gps1.lat = loc.lat / 10000000.0l;
+    gps1.lon = loc.lng / 10000000.0l;
     gps1.alt = loc.alt / 100.0;
     const Vector3f vel = gps_mgr.gps.velocity();
     gps1.vn = vel.x;

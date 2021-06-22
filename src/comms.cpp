@@ -11,7 +11,6 @@
 #include "airdata.h"
 #include "gps_mgr.h"
 #include "imu_mgr.h"
-#include "led.h"
 #include "mixer.h"
 #include "nav_mgr.h"
 #include "pilot.h"
