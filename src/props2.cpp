@@ -72,6 +72,7 @@ static Value *find_node_from_path(Value *start_node, string path, bool create) {
             extend_array(node, index+1);
             // printf("Array size: %d\n", node->Size());
             node = &(*node)[index];
+            //PropertyNode(node).pretty_print();
         } else {
             if ( node->HasMember(tokens[i].c_str()) ) {
                 // printf("    has %s\n", tokens[i].c_str());
@@ -135,12 +136,16 @@ bool PropertyNode::isNull() {
     return val == nullptr;
 }
 
-int PropertyNode::getLen() {
-    if ( val->IsArray() ) {
-        return val->Size();
-    } else {
-        return 0;
+int PropertyNode::getLen( const char *name ) {
+    if ( val->IsObject() ) {
+        if ( val->HasMember(name) ) {
+            Value &v = (*val)[name];
+            if ( v.IsArray() ) {
+                return v.Size();
+            }
+        }
     }
+    return 0;
 }
 
 vector<string> PropertyNode::getChildren(bool expand) {

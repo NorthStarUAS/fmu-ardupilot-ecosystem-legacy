@@ -6,13 +6,14 @@
 #include "eigen3/Eigen/Core"
 
 class mixer_t {
+
 private:
     Eigen::Matrix<float, MAX_RCOUT_CHANNELS, MAX_RCOUT_CHANNELS> M;
     Eigen::Matrix<float, MAX_RCOUT_CHANNELS, 1> inputs;
     
     void sas_update();
     void mixing_update();
-
+    
 public:
     Eigen::Matrix<float, MAX_RCOUT_CHANNELS, 1> outputs;
 

@@ -41,7 +41,7 @@ public:
 
     bool isNull();		// return true if pObj pointer is NULL
     
-    int getLen(); // return len if node is an array (else 0)
+    int getLen( const char *name ); // return len if node is an array (else 0)
     void setLen(int size); // set array len of node, extend if necessary
     void setLen(int size, double init_val); // set array size, extend and init
 

@@ -1,5 +1,7 @@
 // Module to handle actuator input/output and mixing.
 
+#include "props2.h"
+
 #include "config.h"
 #include "imu_mgr.h"
 #include "pilot.h"
@@ -52,55 +54,54 @@ void mixer_t::update_matrix(message::config_mixer_t *mix_config ) {
 
     // note: M(output_channel, input_channel)
     // note: elevon and flaperon mixing are mutually exclusive
-    
-    if ( mix_config->mix_autocoord ) {
-        M(3,1) = -mix_config->mix_Gac;
-        if ( mix_config->mix_vtail && !mix_config->mix_elevon) {
-            M(2,1) = mix_config->mix_Gac;
+
+    PropertyNode autocoord_node = PropertyNode("/config/mixer/auto_coordination");
+    PropertyNode throttletrim_node = PropertyNode("/config/mixer/throttle_trim");
+    PropertyNode flaptrim_node = PropertyNode("/config/mixer/flap_trim");
+    PropertyNode elevon_node = PropertyNode("/config/mixer/elevon");
+    PropertyNode flaperon_node = PropertyNode("/config/mixer/flaperon");
+    PropertyNode vtail_node = PropertyNode("/config/mixer/vtail");
+    PropertyNode diffthrust_node = PropertyNode("/config/mixer/diff_thrust");
+    hal.scheduler->delay(100);
+
+    if ( autocoord_node.getBool("enable") ) {
+        M(3,1) = -autocoord_node.getFloat("gain1");
+        if (vtail_node.getBool("enable") && !elevon_node.getBool("enable")) {
+            M(2,1) = autocoord_node.getFloat("gain1");
         }
     }
-    if ( mix_config->mix_throttle_trim ) {
-        M(2,0) = mix_config->mix_Get;
+    if ( throttletrim_node.getBool("enable") ) {
+        M(2,0) = throttletrim_node.getFloat("gain1");
     }
-    if ( mix_config->mix_flap_trim ) {
-        M(2,4) = mix_config->mix_Gef;
-        if ( mix_config->mix_vtail && !mix_config->mix_elevon) {
-            M(3,4) = mix_config->mix_Gef;
+    if ( flaptrim_node.getBool("enable") ) {
+        M(2,4) = flaptrim_node.getFloat("gain1");
+        if ( vtail_node.getBool("enable") && !elevon_node.getBool("enable")) {
+            M(3,4) = flaptrim_node.getFloat("gain1");
         }
     }
-    if ( mix_config->mix_elevon ) {
-        M(1,1) = mix_config->mix_Gea;
-        M(1,2) = mix_config->mix_Gee;
-        M(2,1) = mix_config->mix_Gea;
-        M(2,2) = -mix_config->mix_Gee;
-    } else if ( mix_config->mix_flaperon ) {
-        M(1,1) = mix_config->mix_Gfa;
-        M(1,4) = mix_config->mix_Gff;
-        M(4,1) = -mix_config->mix_Gfa;
-        M(4,4) = mix_config->mix_Gff;
+    if ( elevon_node.getBool("enable") ) {
+        M(1,1) = elevon_node.getFloat("gain1");
+        M(1,2) = elevon_node.getFloat("gain2");
+        M(2,1) = elevon_node.getFloat("gain1");
+        M(2,2) = -elevon_node.getFloat("gain2");
+    } else if ( flaperon_node.getBool("enable") ) {
+        M(1,1) = flaperon_node.getFloat("gain1");
+        M(1,4) = flaperon_node.getFloat("gain2");
+        M(4,1) = -flaperon_node.getFloat("gain1");
+        M(4,4) = flaperon_node.getFloat("gain2");
     }
     // vtail mixing can't work with elevon mixing
-    if ( mix_config->mix_vtail && !mix_config->mix_elevon) {
-        M(2,2) = mix_config->mix_Gve;
-        M(2,3) = mix_config->mix_Gvr;
-        M(3,2) = mix_config->mix_Gve;
-        M(3,3) = -mix_config->mix_Gvr;
+    if ( vtail_node.getBool("enable") && !elevon_node.getBool("enable") ) {
+        M(2,2) = vtail_node.getFloat("gain1");
+        M(2,3) = vtail_node.getFloat("gain2");
+        M(3,2) = vtail_node.getFloat("gain1");
+        M(3,3) = -vtail_node.getFloat("gain2");
     }
-    if ( mix_config->mix_diff_thrust ) {
+    if ( diffthrust_node.getBool("eanbled") ) {
         // fixme: never tested in the wild (need to think through channel assignments)
-        // outputs[0] = mix_config->mix_Gtt * throttle_cmd + mix_config->mix_Gtr * rudder_cmd;
-        // outputs[5] = mix_config->mix_Gtt * throttle_cmd - mix_config->mix_Gtr * rudder_cmd;
+        // outputs[0] = mix_config.mix_Gtt * throttle_cmd + mix_config.mix_Gtr * rudder_cmd;
+        // outputs[5] = mix_config.mix_Gtt * throttle_cmd - mix_config.mix_Gtr * rudder_cmd;
     }
-
-    // updating the mixer_matrix config message so we can save it in eeeprom
-    for ( int i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
-        for ( int j = 0; j < MAX_RCOUT_CHANNELS; j++ ) {
-            //console->printf("%d\n", j*MAX_RCOUT_CHANNELS+i);
-            config.mixer_matrix_cfg.matrix[i*MAX_RCOUT_CHANNELS+j] = M(i,j);
-        }
-    }
-
-    print_mixer_matrix();
 }
 
 void mixer_t::print_mixer_matrix() {
@@ -120,7 +121,10 @@ void mixer_t::setup() {
     outputs.setZero();
     M = Eigen::Matrix<float, MAX_RCOUT_CHANNELS, MAX_RCOUT_CHANNELS, Eigen::RowMajor>(config.mixer_matrix_cfg.matrix);
     M.setIdentity();
+    message::config_mixer_t config_mixer;
+    update_matrix(&config_mixer);
     print_mixer_matrix();
+    hal.scheduler->delay(100);
 }
 
 // compute the stability damping in normalized command/input space

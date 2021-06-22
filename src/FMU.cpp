@@ -58,9 +58,8 @@ void setup() {
         console->printf("Successfully loaded config from eeprom storage.\n");
     }
     
-    // initialize the IMU
+    // initialize the IMU and calibration matrices
     imu_mgr.setup();
-    // update imu strapdown and mag_affine matrices from config
     imu_mgr.set_strapdown_calibration();
     imu_mgr.set_mag_calibration();
     
