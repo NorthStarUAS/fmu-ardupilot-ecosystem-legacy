@@ -139,6 +139,10 @@ void comms_t::write_actuator_out_ascii()
     console->printf("\n");
 }
 
+static inline int32_t intround(float f) {
+    return (int32_t)(f >= 0.0 ? (f + 0.5) : (f - 0.5));
+}
+
 // output a binary representation of the IMU data (note: scaled to 16bit values)
 int comms_t::write_imu_bin()
 {
@@ -156,23 +160,23 @@ int comms_t::write_imu_bin()
     const float tempScale = 0.01;
     
     static message::imu_t imu1;
-    imu1.millis = imu_mgr.imu_millis;
-    imu1.raw[0] = imu_mgr.get_ax_raw() / accelScale;
-    imu1.raw[1] = imu_mgr.get_ay_raw() / accelScale;
-    imu1.raw[2] = imu_mgr.get_az_raw() / accelScale;
-    imu1.raw[3] = imu_mgr.get_hx_raw() / magScale;
-    imu1.raw[4] = imu_mgr.get_hy_raw() / magScale;
-    imu1.raw[5] = imu_mgr.get_hz_raw() / magScale;
-    imu1.cal[0] = imu_mgr.get_ax_cal() / accelScale;
-    imu1.cal[1] = imu_mgr.get_ay_cal() / accelScale;
-    imu1.cal[2] = imu_mgr.get_az_cal() / accelScale;
-    imu1.cal[3] = imu_mgr.get_p_cal() / gyroScale;
-    imu1.cal[4] = imu_mgr.get_q_cal() / gyroScale;
-    imu1.cal[5] = imu_mgr.get_r_cal() / gyroScale;
-    imu1.cal[6] = imu_mgr.get_hx_cal() / magScale;
-    imu1.cal[7] = imu_mgr.get_hy_cal() / magScale;
-    imu1.cal[8] = imu_mgr.get_hz_cal() / magScale;
-    imu1.cal[9] = imu_mgr.get_tempC() / tempScale;
+    imu1.millis = imu_node.getUInt("millis");
+    imu1.raw[0] = intround(imu_node.getFloat("ax_raw") / accelScale);
+    imu1.raw[1] = intround(imu_node.getFloat("ay_raw") / accelScale);
+    imu1.raw[2] = intround(imu_node.getFloat("az_raw") / accelScale);
+    imu1.raw[3] = intround(imu_node.getFloat("hx_raw") / magScale);
+    imu1.raw[4] = intround(imu_node.getFloat("hy_raw") / magScale);
+    imu1.raw[5] = intround(imu_node.getFloat("hz_raw") / magScale);
+    imu1.cal[0] = intround(imu_node.getFloat("ax_mps2") / accelScale);
+    imu1.cal[1] = intround(imu_node.getFloat("ay_mps2") / accelScale);
+    imu1.cal[2] = intround(imu_node.getFloat("az_mps2") / accelScale);
+    imu1.cal[3] = intround(imu_node.getFloat("p_rps") / gyroScale);
+    imu1.cal[4] = intround(imu_node.getFloat("q_rps") / gyroScale);
+    imu1.cal[5] = intround(imu_node.getFloat("r_rps") / gyroScale);
+    imu1.cal[6] = intround(imu_node.getFloat("hx") / magScale);
+    imu1.cal[7] = intround(imu_node.getFloat("hy") / magScale);
+    imu1.cal[8] = intround(imu_node.getFloat("hz") / magScale);
+    imu1.cal[9] = intround(imu_node.getFloat("tempC") / tempScale);
     imu1.pack();
     int result = serial.write_packet( imu1.id, imu1.payload, imu1.len );
     return result;
@@ -245,7 +249,7 @@ void comms_t::write_gps_ascii() {
 int comms_t::write_nav_bin()
 {
     static message::ekf_t nav_msg;
-    nav_msg.millis = imu_mgr.imu_millis;
+    nav_msg.millis = imu_node.getUInt("millis"); // fixme?
     nav_msg.lat_rad = nav_mgr.data.lat;
     nav_msg.lon_rad = nav_mgr.data.lon;
     nav_msg.altitude_m = nav_mgr.data.alt;

@@ -120,6 +120,7 @@ void imu_mgr_t::update() {
     }
 
     // publish
+    imu_node.setUInt("millis", imu_millis);
     imu_node.setFloat("timestamp", imu_millis / 1000.0);
     imu_node.setFloat("ax_raw", accels_raw(0));
     imu_node.setFloat("ay_raw", accels_raw(1));
