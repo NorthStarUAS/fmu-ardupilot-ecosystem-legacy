@@ -2,7 +2,6 @@
 
 #include "props2.h"
 
-#include "config.h"
 #include "imu_mgr.h"
 #include "pilot.h"
 
@@ -12,19 +11,17 @@
 
 // reset sas parameters to startup defaults
 void mixer_t::sas_defaults() {
-    config.stab_cfg.sas_rollaxis = true;
-    config.stab_cfg.sas_pitchaxis = true;
-    config.stab_cfg.sas_yawaxis = true;
-    config.stab_cfg.sas_tune = false;
-
-    config.stab_cfg.sas_rollgain = 0.2;
-    config.stab_cfg.sas_pitchgain = 0.2;
-    config.stab_cfg.sas_yawgain = 0.2;
-    config.stab_cfg.sas_max_gain = 2.0;
+    stab_roll_node.setBool("enable", true);
+    stab_pitch_node.setBool("enable", true);
+    stab_yaw_node.setBool("enable", true);
+    stab_tune_node.setBool("false", true);
+    stab_roll_node.setFloat("gain", 0.2);
+    stab_pitch_node.setFloat("gain", 0.2);
+    stab_yaw_node.setFloat("gain", 0.2);
 };
 
 
-void mixer_t::update_matrix(message::config_mixer_t *mix_config ) {
+void mixer_t::update_matrix() {
     M.setIdentity();            // straight pass through default
 
     // note: M(output_channel, input_channel)
@@ -101,8 +98,7 @@ void mixer_t::setup() {
     outputs.setZero();
     M = Eigen::Matrix<float, MAX_RCOUT_CHANNELS, MAX_RCOUT_CHANNELS, Eigen::RowMajor>();
     M.setIdentity();
-    message::config_mixer_t config_mixer;
-    update_matrix(&config_mixer);
+    update_matrix();
     print_mixer_matrix();
     hal.scheduler->delay(100);
 }

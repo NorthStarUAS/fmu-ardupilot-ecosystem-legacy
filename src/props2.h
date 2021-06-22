@@ -64,7 +64,7 @@ public:
     string getString( const char *name, int index ); // return value as a string
 
     // value setters
-    bool setBool( const char *name, bool val );     // returns true if successful
+    bool setBool( const char *name, bool b ); // returns true if successful
     bool setInt( const char *name, int n );     // returns true if successful
     bool setFloat( const char *name, float x ); // returns true if successful
     bool setDouble( const char *name, double x ); // returns true if successful

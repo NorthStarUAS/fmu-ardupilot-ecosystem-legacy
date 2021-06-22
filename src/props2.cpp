@@ -376,6 +376,22 @@ float PropertyNode::getFloat( const char *name, int index ) {
     return 0.0;
 }
 
+bool PropertyNode::setBool( const char *name, bool b ) {
+    if ( !val->IsObject() ) {
+        val->SetObject();
+    }
+    Value newval(b);
+    if ( !val->HasMember(name) ) {
+        printf("creating %s\n", name);
+        Value key(name, doc.GetAllocator());
+        val->AddMember(key, newval, doc.GetAllocator());
+    } else {
+        // printf("%s already exists\n", name);
+    }
+    (*val)[name] = b;
+    return true;
+}
+
 bool PropertyNode::setInt( const char *name, int n ) {
     if ( !val->IsObject() ) {
         val->SetObject();

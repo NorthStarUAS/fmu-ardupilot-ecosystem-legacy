@@ -87,7 +87,8 @@ bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size 
         config_mixer.unpack(buf, message_size);
         if ( message_size == config_mixer.len ) {
             console->printf("received new logic level mixer config\n");
-            pilot.mixer.update_matrix(&config_mixer);
+            //pilot.mixer.update_matrix(&config_mixer);
+            pilot.mixer.update_matrix();
             config.write_storage();
             write_ack_bin( id, 0 );
             result = true;

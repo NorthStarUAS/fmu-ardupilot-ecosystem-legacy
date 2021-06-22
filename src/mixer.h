@@ -26,6 +26,6 @@ public:
     void setup();
     void sas_defaults();
     //void mixing_defaults();
-    void update_matrix(message::config_mixer_t *mix_config );
+    void update_matrix();
     void update();
 };
