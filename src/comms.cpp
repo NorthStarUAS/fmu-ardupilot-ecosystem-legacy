@@ -9,7 +9,6 @@
 #include "setup_board.h"
 
 #include "airdata.h"
-#include "config.h"
 #include "gps_mgr.h"
 #include "imu_mgr.h"
 #include "led.h"
@@ -27,6 +26,7 @@
 
 void comms_t::setup() {
     config_node = PropertyNode("/config");
+    imu_node = PropertyNode("/sensors/imu");
     power_node = PropertyNode("/sensors/power");
     // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
     serial.open(DEFAULT_BAUD, hal.serial(1)); // telemetry 1
@@ -46,85 +46,18 @@ bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size 
             pilot.update_ap(&inceptors);
             result = true;
         }
-    } else if ( id == message::config_airdata_id ) {
-        config.airdata_cfg.unpack(buf, message_size);
-        if ( message_size == config.airdata_cfg.len ) {
-            console->printf("received new airdata config\n");
-            console->printf("Swift barometer on I2C: 0x%X\n",
-                            config.airdata_cfg.swift_baro_addr);
-            config.write_storage();
-            write_ack_bin( id, 0 );
-            result = true;
-        }
-    } else if ( id == message::config_board_id ) {
-        config.board_cfg.unpack(buf, message_size);
-        if ( message_size == config.board_cfg.len ) {
-            console->printf("received board config\n");
-            config.write_storage();
-            write_ack_bin( id, 0 );
-            result = true;
-        }
-    } else if ( id == message::config_ekf_id ) {
-        config.ekf_cfg.unpack(buf, message_size);
-        if ( message_size == config.ekf_cfg.len ) {
-            console->printf("received ekf config\n");
-            config.write_storage();
-            write_ack_bin( id, 0 );
-            result = true;
-        }
-    } else if ( id == message::config_imu_id ) {
-        config.imu_cfg.unpack(buf, message_size);
-        if ( message_size == config.imu_cfg.len ) {
-            console->printf("received imu config\n");
-            imu_mgr.set_strapdown_calibration(); // update accel_affine matrix
-            imu_mgr.set_mag_calibration(); // update mag_affine matrix
-            config.write_storage();
-            write_ack_bin( id, 0 );
-            result = true;
-        }
-    } else if ( id == message::config_mixer_id ) {
-        message::config_mixer_t config_mixer;
-        config_mixer.unpack(buf, message_size);
-        if ( message_size == config_mixer.len ) {
-            console->printf("received new logic level mixer config\n");
-            //pilot.mixer.update_matrix(&config_mixer);
-            pilot.mixer.update_matrix();
-            config.write_storage();
-            write_ack_bin( id, 0 );
-            result = true;
-        }
-    } else if ( id == message::config_mixer_matrix_id ) {
-        config.mixer_matrix_cfg.unpack(buf, message_size);
-        if ( message_size == config.mixer_matrix_cfg.len ) {
-            console->printf("received new mixer matrix config\n");
-            config.write_storage();
-            write_ack_bin( id, 0 );
-            result = true;
-        }
-    } else if ( id == message::config_power_id ) {
-        config.power_cfg.unpack(buf, message_size);
-        if ( message_size == config.power_cfg.len ) {
-            console->printf("received new power config\n");
-            config.write_storage();
-            write_ack_bin( id, 0 );
-            result = true;
-        }
-    } else if ( id == message::config_pwm_id ) {
-        config.pwm_cfg.unpack(buf, message_size);
-        if ( message_size == config.pwm_cfg.len ) {
-            console->printf("received new pwm config\n");
-            config.write_storage();
-            write_ack_bin( id, 0 );
-            result = true;
-        }
-    } else if ( id == message::config_stability_damping_id ) {
-        config.stab_cfg.unpack(buf, message_size);
-        if ( message_size == config.stab_cfg.len ) {
-            console->printf("received new stability damping config\n");
-            config.write_storage();
-            write_ack_bin( id, 0 );
-            result = true;
-        }
+    // example of receiving a config message, doing something, and
+    // replying with an ack
+    // } else if ( id == message::config_airdata_id ) {
+    //     config.airdata_cfg.unpack(buf, message_size);
+    //     if ( message_size == config.airdata_cfg.len ) {
+    //         console->printf("received new airdata config\n");
+    //         console->printf("Swift barometer on I2C: 0x%X\n",
+    //                         config.airdata_cfg.swift_baro_addr);
+    //         config.write_storage();
+    //         write_ack_bin( id, 0 );
+    //         result = true;
+    //     }
     } else if ( id == message::command_zero_gyros_id && message_size == 1 ) {
         console->printf("received zero gyros command\n");
         imu_mgr.gyros_calibrated = 0;   // start state
@@ -249,14 +182,14 @@ void comms_t::write_imu_ascii()
 {
     // output imu data
     console->printf("IMU: ");
-    console->printf("%ld ", imu_mgr.imu_millis);
-    console->printf("%.2f ", imu_mgr.get_p_cal());
-    console->printf("%.2f ", imu_mgr.get_q_cal());
-    console->printf("%.2f ", imu_mgr.get_r_cal());
-    console->printf("%.2f ", imu_mgr.get_ax_cal());
-    console->printf("%.2f ", imu_mgr.get_ay_cal());
-    console->printf("%.2f ", imu_mgr.get_az_cal());
-    console->printf("%.2f ", imu_mgr.get_tempC());
+    console->printf("%.3f ", imu_node.getFloat("timestamp"));
+    console->printf("%.2f ", imu_node.getFloat("p_rps"));
+    console->printf("%.2f ", imu_node.getFloat("q_rps"));
+    console->printf("%.2f ", imu_node.getFloat("r_rps"));
+    console->printf("%.2f ", imu_node.getFloat("ax_mps2"));
+    console->printf("%.2f ", imu_node.getFloat("ay_mps2"));
+    console->printf("%.2f ", imu_node.getFloat("az_mps2"));
+    console->printf("%.2f ", imu_node.getFloat("tempC"));
     console->printf("\n");
 }
 

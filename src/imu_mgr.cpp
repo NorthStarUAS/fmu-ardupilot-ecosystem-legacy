@@ -142,7 +142,6 @@ void imu_mgr_t::update() {
     imu_node.setFloat("tempC", tempC);
 }
 
-
 // stay alive for up to 15 seconds looking for agreement between a 1
 // second low pass filter and a 0.1 second low pass filter.  If these
 // agree (close enough) for 4 consecutive seconds, then we calibrate
