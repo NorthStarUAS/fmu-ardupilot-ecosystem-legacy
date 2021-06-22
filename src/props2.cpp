@@ -213,7 +213,31 @@ static int getValueAsInt( Value &v ) {
         string s = v.GetString();
         return std::stoi(s);
     } else {
-        printf("Unknown type in getValueAsBool()\n");
+        printf("Unknown type in getValueAsInt()\n");
+    }
+    return 0;
+}
+
+static unsigned int getValueAsUInt( Value &v ) {
+    if ( v.IsBool() ) {
+        return v.GetBool();
+    } else if ( v.IsInt() ) {
+        return v.GetInt();
+    } else if ( v.IsUint() ) {
+        return v.GetUint();
+    } else if ( v.IsInt64() ) {
+        return v.GetInt64();
+    } else if ( v.IsUint64() ) {
+        return v.GetUint64();
+    } else if ( v.IsFloat() ) {
+        return v.GetFloat();
+    } else if ( v.IsDouble() ) {
+        return v.GetDouble();
+    } else if ( v.IsString() ) {
+        string s = v.GetString();
+        return std::stoi(s);
+    } else {
+        printf("Unknown type in getValueAsUInt()\n");
     }
     return 0;
 }
@@ -237,7 +261,7 @@ static float getValueAsFloat( Value &v ) {
         string s = v.GetString();
         return std::stof(s);
     } else {
-        printf("Unknown type in getValueAsBool()\n");
+        printf("Unknown type in getValueAsFloat()\n");
     }
     return 0.0;
 }
@@ -261,7 +285,7 @@ static double getValueAsDouble( Value &v ) {
         string s = v.GetString();
         return std::stod(s);
     } else {
-        printf("Unknown type in getValueAsBool()\n");
+        printf("Unknown type in getValueAsDouble()\n");
     }
     return 0.0;
 }
@@ -300,6 +324,7 @@ static string getValueAsString( Value &v ) {
     } else if ( v.IsString() ) {
         return v.GetString();
     }
+    printf("Unknown type in getValueAsString()\n");
     return "unhandled value type";
 }
 
@@ -316,6 +341,15 @@ int PropertyNode::getInt( const char *name ) {
     if ( val->IsObject() ) {
         if ( val->HasMember(name) ) {
             return getValueAsInt((*val)[name]);
+        }
+    }
+    return 0;
+}
+
+unsigned int PropertyNode::getUInt( const char *name ) {
+    if ( val->IsObject() ) {
+        if ( val->HasMember(name) ) {
+            return getValueAsUInt((*val)[name]);
         }
     }
     return 0;
@@ -388,7 +422,6 @@ bool PropertyNode::setBool( const char *name, bool b ) {
     } else {
         // printf("%s already exists\n", name);
     }
-    (*val)[name] = b;
     return true;
 }
 
@@ -404,7 +437,21 @@ bool PropertyNode::setInt( const char *name, int n ) {
     } else {
         // printf("%s already exists\n", name);
     }
-    (*val)[name] = n;
+    return true;
+}
+
+bool PropertyNode::setUInt( const char *name, unsigned int u ) {
+    if ( !val->IsObject() ) {
+        val->SetObject();
+    }
+    Value newval(u);
+    if ( !val->HasMember(name) ) {
+        printf("creating %s\n", name);
+        Value key(name, doc.GetAllocator());
+        val->AddMember(key, newval, doc.GetAllocator());
+    } else {
+        // printf("%s already exists\n", name);
+    }
     return true;
 }
 
@@ -427,7 +474,6 @@ bool PropertyNode::setFloat( const char *name, float x ) {
         // printf("%s already exists\n", name);
     }
     // hal.scheduler->delay(100);
-    (*val)[name] = x;
     return true;
 }
 
@@ -443,7 +489,6 @@ bool PropertyNode::setDouble( const char *name, double x ) {
     } else {
         // printf("%s already exists\n", name);
     }
-    (*val)[name] = x;
     return true;
 }
 

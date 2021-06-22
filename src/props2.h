@@ -52,20 +52,23 @@ public:
     // value getters
     bool getBool( const char *name );	  // return value as a bool
     int getInt( const char *name );	  // return value as an int
-    float getFloat( const char *name ); // return value as a float
+    unsigned int getUInt( const char *name ); // return value as an unsigned int
+    float getFloat( const char *name );   // return value as a float
     double getDouble( const char *name ); // return value as a double
     string getString( const char *name ); // return value as a string
 
     // indexed value getters
     bool getBool( const char *name, int index ); // return value as a bool
-    int getInt( const char *name, int index ); // return value as a long
-    float getFloat( const char *name, int index ); // return value as a double
+    int getInt( const char *name, int index ); // return value as an int
+    unsigned int getUInt( const char *name, int index ); // return value as an unsigned int
+    float getFloat( const char *name, int index ); // return value as a float
     double getDouble( const char *name, int index ); // return value as a double
     string getString( const char *name, int index ); // return value as a string
 
     // value setters
     bool setBool( const char *name, bool b ); // returns true if successful
     bool setInt( const char *name, int n );     // returns true if successful
+    bool setUInt( const char *name, unsigned int u ); // returns true if successful
     bool setFloat( const char *name, float x ); // returns true if successful
     bool setDouble( const char *name, double x ); // returns true if successful
     bool setString( const char *name, string s ); // returns true if successful
