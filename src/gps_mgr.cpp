@@ -7,6 +7,8 @@
 
 #include "setup_board.h"
 
+#include "time.h"
+
 #include "nav/coremag.h"
 #include "nav/nav_constants.h"
 #include "gps_mgr.h"
@@ -35,7 +37,6 @@ void gps_mgr_t::update() {
         last_message_ms = gps.last_message_time_ms();
         gps_millis = gps.last_message_time_ms();
         unix_sec = gps.time_epoch_usec() / 1000000.0;
-        // update_unix_sec();
         if ( gps.status() >= AP_GPS::GPS_Status::GPS_OK_FIX_3D ) {
             if ( !gps_acquired ) {
                 // first 3d fix
@@ -52,6 +53,10 @@ void gps_mgr_t::update() {
                 }
             }
         }
+        // generate broken-down time (unix_sec in AP_HAL doesn't
+        // include leap seconds and may be up to a minute off truth.)
+        time_t time_sec = unix_sec;
+        struct tm* tm = gmtime(&time_sec);
         
         // publish
         gps_node.setUInt("millis", gps_millis);
@@ -78,6 +83,12 @@ void gps_mgr_t::update() {
         gps_node.setFloat("hdop", gps.get_hdop() / 100.0);
         gps_node.setFloat("vdop", gps.get_vdop() / 100.0);
         gps_node.setBool("settle", gps_settled);
+        gps_node.setInt("year", tm->tm_year + 1900);
+        gps_node.setInt("month", tm->tm_mon + 1);
+        gps_node.setInt("day", tm->tm_mday);
+        gps_node.setInt("hour", tm->tm_hour);
+        gps_node.setInt("min", tm->tm_min);
+        gps_node.setInt("sec", tm->tm_sec);
     }
 }
 

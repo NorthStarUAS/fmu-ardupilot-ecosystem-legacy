@@ -222,21 +222,16 @@ void comms_t::write_gps_ascii() {
                     gps_node.getFloat("vn_mps"),
                     gps_node.getFloat("ve_mps"),
                     gps_node.getFloat("vd_mps"));
-    console->printf(" SAT: %d", gps_node.getInt("satellites"));
-    console->printf(" FIX: %d", gps_node.getInt("status"));
-#if 0
-    // example of using gmtime() to get these values here:
-    // https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_NMEA_Output/AP_NMEA_Output.cpp#L86
-    
-    console->printf(" TIM:");
-    console->print(gps_mgr.gps_data.hour); console->print(':');
-    console->print(gps_mgr.gps_data.min); console->print(':');
-    console->print(gps_mgr.gps_data.sec);
-    console->print(" DATE:");
-    console->print(gps_mgr.gps_data.month); console->print('/');
-    console->print(gps_mgr.gps_data.day); console->print('/');
-    console->print(gps_mgr.gps_data.year);
-#endif
+    console->printf(" Sat: %d", gps_node.getInt("satellites"));
+    console->printf(" Fix: %d", gps_node.getInt("status"));
+    console->printf(" Time: %02d:%02d:%02d ",
+                    gps_node.getInt("hour"),
+                    gps_node.getInt("min"),
+                    gps_node.getInt("sec"));
+    console->printf(" Date: %02d/%02d/%04d",
+                    gps_node.getInt("mon"),
+                    gps_node.getInt("day"),
+                    gps_node.getInt("year"));
     console->printf("\n");
 }
 
