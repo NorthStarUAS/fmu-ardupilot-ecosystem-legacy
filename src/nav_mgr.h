@@ -21,8 +21,9 @@ private:
     EKF15_mag ekf_mag;
 #endif
     PropertyNode config_ekf_node;
-    PropertyNode imu_node;
     PropertyNode gps_node;
+    PropertyNode imu_node;
+    PropertyNode nav_node;
     
 public:
     NAVdata data;

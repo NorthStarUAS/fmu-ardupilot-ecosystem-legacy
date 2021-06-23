@@ -24,6 +24,7 @@
 
 void comms_t::setup() {
     config_node = PropertyNode("/config");
+    nav_node = PropertyNode("/filters/nav");
     gps_node = PropertyNode("/sensors/gps");
     imu_node = PropertyNode("/sensors/imu");
     power_node = PropertyNode("/sensors/power");
@@ -229,7 +230,7 @@ void comms_t::write_gps_ascii() {
                     gps_node.getInt("min"),
                     gps_node.getInt("sec"));
     console->printf(" Date: %02d/%02d/%04d",
-                    gps_node.getInt("mon"),
+                    gps_node.getInt("month"),
                     gps_node.getInt("day"),
                     gps_node.getInt("year"));
     console->printf("\n");
@@ -240,37 +241,37 @@ int comms_t::write_nav_bin()
 {
     static message::ekf_t nav_msg;
     nav_msg.millis = imu_node.getUInt("millis"); // fixme?
-    nav_msg.lat_rad = nav_mgr.data.lat;
-    nav_msg.lon_rad = nav_mgr.data.lon;
-    nav_msg.altitude_m = nav_mgr.data.alt;
-    nav_msg.vn_ms = nav_mgr.data.vn;
-    nav_msg.ve_ms = nav_mgr.data.ve;
-    nav_msg.vd_ms = nav_mgr.data.vd;
-    nav_msg.phi_rad = nav_mgr.data.phi;
-    nav_msg.the_rad = nav_mgr.data.the;
-    nav_msg.psi_rad = nav_mgr.data.psi;
-    nav_msg.p_bias = nav_mgr.data.gbx;
-    nav_msg.q_bias = nav_mgr.data.gby;
-    nav_msg.r_bias = nav_mgr.data.gbz;
-    nav_msg.ax_bias = nav_mgr.data.abx;
-    nav_msg.ay_bias = nav_mgr.data.aby;
-    nav_msg.az_bias = nav_mgr.data.abz;
-    float max_pos_cov = nav_mgr.data.Pp0;
-    if ( nav_mgr.data.Pp1 > max_pos_cov ) { max_pos_cov = nav_mgr.data.Pp1; }
-    if ( nav_mgr.data.Pp2 > max_pos_cov ) { max_pos_cov = nav_mgr.data.Pp2; }
+    nav_msg.lat_rad = nav_node.getDouble("latitude_rad");
+    nav_msg.lon_rad = nav_node.getDouble("longitude_rad");
+    nav_msg.altitude_m = nav_node.getFloat("altitude_m");
+    nav_msg.vn_ms = nav_node.getFloat("vn_mps");
+    nav_msg.ve_ms = nav_node.getFloat("ve_mps");
+    nav_msg.vd_ms = nav_node.getFloat("vd_mps");
+    nav_msg.phi_rad = nav_node.getFloat("phi_rad");
+    nav_msg.the_rad = nav_node.getFloat("the_rad");
+    nav_msg.psi_rad = nav_node.getFloat("psi_rad");
+    nav_msg.p_bias = nav_node.getFloat("p_bias");
+    nav_msg.q_bias = nav_node.getFloat("q_bias");
+    nav_msg.r_bias = nav_node.getFloat("r_bias");
+    nav_msg.ax_bias = nav_node.getFloat("ax_bias");
+    nav_msg.ay_bias = nav_node.getFloat("ay_bias");
+    nav_msg.az_bias = nav_node.getFloat("az_bias");
+    float max_pos_cov = nav_node.getFloat("Pp0");
+    if ( nav_node.getFloat("Pp1") > max_pos_cov ) { max_pos_cov = nav_node.getFloat("Pp1"); }
+    if ( nav_node.getFloat("Pp2") > max_pos_cov ) { max_pos_cov = nav_node.getFloat("Pp2"); }
     if ( max_pos_cov > 655.0 ) { max_pos_cov = 655.0; }
     nav_msg.max_pos_cov = max_pos_cov;
-    float max_vel_cov = nav_mgr.data.Pv0;
-    if ( nav_mgr.data.Pv1 > max_vel_cov ) { max_vel_cov = nav_mgr.data.Pv1; }
-    if ( nav_mgr.data.Pv2 > max_vel_cov ) { max_vel_cov = nav_mgr.data.Pv2; }
+    float max_vel_cov = nav_node.getFloat("Pv0");
+    if ( nav_node.getFloat("Pv1") > max_vel_cov ) { max_vel_cov = nav_node.getFloat("Pv1"); }
+    if ( nav_node.getFloat("Pv2") > max_vel_cov ) { max_vel_cov = nav_node.getFloat("Pv2"); }
     if ( max_vel_cov > 65.5 ) { max_vel_cov = 65.5; }
     nav_msg.max_vel_cov = max_vel_cov;
-    float max_att_cov = nav_mgr.data.Pa0;
-    if ( nav_mgr.data.Pa1 > max_att_cov ) { max_att_cov = nav_mgr.data.Pa1; }
-    if ( nav_mgr.data.Pa2 > max_att_cov ) { max_att_cov = nav_mgr.data.Pa2; }
+    float max_att_cov = nav_node.getFloat("Pa0");
+    if ( nav_node.getFloat("Pa1") > max_att_cov ) { max_att_cov = nav_node.getFloat("Pa1"); }
+    if ( nav_node.getFloat("Pa2") > max_att_cov ) { max_att_cov = nav_node.getFloat("Pa2"); }
     if ( max_att_cov > 6.55 ) { max_vel_cov = 6.55; }
     nav_msg.max_att_cov = max_att_cov;
-    nav_msg.status = nav_mgr.status;
+    nav_msg.status = nav_node.getInt("status");
     nav_msg.pack();
     return serial.write_packet( nav_msg.id, nav_msg.payload, nav_msg.len );
 }
@@ -279,26 +280,36 @@ void comms_t::write_nav_ascii() {
     if ( true ) {
         // values
         console->printf("Pos: %.7f, %.7f, %.2f",
-                        nav_mgr.data.lat*R2D, nav_mgr.data.lon*R2D,nav_mgr.data.alt);
+                        nav_node.getDouble("latitude_rad")*R2D,
+                        nav_node.getDouble("longitude_rad")*R2D,
+                        nav_node.getFloat("altitude_m"));
         console->printf(" Vel: %.2f, %.2f, %.2f",
-                        nav_mgr.data.vn, nav_mgr.data.ve, nav_mgr.data.vd);
+                        nav_node.getFloat("vn_mps"),
+                        nav_node.getFloat("ve_mps"),
+                        nav_node.getFloat("vd_mps"));
         console->printf(" Att: %.2f, %.2f, %.2f\n",
-                        nav_mgr.data.phi*R2D, nav_mgr.data.the*R2D, nav_mgr.data.psi*R2D);
-    } else {
+                        nav_node.getFloat("phi_rad")*R2D,
+                        nav_node.getFloat("the_rad")*R2D,
+                        nav_node.getFloat("psi_rad")*R2D);
+    }
+    if (false) {
         // covariances
         float num = 3.0;        // how many standard deviations
         console->printf("cov pos: %.2f, %.2f, %.2f",
-                        num * nav_mgr.data.Pp0,
-                        num * nav_mgr.data.Pp1,
-                        num * nav_mgr.data.Pp2);
+                        num * nav_node.getFloat("Pp0"),
+                        num * nav_node.getFloat("Pp1"),
+                        num * nav_node.getFloat("Pp2"));
         console->printf(" vel: %.2f, %.2f, %.2f",
-                        num * nav_mgr.data.Pv0,
-                        num * nav_mgr.data.Pv1,
-                        num * nav_mgr.data.Pv2);
+                        num * nav_node.getFloat("Pv0"),
+                        num * nav_node.getFloat("Pv1"),
+                        num * nav_node.getFloat("Pv2"));
         console->printf(" att: %.2f, %.2f, %.2f\n",
-                        num * nav_mgr.data.Pa0*R2D,
-                        num * nav_mgr.data.Pa1*R2D,
-                        num * nav_mgr.data.Pa2*R2D);
+                        num * nav_node.getFloat("Pa0")*R2D,
+                        num * nav_node.getFloat("Pa1")*R2D,
+                        num * nav_node.getFloat("Pa2")*R2D);
+    }
+    if ( false ) {
+        nav_node.pretty_print();
     }
 }
 

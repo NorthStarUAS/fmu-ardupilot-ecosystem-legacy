@@ -359,8 +359,8 @@ float PropertyNode::getFloat( const char *name ) {
     if ( val->IsObject() ) {
         if ( val->HasMember(name) ) {
             return getValueAsFloat((*val)[name]);
-        } else {
-            printf("no member in getFloat(%s)\n", name);
+        // } else {
+        //     printf("no member in getFloat(%s)\n", name);
         }
     } else {
         printf("v is not an object\n");
@@ -422,6 +422,7 @@ bool PropertyNode::setBool( const char *name, bool b ) {
     } else {
         // printf("%s already exists\n", name);
     }
+    (*val)[name] = b;
     return true;
 }
 
@@ -437,6 +438,7 @@ bool PropertyNode::setInt( const char *name, int n ) {
     } else {
         // printf("%s already exists\n", name);
     }
+    (*val)[name] = n;
     return true;
 }
 
@@ -452,6 +454,7 @@ bool PropertyNode::setUInt( const char *name, unsigned int u ) {
     } else {
         // printf("%s already exists\n", name);
     }
+    (*val)[name] = u;
     return true;
 }
 
@@ -473,6 +476,7 @@ bool PropertyNode::setFloat( const char *name, float x ) {
     } else {
         // printf("%s already exists\n", name);
     }
+    (*val)[name] = x;
     // hal.scheduler->delay(100);
     return true;
 }
@@ -489,6 +493,7 @@ bool PropertyNode::setDouble( const char *name, double x ) {
     } else {
         // printf("%s already exists\n", name);
     }
+    (*val)[name] = x;
     return true;
 }
 

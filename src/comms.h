@@ -33,6 +33,7 @@ public:
     
 private:
     PropertyNode config_node;
+    PropertyNode nav_node;
     PropertyNode gps_node;
     PropertyNode imu_node;
     PropertyNode power_node;

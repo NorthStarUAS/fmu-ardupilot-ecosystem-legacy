@@ -175,10 +175,10 @@ void loop() {
             if ( imu_mgr.gyros_calibrated == 2 ) {
                 // comms.write_pilot_in_ascii();
                 // comms.write_actuator_out_ascii();
-                // comms.write_gps_ascii();
-                // if ( config.ekf_cfg.select != message::enum_nav::none ) {
-                //     comms.write_nav_ascii();
-                // }
+                comms.write_gps_ascii();
+                //if ( config_ekf_node.getString("selected") != "none" ) {
+                //    comms.write_nav_ascii();
+                //}
                 // comms.write_airdata_ascii();
                 // comms.write_status_info_ascii();
                 // comms.write_imu_ascii();
