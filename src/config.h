@@ -11,7 +11,7 @@ class config_t {
     
 private:
     
-    AP_HAL::Storage *storage = NULL;
+    // AP_HAL::Storage *storage = NULL;
     
     // int config_size = 0;
     // struct packed_config_t {
@@ -29,7 +29,7 @@ private:
     
  public:
     
-    config_t();
+    // config_t();
     
     // message::config_airdata_t airdata_cfg;
     // message::config_board_t board_cfg;
@@ -40,16 +40,20 @@ private:
     // message::config_pwm_t pwm_cfg;
     // message::config_stability_damping_t stab_cfg;
 
+    void setup();               // load config.json from sd card
+    
     uint16_t serial_number = 0;
     uint16_t read_serial_number();
     uint16_t set_serial_number(uint16_t value);
-    int read_storage();
-    int write_storage();
+
+    bool load_json_config();
+    
+    // int read_storage();
+    // int write_storage();
 
     void actuator_gain_defaults();
     //void force_config_aura3();
     //void force_config_goldy3();
     void reset_defaults();
 
-    void setup();               // load config.json from sd card
 };

@@ -43,6 +43,12 @@ void setup() {
     console->printf("\nRice Creek UAS FMU: Rev %d\n", FIRMWARE_REV);
     console->printf("You are seeing this message on the console interface.\n");
     console->printf("Sensor/config communication is on Serial1 @ %d baud (N81) no flow control.\n", DEFAULT_BAUD);
+
+    // load config from sd card
+    config.setup();
+    if ( !config.load_json_config() ) {
+        config.reset_defaults();
+    }
     
     // The following code (when enabled) will force setting a specific
     // device serial number when the device boots:
@@ -53,17 +59,16 @@ void setup() {
     console->printf("Serial Number: %d\n", config.read_serial_number());
     hal.scheduler->delay(100);
 
-    config.setup();             // load config from sd card
     config_ekf_node = PropertyNode("/config/ekf");
     pilot_node = PropertyNode("/pilot");
     
-    if ( !config.read_storage() ) {
-        console->printf("Resetting eeprom to default values.");
-        config.reset_defaults();
-        config.write_storage();
-    } else {
-        console->printf("Successfully loaded config from eeprom storage.\n");
-    }
+    // if ( !config.read_storage() ) {
+    //     console->printf("Resetting eeprom to default values.");
+    //     config.reset_defaults();
+    //     config.write_storage();
+    // } else {
+    //     console->printf("Successfully loaded config from eeprom storage.\n");
+    // }
     
     // initialize the IMU and calibration matrices
     imu_mgr.setup();
