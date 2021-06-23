@@ -25,6 +25,7 @@ AP_HAL::UARTDriver *console = hal.console;
 static PropertyNode config_ekf_node;
 static PropertyNode pilot_node;
 
+static config_t config;
 static gps_mgr_t gps_mgr;
 static led_t led;
 static power_t power;

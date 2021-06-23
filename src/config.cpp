@@ -142,19 +142,19 @@ int config_t::write_storage() {
 
 void config_t::actuator_gain_defaults() {
     for ( int i = 0; i < message::pwm_channels; i++ ) {
-        config.pwm_cfg.act_gain[i] = 1.0;
+        pwm_cfg.act_gain[i] = 1.0;
     }
 }
 
 void config_t::reset_defaults() {
     console->printf("Setting default config ...\n");
-    config.board_cfg.board = 0;
+    board_cfg.board = 0;
     imu_mgr.defaults();
     actuator_gain_defaults();
     pilot.mixer.setup();
     pilot.mixer.sas_defaults();
-    config.power_cfg.have_attopilot = false;
-    config.ekf_cfg.select = message::enum_nav::nav15;
+    power_cfg.have_attopilot = false;
+    ekf_cfg.select = message::enum_nav::nav15;
 }
 
 void config_t::setup() {
@@ -166,6 +166,3 @@ void config_t::setup() {
         console->printf("Config file loading failed: %s\n", file_path);
     }
 }
-
-// global shared instance
-config_t config;

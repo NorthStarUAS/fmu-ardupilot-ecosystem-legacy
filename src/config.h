@@ -53,5 +53,3 @@ private:
 
     void setup();               // load config.json from sd card
 };
-
-extern config_t config;
