@@ -19,5 +19,3 @@ public:
     void setup();
     void update();
 };
-
-extern power_t power;

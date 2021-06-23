@@ -4,8 +4,7 @@
 #include "comms.h"
 #include "config.h"
 #include "imu_mgr.h"
-#include "pilot.h"
-#include "power.h"
+#include "pilot.h"              // reset defaults
 
 // starting point for writing big eeprom struct
 static const int CONFIG_OFFSET = 2;

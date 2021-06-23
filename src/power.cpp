@@ -32,6 +32,3 @@ void power_t::update() {
     power_node.setFloat("battery_volts", battery_volts);
     power_node.setFloat("battery_amps", battery_amps);
 }
-
-// shared global instance
-power_t power;
