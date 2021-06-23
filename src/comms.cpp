@@ -9,11 +9,9 @@
 #include "setup_board.h"
 
 #include "airdata.h"
-#include "imu_mgr.h"
-#include "mixer.h"
-#include "nav_mgr.h"
-#include "pilot.h"
-#include "power.h"
+#include "imu_mgr.h"            // reset gyros
+#include "nav_mgr.h"            // reset ekf
+#include "pilot.h"              // update_ap()
 #include "nav/nav_constants.h"
 #include "serial_link.h"
 #include "aura4_messages.h"
@@ -24,10 +22,13 @@
 
 void comms_t::setup() {
     config_node = PropertyNode("/config");
+    effector_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");
     gps_node = PropertyNode("/sensors/gps");
     imu_node = PropertyNode("/sensors/imu");
     power_node = PropertyNode("/sensors/power");
+    pilot_node = PropertyNode("/pilot");
+    
     // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
     serial.open(DEFAULT_BAUD, hal.serial(1)); // telemetry 1
     // serial.open(DEFAULT_BAUD, hal.serial(2)); // telemetry 2
@@ -97,11 +98,11 @@ int comms_t::write_pilot_in_bin()
     
     // receiver data
     for ( int i = 0; i < message::sbus_channels; i++ ) {
-        pilot1.channel[i] = pilot.manual_inputs[i];
+        pilot1.channel[i] = pilot_node.getFloat("manual", i);
     }
 
     // flags
-    pilot1.flags = pilot.failsafe;
+    pilot1.flags = pilot_node.getBool("failsafe");
     
     pilot1.pack();
     return serial.write_packet( pilot1.id, pilot1.payload, pilot1.len);
@@ -110,21 +111,21 @@ int comms_t::write_pilot_in_bin()
 void comms_t::write_pilot_in_ascii()
 {
     // pilot (receiver) input data
-    if ( pilot.failsafe ) {
+    if ( pilot_node.getBool("failsafe") ) {
         console->printf("FAILSAFE! ");
     }
-    if ( pilot.ap_enabled() ) {
+    if ( pilot_node.getBool("ap_enabled") ) {
         console->printf("(Auto) ");
     } else {
         console->printf("(Manual) ");
     }
-    if ( pilot.throttle_safety() ) {
+    if ( pilot_node.getBool("throttle_safety") ) {
         console->printf("(Throttle safety) ");
     } else {
         console->printf("(Throttle enable) ");
     }
     for ( int i = 0; i < 8; i++ ) {
-        console->printf("%.3f ", pilot.manual_inputs[i]);
+        console->printf("%.3f ", pilot_node.getFloat("manual", i));
     }
     console->printf("\n");
 }
@@ -134,7 +135,7 @@ void comms_t::write_actuator_out_ascii()
     // actuator output
     console->printf("RCOUT:");
     for ( int i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
-        console->printf("%.2f ", pilot.mixer.outputs[i]);
+        console->printf("%.2f ", effector_node.getFloat("channel", i));
     }
     console->printf("\n");
 }

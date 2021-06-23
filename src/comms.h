@@ -33,9 +33,11 @@ public:
     
 private:
     PropertyNode config_node;
+    PropertyNode effector_node;
     PropertyNode nav_node;
     PropertyNode gps_node;
     PropertyNode imu_node;
+    PropertyNode pilot_node;
     PropertyNode power_node;
     unsigned long int gps_last_millis = 0;
 };

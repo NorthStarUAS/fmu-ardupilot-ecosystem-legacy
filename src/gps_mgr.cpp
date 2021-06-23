@@ -69,8 +69,7 @@ void gps_mgr_t::update() {
             console->printf("RTC clock not yet set!\n");
             time_usec = gps.time_epoch_usec();
         }
-        // generate broken-down time (unix_sec/rtc in AP_HAL doesn't
-        // include leap seconds and may be up to a minute off truth.)
+        // generate broken-down time
         time_t time_sec = time_usec / 1000000U;
         tm = gmtime(&time_sec);
         
@@ -107,23 +106,6 @@ void gps_mgr_t::update() {
         // gps_node.pretty_print();
     }
 }
-
-// void gps_mgr_t::update_unix_sec() {
-//     tmElements_t tm;
-//     int yr = gps_data.year;
-//     if (yr > 99) {
-//         yr = yr - 1970;
-//     } else {
-//         yr += 30;
-//     }
-//     tm.Year = yr;
-//     tm.Month = gps_data.month;
-//     tm.Day = gps_data.day;
-//     tm.Hour = gps_data.hour;
-//     tm.Minute = gps_data.min;
-//     tm.Second = gps_data.sec;
-//     unix_sec = makeTime(tm);
-// }
 
 void gps_mgr_t::update_magvar( time_t unix_sec ) {
     long int jd = unixdate_to_julian_days( unix_sec );

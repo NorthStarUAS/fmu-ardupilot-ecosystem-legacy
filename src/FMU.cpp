@@ -23,6 +23,7 @@ AP_HAL::UARTDriver *console = hal.console;
 // AP_HAL::UARTDriver *console = hal.serial(1); // telemetry 1
 
 static PropertyNode config_ekf_node;
+static PropertyNode pilot_node;
 
 static gps_mgr_t gps_mgr;
 static led_t led;
@@ -52,6 +53,7 @@ void setup() {
 
     config.setup();             // load config from sd card
     config_ekf_node = PropertyNode("/config/ekf");
+    pilot_node = PropertyNode("/pilot");
     
     if ( !config.read_storage() ) {
         console->printf("Resetting eeprom to default values.");
@@ -195,14 +197,14 @@ void loop() {
         gps_mgr.update();
 
         if ( pilot.read() ) {
-            static bool last_ap_state = pilot.ap_enabled();
-            if ( pilot.ap_enabled() and !last_ap_state ) {
+            bool ap_state = pilot_node.getBool("ap_enabled");
+            static bool last_ap_state = ap_state;
+            if ( ap_state and !last_ap_state ) {
                 console->printf("ap enabled\n");
-            } else if ( !pilot.ap_enabled() and last_ap_state ) {
+            } else if ( !ap_state and last_ap_state ) {
                 console->printf("ap disabled (manaul flight)\n");
             }
-            // pwm.update();
-            last_ap_state = pilot.ap_enabled();
+            last_ap_state = ap_state;
         }
 
         // read in any host commmands (config, inceptors, etc.)

@@ -40,7 +40,9 @@ uint16_t pilot_t::norm2pwm(float norm_val, uint8_t i) {
 }
 
 void pilot_t::setup() {
-    eff_gains = PropertyNode("/config/pwm");
+    config_eff_gains = PropertyNode("/config/pwm");
+    effector_node = PropertyNode("/effectors");
+    pilot_node = PropertyNode("/pilot");
     
     manual_inputs[0] = ap_inputs[0] = -1.0; // autopilot disabled (manual)
     manual_inputs[1] = ap_inputs[1] = -1.0; // throttle safety enabled
@@ -48,6 +50,13 @@ void pilot_t::setup() {
         manual_inputs[i] = ap_inputs[i] = 0.0;
     }
 
+    // extend gain array with default value (1.0) if not provided in
+    // config file
+    uint8_t size = config_eff_gains.getLen("gains");
+    for ( uint8_t i = size; i < MAX_RCOUT_CHANNELS; i++ ) {
+        config_eff_gains.setFloat("gains", i, 1.0);
+    }
+    
     mixer.setup();
 }
 
@@ -58,18 +67,34 @@ bool pilot_t::read() {
         new_input = true;
         changed = true;
         last_input = AP_HAL::millis();
-        failsafe = false;
         nchannels = hal.rcin->read(pwm_inputs, MAX_RCIN_CHANNELS);
         for ( uint8_t i = 0; i < nchannels; i++ ) {
             manual_inputs[i] = pwm2norm(pwm_inputs[i], i);
         }
+        
+        // publish
+        for ( uint8_t i = 0; i < nchannels; i++ ) {
+            pilot_node.setFloat("manual", i, manual_inputs[i]);
+        }
+        // logical values
+        pilot_node.setBool("failsafe", false); // good
+        pilot_node.setBool("ap_enabled", ap_enabled());
+        pilot_node.setBool("throttle_safety", throttle_safety());
+        pilot_node.setFloat("aileron", get_aileron());
+        pilot_node.setFloat("elevator", get_elevator());
+        pilot_node.setFloat("throttle", get_throttle());
+        pilot_node.setFloat("rudder", get_rudder());
+        pilot_node.setFloat("flaps", get_flap());
+        pilot_node.setFloat("gear", get_gear());
+        pilot_node.setFloat("aux1", get_aux1());
+        pilot_node.setFloat("aux2", get_aux2());
         // console->printf("%d ", nchannels);
         // for ( uint8_t i = 0; i < 8; i++ ) {
         //     console->printf("%.2f ", manual_inputs[i]);
         // }
         // console->printf("\n");
-    } else if ( !failsafe and AP_HAL::millis() - last_input > 500 ) {
-        failsafe = true;
+    } else if ( AP_HAL::millis() - last_input > 500 and !pilot_node.getBool("failsafe") ) {
+        pilot_node.setBool("failsafe", true); // bad
         // console->printf("failsafe!\n");
     }
     return new_input;
@@ -81,7 +106,8 @@ void pilot_t::write() {
     mixer.update();
     for ( uint8_t i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
         // float norm_val = mixer.outputs[i] * config.pwm_cfg.act_gain[i];
-        float norm_val = mixer.outputs[i] * eff_gains.getFloat("gains", i);
+        float norm_val = effector_node.getFloat("channel", i)
+            * config_eff_gains.getFloat("gains", i);
         uint16_t pwm_val = norm2pwm(norm_val, i);
         hal.rcout->write(i, pwm_val);
     }
@@ -99,6 +125,9 @@ void pilot_t::update_ap( message::command_inceptors_t *inceptors ) {
     ap_inputs[5] = inceptors->channel[3]; // rudder
     ap_inputs[6] = inceptors->channel[4]; // flap
     ap_inputs[7] = inceptors->channel[5]; // gear
+    for ( int i = 0; i < MAX_RCIN_CHANNELS; i++ ) {
+        pilot_node.setFloat("auto", i, ap_inputs[i]);
+    }
     changed = true;
 }
 

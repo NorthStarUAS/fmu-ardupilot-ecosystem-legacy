@@ -3,7 +3,6 @@
 #include "setup_board.h"
 #include "props2.h"
 
-#include "pilot.h"
 #include "mixer.h"
 
 
@@ -88,7 +87,9 @@ void mixer_t::print_mixer_matrix() {
     }
 }
 void mixer_t::setup() {
+    effector_node = PropertyNode("/effectors");
     imu_node = PropertyNode("/sensors/imu");
+    pilot_node = PropertyNode("/pilot");
     stab_roll_node = PropertyNode("/config/stability_damper/roll");
     stab_pitch_node = PropertyNode("/config/stability_damper/pitch");
     stab_yaw_node = PropertyNode("/config/stability_damper/yaw");
@@ -108,7 +109,7 @@ void mixer_t::sas_update() {
     float tune = 1.0;
     float max_tune = 2.0;
     if ( stab_tune_node.getBool("enable") ) {
-        tune = max_tune * pilot.manual_inputs[7];
+        tune = max_tune * pilot_node.getFloat("manual", 7);
         if ( tune < 0.0 ) {
             tune = 0.0;
         } else if ( tune > max_tune ) {
@@ -135,17 +136,23 @@ void mixer_t::sas_update() {
 void mixer_t::mixing_update() {
     outputs = M * inputs;
     
-    if ( pilot.throttle_safety() ) {
+    if ( pilot_node.getBool("throttle_safety") ) {
         outputs[0] = 0.0;
+    }
+
+    // publish
+    for ( int i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
+        effector_node.setFloat("channel", i, outputs[i]);
     }
 }
 
 void mixer_t::update() {
     // the pilot.get_* interface is smart to return manual
     // vs. autopilot depending on switch state.
-    inputs << pilot.get_throttle(), pilot.get_aileron(), pilot.get_elevator(),
-        pilot.get_rudder(), pilot.get_flap(), pilot.get_gear(),
-        pilot.get_ch7(), pilot.get_ch8();
+    inputs << pilot_node.getFloat("throttle"), pilot_node.getFloat("aileron"),
+        pilot_node.getFloat("elevator"), pilot_node.getFloat("rudder"),
+        pilot_node.getFloat("flaps"), pilot_node.getFloat("gear"),
+        pilot_node.getFloat("aux1"), pilot_node.getFloat("aux2");
     
     sas_update();
     mixing_update();

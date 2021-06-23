@@ -18,27 +18,13 @@ private:
 
     uint32_t last_input = 0;
 
-    PropertyNode eff_gains;
+    PropertyNode config_eff_gains;
+    PropertyNode effector_node;
+    PropertyNode pilot_node;
 
-public:
-    uint16_t pwm_inputs[MAX_RCIN_CHANNELS];
-    float manual_inputs[MAX_RCIN_CHANNELS]; // normalized
-    float ap_inputs[MAX_RCIN_CHANNELS];     // normalized
-    uint16_t pwm_outputs[MAX_RCOUT_CHANNELS];
-    bool failsafe = true;
-    bool changed = false;
-
-    mixer_t mixer;
-    
-    void setup();
-    bool read();
-    void write();
-    
-    void update_ap( message::command_inceptors_t *inceptors );
-
-    // convenience (used by mixer)
+    // convenience
     inline bool ap_enabled() { return manual_inputs[0] >= 0.0; }
-    inline bool throttle_safety() { return manual_inputs[1] < 0.0; }
+    inline bool throttle_safety() { return manual_inputs[1] <= 0.0; }
     inline float get_aileron() {
         if ( ap_enabled() ) {
             return ap_inputs[3];
@@ -81,12 +67,28 @@ public:
             return manual_inputs[7];
         }
     }
-    inline float get_ch7() {
+    inline float get_aux1() {
         return manual_inputs[8];
     }
-    inline float get_ch8() {
+    inline float get_aux2() {
         return manual_inputs[9];
     }
+    
+public:
+    uint16_t pwm_inputs[MAX_RCIN_CHANNELS];
+    float manual_inputs[MAX_RCIN_CHANNELS]; // normalized
+    float ap_inputs[MAX_RCIN_CHANNELS];     // normalized
+    uint16_t pwm_outputs[MAX_RCOUT_CHANNELS];
+    bool changed = false;
+
+    mixer_t mixer;
+    
+    void setup();
+    bool read();
+    void write();
+    
+    void update_ap( message::command_inceptors_t *inceptors );
+
 };
 
 extern pilot_t pilot;

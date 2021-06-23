@@ -40,7 +40,7 @@ static bool extend_array(Value *node, int size) {
     if ( !node->IsArray() ) {
         node->SetArray();
     }
-    for ( int i = node->Size(); i < size; i++ ) {
+    for ( int i = node->Size(); i <= size; i++ ) {
         printf("    extending: %d\n", i);
         Value newobj(kObjectType);
         node->PushBack(newobj, doc.GetAllocator());
@@ -396,10 +396,10 @@ float PropertyNode::getFloat( const char *name, int index ) {
                 if ( index >= 0 and index < v.Size() ) {
                     return getValueAsFloat(v[index]);
                 } else {
-                    printf("index out of bounds\n");
+                    printf("index out of bounds: %s\n", name);
                 }
             } else {
-                printf("not an array\n");
+                printf("not an array: %s\n", name);
             }
         } else {
             printf("no member in getFloat(%s, %d)\n", name, index);
@@ -519,19 +519,20 @@ bool PropertyNode::setFloat( const char *name, int index, float x ) {
         // hal.scheduler->delay(100);
         val->SetObject();
     }
-    Value a(kArrayType);
     if ( !val->HasMember(name) ) {
         printf("creating %s\n", name);
         Value key(name, doc.GetAllocator());
+        Value a(kArrayType);
         val->AddMember(key, a, doc.GetAllocator());
     } else {
         // printf("%s already exists\n", name);
-        a = (*val)[name];
+        Value &a = (*val)[name];
         if ( ! a.IsArray() ) {
-            printf("converting member to array\n");
+            printf("converting member to array: %s\n", name);
             a.SetArray();
         }
     }
+    Value &a = (*val)[name];
     extend_array(&a, index);    // protect against out of range
     a[index] = x;
     return true;
