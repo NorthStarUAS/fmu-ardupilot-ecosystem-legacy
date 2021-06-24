@@ -61,7 +61,16 @@ void gps_mgr_t::update() {
                     gps_node.setBool("settle", gps_settled);
                 }
             }
+        } else {
+            // less than 3d fix
+            if ( gps_acquired and !gps_settled ) {
+                // unaquire if we lose fix before settling
+                gps_acquired = false;
+                console->printf("lost fix before settling, unaquire gps\n");
+            }
+            
         }
+
         // get time and date
         struct tm *tm;
         uint64_t time_usec;

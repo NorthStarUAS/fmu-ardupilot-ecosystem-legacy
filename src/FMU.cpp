@@ -38,7 +38,7 @@ void setup() {
     BoardConfig.init();         // setup any board specific drivers
 
     console->begin(57600);
-    hal.scheduler->delay(2000); // give the electrons a second to settle
+    hal.scheduler->delay(2000); // give the electrons a chance to settle
     
     console->printf("\nRice Creek UAS FMU: Rev %d\n", FIRMWARE_REV);
     console->printf("You are seeing this message on the console interface.\n");
@@ -59,7 +59,7 @@ void setup() {
     console->printf("Serial Number: %d\n", config.read_serial_number());
     hal.scheduler->delay(100);
 
-    config_ekf_node = PropertyNode("/config/ekf");
+    config_ekf_node = PropertyNode("/config/ekf"); // after config.setup()
     pilot_node = PropertyNode("/pilot");
     
     // if ( !config.read_storage() ) {
@@ -185,9 +185,9 @@ void loop() {
                 // comms.write_pilot_in_ascii();
                 // comms.write_actuator_out_ascii();
                 comms.write_gps_ascii();
-                //if ( config_ekf_node.getString("selected") != "none" ) {
-                //    comms.write_nav_ascii();
-                //}
+                if ( config_ekf_node.getString("selected") != "none" ) {
+                    comms.write_nav_ascii();
+                }
                 // comms.write_airdata_ascii();
                 // comms.write_status_info_ascii();
                 // comms.write_imu_ascii();

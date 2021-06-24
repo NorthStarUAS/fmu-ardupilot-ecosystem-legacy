@@ -46,7 +46,7 @@ void nav_mgr_t::update() {
     gps1.ve = gps_node.getFloat("ve_mps");
     gps1.vd = gps_node.getFloat("vd_mps");
 
-    string selected = config_ekf_node.getString("selected");
+    string selected = config_ekf_node.getString("select");
     if ( !ekf_inited and gps_node.getBool("settle") ) {
         if ( selected == "nav15" ) {
             ekf.init(imu1, gps1);
@@ -90,35 +90,35 @@ void nav_mgr_t::update() {
             // last gps message > 2 seconds ago
             status = 1;         // no gps
         }
+        
+        // publish
+        nav_node.setDouble("latitude_rad", data.lat);
+        nav_node.setDouble("longitude_rad", data.lon);
+        nav_node.setFloat("altitude_m", data.alt);
+        nav_node.setFloat("vn_mps", data.vn);
+        nav_node.setFloat("ve_mps", data.ve);
+        nav_node.setFloat("vd_mps", data.vd);
+        nav_node.setFloat("phi_rad", data.phi);
+        nav_node.setFloat("the_rad", data.the);
+        nav_node.setFloat("psi_rad", data.psi);
+        nav_node.setFloat("p_bias", data.gbx);
+        nav_node.setFloat("q_bias", data.gby);
+        nav_node.setFloat("r_bias", data.gbz);
+        nav_node.setFloat("ax_bias", data.abx);
+        nav_node.setFloat("ay_bias", data.aby);
+        nav_node.setFloat("az_bias", data.abz);
+        nav_node.setFloat("Pp0", data.Pp0);
+        nav_node.setFloat("Pp1", data.Pp1);
+        nav_node.setFloat("Pp2", data.Pp2);
+        nav_node.setFloat("Pv0", data.Pv0);
+        nav_node.setFloat("Pv1", data.Pv1);
+        nav_node.setFloat("Pv2", data.Pv2);
+        nav_node.setFloat("Pa0", data.Pa0);
+        nav_node.setFloat("Pa1", data.Pa1);
+        nav_node.setFloat("Pa2", data.Pa2);
     } else {
         status = 0;             // not initialized
     }
-
-    // publish
-    nav_node.setDouble("latitude_rad", data.lat);
-    nav_node.setDouble("longitude_rad", data.lon);
-    nav_node.setFloat("altitude_m", data.alt);
-    nav_node.setFloat("vn_mps", data.vn);
-    nav_node.setFloat("ve_mps", data.ve);
-    nav_node.setFloat("vd_mps", data.vd);
-    nav_node.setFloat("phi_rad", data.phi);
-    nav_node.setFloat("the_rad", data.the);
-    nav_node.setFloat("psi_rad", data.psi);
-    nav_node.setFloat("p_bias", data.gbx);
-    nav_node.setFloat("q_bias", data.gby);
-    nav_node.setFloat("r_bias", data.gbz);
-    nav_node.setFloat("ax_bias", data.abx);
-    nav_node.setFloat("ay_bias", data.aby);
-    nav_node.setFloat("az_bias", data.abz);
-    nav_node.setFloat("Pp0", data.Pp0);
-    nav_node.setFloat("Pp1", data.Pp1);
-    nav_node.setFloat("Pp2", data.Pp2);
-    nav_node.setFloat("Pv0", data.Pv0);
-    nav_node.setFloat("Pv1", data.Pv1);
-    nav_node.setFloat("Pv2", data.Pv2);
-    nav_node.setFloat("Pa0", data.Pa0);
-    nav_node.setFloat("Pa1", data.Pa1);
-    nav_node.setFloat("Pa2", data.Pa2);
     nav_node.setInt("status", status);
 #endif // AURA_ONBOARD_EKF
 }

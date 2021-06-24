@@ -67,8 +67,27 @@ void EKF15::default_config()
 }
 
 void EKF15::init(IMUdata imu, GPSdata gps) {
+    F.resize(15,15);
+    PHI.resize(15,15);
+    P.resize(15,15);
+    Qw.resize(15,15);
+    Q.resize(15,15);
+    ImKH.resize(15,15);
+    KRKt.resize(15,15);
+    I15.resize(15,15);
+
+    G.resize(15,12);
+    K.resize(15,6);
+
+    Rw.resize(12,12);
+
+    H.resize(6,15);
+
+    R.resize(6,6);
+    
     I15.setIdentity();
     I3.setIdentity();
+    
 
     // Assemble the matrices
     // .... gravity, g
@@ -291,11 +310,11 @@ void EKF15::time_update(IMUdata imu) {
     Q = (Q + Q.transpose()) * 0.5;			// Q = 0.5*(Q+Q')
 	
     // Covariance Time Update
-    // P = PHI * P * PHI.transpose() + Q;			// P = PHI*P*PHI' + Q
-    t1 = PHI * P;
-    t2 = PHI.transpose();
-    t3 = t1 * t2;
-    P = t3 + Q;
+    P = PHI * P * PHI.transpose() + Q;			// P = PHI*P*PHI' + Q
+    //t1 = PHI * P;
+    //t2 = PHI.transpose();
+    //t3 = t1 * t2;
+    //P = t3 + Q;
     P = (P + P.transpose()) * 0.5;			// P = 0.5*(P+P')
 	
     nav.Pp0 = P(0,0);     nav.Pp1 = P(1,1);     nav.Pp2 = P(2,2);
@@ -333,6 +352,8 @@ void EKF15::measurement_update(GPSdata gps) {
     // Kalman Gain
     // K = P*H'*inv(H*P*H'+R)
     K = P * H.transpose() * (H * P * H.transpose() + R).inverse();
+    //t1_6 = H * P * H.transpose();
+    //K = P * H.transpose() * (t1_6 + R).inverse();
 		
     // Covariance Update
     ImKH = I15 - K * H;	                // ImKH = I - K*H
