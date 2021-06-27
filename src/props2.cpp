@@ -28,7 +28,7 @@ static void pretty_print_tree(Value *v) {
 }
 
 static bool is_integer(const string val) {
-    for ( int i = 0; i < val.length(); i++ ) {
+    for ( unsigned int i = 0; i < val.length(); i++ ) {
         if ( val[i] < '0' or val[i] > '9' ) {
             return false;
         }
@@ -61,7 +61,7 @@ static Value *find_node_from_path(Value *start_node, string path, bool create) {
         }              
     }
     vector<string> tokens = split(path, "/");
-    for ( int i = 0; i < tokens.size(); i++ ) {
+    for ( unsigned int i = 0; i < tokens.size(); i++ ) {
         if ( tokens[i].length() == 0 ) {
             continue;
         }
@@ -154,7 +154,7 @@ vector<string> PropertyNode::getChildren(bool expand) {
         for (Value::ConstMemberIterator itr = val->MemberBegin(); itr != val->MemberEnd(); ++itr) {
             string name = itr->name.GetString();
             if ( expand and itr->value.IsArray() ) {
-                for ( int i = 0; i < itr->value.Size(); i++ ) {
+                for ( unsigned int i = 0; i < itr->value.Size(); i++ ) {
                     string ename = name + "/" + std::to_string(i);
                     result.push_back(ename);
                 }
@@ -388,12 +388,12 @@ string PropertyNode::getString( const char *name ) {
     return (string)name + ": not an object";
 }
 
-float PropertyNode::getFloat( const char *name, int index ) {
+float PropertyNode::getFloat( const char *name, unsigned int index ) {
     if ( val->IsObject() ) {
         if ( val->HasMember(name) ) {
             Value &v = (*val)[name];
             if ( v.IsArray() ) {
-                if ( index >= 0 and index < v.Size() ) {
+                if ( index < v.Size() ) {
                     return getValueAsFloat(v[index]);
                 } else {
                     printf("index out of bounds: %s\n", name);
@@ -513,7 +513,7 @@ bool PropertyNode::setString( const char *name, string s ) {
     return true;
 }
 
-bool PropertyNode::setFloat( const char *name, int index, float x ) {
+bool PropertyNode::setFloat( const char *name, unsigned int index, float x ) {
     if ( !val->IsObject() ) {
         printf("  converting value to object\n");
         // hal.scheduler->delay(100);
@@ -563,7 +563,7 @@ static bool load_json( const char *file_path, Value *v ) {
     if ( read_size >= 0 ) {
         read_buf[read_size] = 0; // null terminate
     }
-    printf("Read %d bytes.\n", read_size);
+    printf("Read %d bytes.\n", (int)read_size);
     // printf("Read %d bytes.\nstring: %s\n", read_size, read_buf);
     // hal.scheduler->delay(100);
 
@@ -632,12 +632,13 @@ void PropertyNode::pretty_print() {
     val->Accept(writer);
     // work around size limitations
     const char *ptr = buffer.GetString();
-    for ( int i = 0; i < buffer.GetSize(); i++ ) {
+    for ( unsigned int i = 0; i < buffer.GetSize(); i++ ) {
         printf("%c", ptr[i]);
         if ( i % 256 == 0 ) {
             hal.scheduler->delay(100);
         }
     }
+    console->printf("\n");
 }
 
 Document doc;

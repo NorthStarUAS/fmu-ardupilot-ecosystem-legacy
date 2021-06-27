@@ -154,7 +154,7 @@ int SerialLink::write_packet(uint8_t packet_id, uint8_t *buf, uint8_t len) {
     if ( ! _port->is_initialized() ) {
         return 0;
     }
-    if ( _port->txspace() < len + 6 ) {
+    if ( _port->txspace() < len + 6U ) {
         // console->printf("tx space: %ld\n", _port->txspace());
         return 0;
     }

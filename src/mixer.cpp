@@ -86,6 +86,7 @@ void mixer_t::print_mixer_matrix() {
         console->printf("\n");
     }
 }
+
 void mixer_t::setup() {
     effector_node = PropertyNode("/effectors");
     imu_node = PropertyNode("/sensors/imu");
@@ -95,11 +96,17 @@ void mixer_t::setup() {
     stab_yaw_node = PropertyNode("/config/stability_damper/yaw");
     stab_tune_node = PropertyNode("/config/stability_damper/pilot_tune");
     
-    outputs.setZero();
-    M = Eigen::Matrix<float, MAX_RCOUT_CHANNELS, MAX_RCOUT_CHANNELS, Eigen::RowMajor>();
+    M.resize(MAX_RCOUT_CHANNELS, MAX_RCOUT_CHANNELS);
     M.setIdentity();
     update_matrix();
     print_mixer_matrix();
+    
+    inputs.resize(MAX_RCOUT_CHANNELS);
+    outputs.resize(MAX_RCOUT_CHANNELS);
+
+    inputs.setZero();
+    outputs.setZero();
+    
     hal.scheduler->delay(100);
 }
 

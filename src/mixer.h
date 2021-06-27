@@ -10,9 +10,8 @@
 class mixer_t {
 
 private:
-    Eigen::Matrix<float, MAX_RCOUT_CHANNELS, MAX_RCOUT_CHANNELS> M;
-    Eigen::Matrix<float, MAX_RCOUT_CHANNELS, 1> inputs;
-    Eigen::Matrix<float, MAX_RCOUT_CHANNELS, 1> outputs;
+    Eigen::MatrixXf M;
+    Eigen::VectorXf inputs, outputs;
     
     void sas_update();
     void mixing_update();

@@ -51,7 +51,7 @@ void gps_mgr_t::update() {
                 gps_settle_timer = AP_HAL::millis();
                 update_magvar(unix_sec);
                 console->printf("GPS: 3d fix acquired.\n");
-                console->printf("GPS: unix time = %ld\n", (uint32_t)(gps.time_epoch_usec() / 1000000.0));
+                console->printf("GPS: unix time = %d\n", (unsigned int)(gps.time_epoch_usec() / 1000000.0));
                 console->printf("Local magvar (deg) = %.1f\n", magvar_rad*R2D);
             } else if ( gps_acquired and !gps_settled ) {
                 if ( AP_HAL::millis() - gps_settle_timer > 10000 ) {

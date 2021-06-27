@@ -12,6 +12,7 @@
 #include "gps_mgr.h"
 #include "imu_mgr.h"
 #include "led.h"
+#include "menu.h"
 #include "nav_mgr.h"
 #include "pilot.h"
 #include "power.h"
@@ -28,6 +29,7 @@ static PropertyNode pilot_node;
 static config_t config;
 static gps_mgr_t gps_mgr;
 static led_t led;
+static menu_t menu;
 static power_t power;
 
 // -Wmissing-declarations requires these
@@ -121,13 +123,18 @@ void loop() {
         }
         counter++;
         
-        // top priority, used for timing sync downstream.
+        // 1. Sense motion
         imu_mgr.update();
 
+        // 2. Check for gps updates
+        gps_mgr.update();
+
+        // 3. Estimate location and attitude
         if ( config_ekf_node.getString("selected") != "none" ) {
             nav_mgr.update();
         }
 
+        // 4. Send state to host computer
         if ( true) {
             comms.output_counter += comms.write_pilot_in_bin();
             comms.output_counter += comms.write_gps_bin();
@@ -147,6 +154,20 @@ void loop() {
             hal.scheduler->delay(1);
         }
 
+        // 10hz human console output, (begins when gyros finish calibrating)
+        if ( AP_HAL::millis() - debugTimer >= 100 ) {
+            debugTimer = AP_HAL::millis();
+            if ( imu_mgr.gyros_calibrated == 2 ) {
+                menu.update();
+                if ( menu.display_pilot ) { comms.write_pilot_in_ascii(); }
+                if ( menu.display_gps ) { comms.write_gps_ascii(); }
+                if ( menu.display_airdata ) { comms.write_airdata_ascii(); }
+                if ( menu.display_imu ) { comms.write_imu_ascii(); }
+                if ( menu.display_nav ) { comms.write_nav_ascii(); }
+                if ( menu.display_act ) { comms.write_actuator_out_ascii(); }
+            }
+        }
+
         // 10 second heartbeat console output
         if ( AP_HAL::millis() - hbTimer >= 10000 ) {
             hbTimer = AP_HAL::millis();
@@ -154,8 +175,8 @@ void loop() {
                 comms.write_status_info_ascii();
                 comms.write_power_ascii();
                 float elapsed_sec = (AP_HAL::millis() - tempTimer) / 1000.0;
-                console->printf("Available mem: %ld bytes\n",
-                                hal.util->available_memory());
+                console->printf("Available mem: %d bytes\n",
+                                (unsigned int)hal.util->available_memory());
                 console->printf("Performance = %.1f hz\n", counter/elapsed_sec);
                 //PropertyNode("/").pretty_print();
                 console->printf("\n");
@@ -178,30 +199,11 @@ void loop() {
             }
         }
         
-        // 10hz human console output, (begins when gyros finish calibrating)
-        if ( AP_HAL::millis() - debugTimer >= 100 ) {
-            debugTimer = AP_HAL::millis();
-            if ( imu_mgr.gyros_calibrated == 2 ) {
-                // comms.write_pilot_in_ascii();
-                // comms.write_actuator_out_ascii();
-                comms.write_gps_ascii();
-                if ( config_ekf_node.getString("selected") != "none" ) {
-                    comms.write_nav_ascii();
-                }
-                // comms.write_airdata_ascii();
-                // comms.write_status_info_ascii();
-                // comms.write_imu_ascii();
-            }
-        }
-
         // poll the pressure sensors
         // airdata.update();
 
         // read power values
         power.update();
-
-        // suck in any available gps messages
-        gps_mgr.update();
 
         if ( pilot.read() ) {
             bool ap_state = pilot_node.getBool("ap_enabled");

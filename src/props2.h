@@ -61,9 +61,9 @@ public:
     bool getBool( const char *name, int index ); // return value as a bool
     int getInt( const char *name, int index ); // return value as an int
     unsigned int getUInt( const char *name, int index ); // return value as an unsigned int
-    float getFloat( const char *name, int index ); // return value as a float
-    double getDouble( const char *name, int index ); // return value as a double
-    string getString( const char *name, int index ); // return value as a string
+    float getFloat( const char *name, unsigned int index ); // return value as a float
+    double getDouble( const char *name, unsigned int index ); // return value as a double
+    string getString( const char *name, unsigned int index ); // return value as a string
 
     // value setters
     bool setBool( const char *name, bool b ); // returns true if successful
@@ -74,7 +74,7 @@ public:
     bool setString( const char *name, string s ); // returns true if successful
 
     // indexed value setters
-    bool setFloat( const char *name, int index, float x ); // returns true if successful
+    bool setFloat( const char *name, unsigned int index, float x ); // returns true if successful
 
     // load/merge json file under this node
     bool load( const char *file_path );

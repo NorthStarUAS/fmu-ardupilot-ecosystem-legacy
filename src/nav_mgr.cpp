@@ -21,6 +21,8 @@ void nav_mgr_t::setup() {
     console->printf("EKF: not available for Teensy 3.2\n");
 #endif
     configure();
+    console->printf("configured ekf:\n");
+    config_ekf_node.pretty_print();
 }
 
 void nav_mgr_t::configure() {
