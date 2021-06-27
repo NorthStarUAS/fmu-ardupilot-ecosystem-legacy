@@ -41,7 +41,7 @@ static bool extend_array(Value *node, int size) {
         node->SetArray();
     }
     for ( int i = node->Size(); i <= size; i++ ) {
-        printf("    extending: %d\n", i);
+        // printf("    extending: %d\n", i);
         Value newobj(kObjectType);
         node->PushBack(newobj, doc.GetAllocator());
     }
@@ -402,7 +402,7 @@ float PropertyNode::getFloat( const char *name, unsigned int index ) {
                 printf("not an array: %s\n", name);
             }
         } else {
-            printf("no member in getFloat(%s, %d)\n", name, index);
+            // printf("no member in getFloat(%s, %d)\n", name, index);
         }
     } else {
         printf("v is not an object\n");
@@ -416,7 +416,7 @@ bool PropertyNode::setBool( const char *name, bool b ) {
     }
     Value newval(b);
     if ( !val->HasMember(name) ) {
-        printf("creating %s\n", name);
+        // printf("creating %s\n", name);
         Value key(name, doc.GetAllocator());
         val->AddMember(key, newval, doc.GetAllocator());
     } else {
@@ -432,7 +432,7 @@ bool PropertyNode::setInt( const char *name, int n ) {
     }
     Value newval(n);
     if ( !val->HasMember(name) ) {
-        printf("creating %s\n", name);
+        // printf("creating %s\n", name);
         Value key(name, doc.GetAllocator());
         val->AddMember(key, newval, doc.GetAllocator());
     } else {
@@ -448,7 +448,7 @@ bool PropertyNode::setUInt( const char *name, unsigned int u ) {
     }
     Value newval(u);
     if ( !val->HasMember(name) ) {
-        printf("creating %s\n", name);
+        // printf("creating %s\n", name);
         Value key(name, doc.GetAllocator());
         val->AddMember(key, newval, doc.GetAllocator());
     } else {
@@ -459,18 +459,13 @@ bool PropertyNode::setUInt( const char *name, unsigned int u ) {
 }
 
 bool PropertyNode::setFloat( const char *name, float x ) {
-    //printf("setFloat(%s) = %f\n", name, val);
-    // hal.scheduler->delay(100);
     if ( !val->IsObject() ) {
         printf("  converting value to object\n");
-        // hal.scheduler->delay(100);
         val->SetObject();
     }
-    // printf("  creating newval\n");
-    // hal.scheduler->delay(100);
     Value newval(x);
     if ( !val->HasMember(name) ) {
-        printf("creating %s\n", name);
+        // printf("creating %s\n", name);
         Value key(name, doc.GetAllocator());
         val->AddMember(key, newval, doc.GetAllocator());
     } else {
@@ -487,7 +482,7 @@ bool PropertyNode::setDouble( const char *name, double x ) {
     }
     Value newval(x);
     if ( !val->HasMember(name) ) {
-        printf("creating %s\n", name);
+        // printf("creating %s\n", name);
         Value key(name, doc.GetAllocator());
         val->AddMember(key, newval, doc.GetAllocator());
     } else {
@@ -503,7 +498,7 @@ bool PropertyNode::setString( const char *name, string s ) {
     }
     if ( !val->HasMember(name) ) {
         Value newval("");
-        printf("creating %s\n", name);
+        // printf("creating %s\n", name);
         Value key(name, doc.GetAllocator());
         val->AddMember(key, newval, doc.GetAllocator());
     } else {
@@ -520,7 +515,7 @@ bool PropertyNode::setFloat( const char *name, unsigned int index, float x ) {
         val->SetObject();
     }
     if ( !val->HasMember(name) ) {
-        printf("creating %s\n", name);
+        // printf("creating %s\n", name);
         Value key(name, doc.GetAllocator());
         Value a(kArrayType);
         val->AddMember(key, a, doc.GetAllocator());
@@ -635,7 +630,7 @@ void PropertyNode::pretty_print() {
     for ( unsigned int i = 0; i < buffer.GetSize(); i++ ) {
         printf("%c", ptr[i]);
         if ( i % 256 == 0 ) {
-            hal.scheduler->delay(100);
+            hal.scheduler->delay(50);
         }
     }
     console->printf("\n");

@@ -3,15 +3,15 @@
 #include "nav_mgr.h"
 
 void nav_mgr_t::setup() {
-    config_ekf_node = PropertyNode("/config/ekf");
+    config_nav_node = PropertyNode("/config/nav");
     gps_node = PropertyNode("/sensors/gps");
     imu_node = PropertyNode("/sensors/imu");
     nav_node = PropertyNode("/filters/nav");
-    string selected = config_ekf_node.getString("select");
+    string selected = config_nav_node.getString("select");
     // fix me ...
     if ( selected == ""  ) {
         selected = "none";
-        config_ekf_node.setString("select", selected);
+        config_nav_node.setString("select", selected);
     } else {
         selected = "nav15";         // force (fixme)
     }
@@ -22,53 +22,53 @@ void nav_mgr_t::setup() {
 #endif
     configure();
     console->printf("configured ekf:\n");
-    config_ekf_node.pretty_print();
+    config_nav_node.pretty_print();
 }
 
 void nav_mgr_t::configure() {
-    string selected = config_ekf_node.getString("select");
+    string selected = config_nav_node.getString("select");
     NAVconfig config;
     if ( selected == "nav15" ) {
         config = ekf.get_config();
     } else if ( selected == "nav15_mag" ) {
         config = ekf_mag.get_config();
     }
-    if ( config_ekf_node.hasChild("sig_w_accel") ) {
-        config.sig_w_ax = config_ekf_node.getDouble("sig_w_accel");
+    if ( config_nav_node.hasChild("sig_w_accel") ) {
+        config.sig_w_ax = config_nav_node.getDouble("sig_w_accel");
         config.sig_w_ay = config.sig_w_ax;
         config.sig_w_az = config.sig_w_ax;
     }
-    if ( config_ekf_node.hasChild("sig_w_gyro") ) {
-        config.sig_w_gx = config_ekf_node.getDouble("sig_w_gyro");
+    if ( config_nav_node.hasChild("sig_w_gyro") ) {
+        config.sig_w_gx = config_nav_node.getDouble("sig_w_gyro");
         config.sig_w_gy = config.sig_w_gx;
         config.sig_w_gz = config.sig_w_gx;
     }
-    if ( config_ekf_node.hasChild("sig_a_d") ) {
-        config.sig_a_d = config_ekf_node.getDouble("sig_a_d");
+    if ( config_nav_node.hasChild("sig_a_d") ) {
+        config.sig_a_d = config_nav_node.getDouble("sig_a_d");
     }
-    if ( config_ekf_node.hasChild("tau_a") ) {
-        config.tau_a = config_ekf_node.getDouble("tau_a");
+    if ( config_nav_node.hasChild("tau_a") ) {
+        config.tau_a = config_nav_node.getDouble("tau_a");
     }
-    if ( config_ekf_node.hasChild("sig_g_d") ) {
-        config.sig_g_d = config_ekf_node.getDouble("sig_g_d");
+    if ( config_nav_node.hasChild("sig_g_d") ) {
+        config.sig_g_d = config_nav_node.getDouble("sig_g_d");
     }
-    if ( config_ekf_node.hasChild("tau_g") ) {
-        config.tau_g = config_ekf_node.getDouble("tau_g");
+    if ( config_nav_node.hasChild("tau_g") ) {
+        config.tau_g = config_nav_node.getDouble("tau_g");
     }
-    if ( config_ekf_node.hasChild("sig_gps_p_ne") ) {
-        config.sig_gps_p_ne = config_ekf_node.getDouble("sig_gps_p_ne");
+    if ( config_nav_node.hasChild("sig_gps_p_ne") ) {
+        config.sig_gps_p_ne = config_nav_node.getDouble("sig_gps_p_ne");
     }
-    if ( config_ekf_node.hasChild("sig_gps_p_d") ) {
-        config.sig_gps_p_d = config_ekf_node.getDouble("sig_gps_p_d");
+    if ( config_nav_node.hasChild("sig_gps_p_d") ) {
+        config.sig_gps_p_d = config_nav_node.getDouble("sig_gps_p_d");
     }
-    if ( config_ekf_node.hasChild("sig_gps_v_ne") ) {
-        config.sig_gps_v_ne = config_ekf_node.getDouble("sig_gps_v_ne");
+    if ( config_nav_node.hasChild("sig_gps_v_ne") ) {
+        config.sig_gps_v_ne = config_nav_node.getDouble("sig_gps_v_ne");
     }
-    if ( config_ekf_node.hasChild("sig_gps_v_d") ) {
-        config.sig_gps_v_d = config_ekf_node.getDouble("sig_gps_v_d");
+    if ( config_nav_node.hasChild("sig_gps_v_d") ) {
+        config.sig_gps_v_d = config_nav_node.getDouble("sig_gps_v_d");
     }
-    if ( config_ekf_node.hasChild("sig_mag") ) {
-        config.sig_mag = config_ekf_node.getDouble("sig_mag");
+    if ( config_nav_node.hasChild("sig_mag") ) {
+        config.sig_mag = config_nav_node.getDouble("sig_mag");
     }
     if ( selected == "nav15" ) {
         ekf.set_config(config);
@@ -101,7 +101,7 @@ void nav_mgr_t::update() {
     gps1.ve = gps_node.getFloat("ve_mps");
     gps1.vd = gps_node.getFloat("vd_mps");
 
-    string selected = config_ekf_node.getString("select");
+    string selected = config_nav_node.getString("select");
     if ( !ekf_inited and gps_node.getBool("settle") ) {
         if ( selected == "nav15" ) {
             ekf.init(imu1, gps1);

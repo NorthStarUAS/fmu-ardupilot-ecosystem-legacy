@@ -10,25 +10,12 @@ void menu_t::display() {
                     "  4) IMU\n"
                     "  5) Nav/EFK\n"
                     "  6) Actuator output\n"
+                    "  7) Pretty print property tree\n"
                     "  Reboot: type \"reboot\"\n");
 }
 
 void menu_t::update() {
-    // uint8_t buf[128];
     int16_t user_input = 0;
-    // int avail = console->available();
-    // if ( avail > 1 ) {
-    //     int read = console->read(buf, 128);
-    //     for ( int i = 0; i < read; i++ ) {
-    //         console->printf("  read: %d %c (%d)\n", i, buf[i], buf[i]);
-    //     }
-    //     // this is probably a brittle hack
-    //     if ( buf[34] == 'r' and buf[35] == 'e' and buf[36] == 'b' and buf[37] == 'o' and buf[38] == 'o' and buf[39] == 't' ) {
-    //         console->printf("rebooting for firmward load request ...\n");
-    //         hal.scheduler->delay(500);
-    //         hal.scheduler->reboot(false);
-    //     }
-    // } else 
     if ( console->available() ) {
         user_input = console->read();
         printf("read character: %c\n", (char)user_input);
@@ -44,6 +31,8 @@ void menu_t::update() {
             display_nav = !display_nav;
         } else if ( user_input == '6' ) {
             display_act = !display_act;
+        } else if ( user_input == '7' ) {
+            PropertyNode("/").pretty_print();
         } else if ( user_input == reboot_cmd[reboot_count] ) {
             reboot_count++;
             if ( reboot_count == strlen(reboot_cmd) ) {

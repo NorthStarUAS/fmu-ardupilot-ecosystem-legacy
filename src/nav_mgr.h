@@ -20,7 +20,7 @@ private:
     EKF15 ekf;
     EKF15_mag ekf_mag;
 #endif
-    PropertyNode config_ekf_node;
+    PropertyNode config_nav_node;
     PropertyNode gps_node;
     PropertyNode imu_node;
     PropertyNode nav_node;

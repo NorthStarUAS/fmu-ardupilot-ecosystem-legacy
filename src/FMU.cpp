@@ -23,7 +23,7 @@ static AP_BoardConfig BoardConfig;
 AP_HAL::UARTDriver *console = hal.console;
 // AP_HAL::UARTDriver *console = hal.serial(1); // telemetry 1
 
-static PropertyNode config_ekf_node;
+static PropertyNode config_nav_node;
 static PropertyNode pilot_node;
 
 static config_t config;
@@ -61,7 +61,7 @@ void setup() {
     console->printf("Serial Number: %d\n", config.read_serial_number());
     hal.scheduler->delay(100);
 
-    config_ekf_node = PropertyNode("/config/ekf"); // after config.setup()
+    config_nav_node = PropertyNode("/config/nav"); // after config.setup()
     pilot_node = PropertyNode("/pilot");
     
     // if ( !config.read_storage() ) {
@@ -130,7 +130,7 @@ void loop() {
         gps_mgr.update();
 
         // 3. Estimate location and attitude
-        if ( config_ekf_node.getString("selected") != "none" ) {
+        if ( config_nav_node.getString("selected") != "none" ) {
             nav_mgr.update();
         }
 
@@ -145,7 +145,7 @@ void loop() {
             // that gets ignored if we do the math in one step)
             uint8_t result = comms.write_status_info_bin();
             comms.output_counter += result;
-            if ( config_ekf_node.getString("select") != "none" ) {
+            if ( config_nav_node.getString("select") != "none" ) {
                 comms.output_counter += comms.write_nav_bin();
             }
             // write imu message last: used as an implicit end of data
