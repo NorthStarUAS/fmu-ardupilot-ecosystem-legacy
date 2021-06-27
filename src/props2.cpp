@@ -16,7 +16,7 @@ using std::string;
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/prettywriter.h"
 
-#include "strutils.h"
+#include "util/strutils.h"
 #include "props2.h"
 
 static void pretty_print_tree(Value *v) {

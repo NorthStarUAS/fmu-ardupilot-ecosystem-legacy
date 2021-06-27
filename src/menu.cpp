@@ -51,6 +51,9 @@ void menu_t::update() {
                 hal.scheduler->delay(250);
                 hal.scheduler->reboot(false);
             }
+        } else if ( user_input == reboot_cmd[0] ) {
+            // allow immediate restart of a failed or partial command
+            reboot_count = 1;
         } else {
             reboot_count = 0;
             display();
