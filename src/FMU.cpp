@@ -97,6 +97,8 @@ void setup() {
 
     comms.setup();              // do this after gps initialization
 
+    menu.setup();
+    
     console->printf("Setup finished.\n");
     console->printf("Ready and transmitting...\n");
 }
