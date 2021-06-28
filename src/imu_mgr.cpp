@@ -93,6 +93,12 @@ void imu_mgr_t::update() {
     // static uint8_t accel_count = ins.get_accel_count();
     // static uint8_t gyro_count = ins.get_gyro_count();
 
+    string request = imu_node.getString("request");
+    if ( request == "calibrate-accels" ) {
+        imu_node.setString("request", "received: calibrate-accels");
+        calib_accels.setup();
+    }
+    
     imu_hal.update();
     imu_millis = imu_hal.raw_millis;
     
@@ -141,6 +147,8 @@ void imu_mgr_t::update() {
     imu_node.setFloat("hy", mags_cal(1));
     imu_node.setFloat("hz", mags_cal(2));
     imu_node.setFloat("tempC", tempC);
+
+    calib_accels.update();      // run if requested
 }
 
 // stay alive for up to 15 seconds looking for agreement between a 1

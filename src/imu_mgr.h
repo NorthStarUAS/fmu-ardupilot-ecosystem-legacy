@@ -10,6 +10,7 @@
 
 #include "props2.h"
 
+#include "calibration/calib_accels.h"
 #include "imu_hal.h"
 #include "cal_temp.h"
 
@@ -35,6 +36,8 @@ private:
     CalTemp ay_cal;
     CalTemp az_cal;
 
+    calib_accels_t calib_accels;
+    
     PropertyNode imu_node;
     PropertyNode imu_calib_node;
 

@@ -26,6 +26,14 @@ progress.
 
 ## Some major bullet point todo list items:
 
+- move accel calibration code over and test.
+  - implement fit quality metrics
+  - save to sd card
+
+- Is there a way we can activate console type messages over the
+  telemetry port for convenience when the system is installed and
+  harder to access the usb console port?
+
 - figure out/test airdata connections (no external port on pixracer?)
 - decide how best to detect and choose when multiple imu and compass
   are available.
