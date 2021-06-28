@@ -504,7 +504,7 @@ bool PropertyNode::setString( const char *name, string s ) {
     } else {
         // printf("%s already exists\n", name);
     }
-    (*val)[name].SetString(s.c_str(), s.length());
+    (*val)[name].SetString(s.c_str(), s.length(), doc.GetAllocator());
     return true;
 }
 
