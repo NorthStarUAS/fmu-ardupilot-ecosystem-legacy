@@ -10,8 +10,17 @@ void menu_t::display() {
                     "  4) IMU\n"
                     "  5) Nav/EFK\n"
                     "  6) Actuator output\n"
-                    "  7) Pretty print property tree\n"
+                    "  7) Calibrate IMU strapdown\n"
+                    "  8) Pretty print property tree\n"
                     "  Reboot: type \"reboot\"\n");
+}
+
+void menu_t::setup() {
+    imu_node = PropertyNode("/sensors/imu");
+    // flush input buffer
+    while ( console->available() ) {
+        console->read();
+    }
 }
 
 void menu_t::update() {
@@ -32,6 +41,9 @@ void menu_t::update() {
         } else if ( user_input == '6' ) {
             display_act = !display_act;
         } else if ( user_input == '7' ) {
+            imu_node.setString("request", "calibrate-accels");
+            console->printf("request: %s\n", imu_node.getString("request").c_str());
+        } else if ( user_input == '8' ) {
             PropertyNode("/").pretty_print();
         } else if ( user_input == reboot_cmd[reboot_count] ) {
             reboot_count++;

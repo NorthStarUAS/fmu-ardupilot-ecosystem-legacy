@@ -5,6 +5,8 @@ class menu_t {
 private:
     uint32_t reboot_count = 0;
     const char *reboot_cmd = "reboot";
+    PropertyNode imu_node;
+    void display();
     
 public:
     bool display_pilot = false;
@@ -14,6 +16,6 @@ public:
     bool display_nav = false;
     bool display_act = false;
         
-    void display();
+    void setup();
     void update();
 };
