@@ -1,7 +1,7 @@
 # Rice Creek FMU
 
-This is an Ardupilot/ChibiOS app for building the firmware that serves
-as the heart of a Rice Creek UAV autopilot.
+This is an Ardupilot/ChibiOS based flight controller firmware that
+serves as the heart of a Rice Creek UAV autopilot.
 
 Note: the purpose of this project is to prototype and demonstrate
 various autopilot design ideas.  Occasionally I like to break the rules
@@ -23,6 +23,9 @@ June 2021.
   * Integrates cleanly with json (reading and writing.)
   * Built on top of rapidjson which provides all the low level tree
     building and access details.
+  * Eliminates (somewhat) the tangled web of interconnected #include
+    dependencies.
+  * Eliminates most initialization order dependencies.
     
 * Thread-less design: grand loop structure. (excepting the service and
   driver threads that run under the hood in AP_HAL.)
@@ -56,6 +59,10 @@ June 2021.
   communicating with host computer and logging.  Supports C++ and
   python compatible messages.  It is like a mavlink-lite, and very
   lite.
+
+* University of Minnesota, Aerospace Engineering and Mechanics, UAV
+  lab 15-state EKF (and magnetometer version.)  Designed to run
+  continuously and ubiquitously.
   
 ## Short term notes to self:
 
@@ -75,6 +82,7 @@ June 2021.
 
 ## Some major bullet point todo list items:
 
+- port ekf15 heap allocation changes over to ekf15_mag
 - test servo outputs/mixing
 - pid's
 - temp and mag calibration based on EKF when it is in a high confidence state
