@@ -14,6 +14,7 @@ public:
     bool display_airdata = false;
     bool display_imu = false;
     bool display_nav = false;
+    bool display_nav_stats = false;
     bool display_act = false;
         
     void setup();

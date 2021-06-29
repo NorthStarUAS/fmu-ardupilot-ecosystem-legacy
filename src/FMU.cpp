@@ -181,6 +181,7 @@ void loop() {
                 if ( menu.display_airdata ) { comms.write_airdata_ascii(); }
                 if ( menu.display_imu ) { comms.write_imu_ascii(); }
                 if ( menu.display_nav ) { comms.write_nav_ascii(); }
+                if ( menu.display_nav_stats ) { comms.write_nav_stats_ascii(); }
                 if ( menu.display_act ) { comms.write_actuator_out_ascii(); }
             }
         }

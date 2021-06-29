@@ -22,6 +22,7 @@ public:
     void write_gps_ascii();
     int write_nav_bin();
     void write_nav_ascii();
+    void write_nav_stats_ascii();
     int write_airdata_bin();
     void write_airdata_ascii();
     int write_power_bin();

@@ -1,13 +1,62 @@
 # Rice Creek FMU
 
-This is an ardupilot/chibios app for building the firmware that serves
+This is an Ardupilot/ChibiOS app for building the firmware that serves
 as the heart of a Rice Creek UAV autopilot.
 
-This README has not been fully updated for the ardupilot/chibios port,
-so much of it is probably wrong or terribly out dated.  The code is
-also just at a checkpoint state ... still very much a work in
-progress.
+Note: the purpose of this project is to prototype and demonstrate
+various autopilot design ideas.  Occasionally I like to break the rules
+or make up my own rules and in some places, this project shows how
+that might look.  Also it is a priority to maintain this system in a
+state that is robust and flyable so that these ideas can be proven in
+actual flight test.
 
+This README has only been partially updated for the Ardupilot/ChibiOS
+port, so some of it is likely wrong or outdated.  The AP/ChibiOS
+version of the code is at an advanced checkpoint state ... nearly
+working, but still a work in progress and not yet flight tested as of
+June 2021.
+
+## Demonstrated design ideas
+
+* Property tree, shared hierarchical data structure.
+  * Implements a publish/subscribe system.
+  * Integrates cleanly with json (reading and writing.)
+  * Built on top of rapidjson which provides all the low level tree
+    building and access details.
+    
+* Thread-less design: grand loop structure. (excepting the service and
+  driver threads that run under the hood in AP_HAL.)
+
+* Big processor / little processor architecture moves important
+  functionality to the host (big) computer.  Simultaneously enables a
+  much simpler and lighter weight "little" processor.  Dividing the
+  workload between two systems leads to two simpler apps versus one
+  single very complicated monolithic app.
+
+* Heavy use of python and scripted tasks on the big processor where
+  python is supported.
+
+* Accel calibration procedure that generates an affine matrix
+  (encapsulates rotation, bias, and scale errors in a single step.)
+
+* Dynamic accelerometer temperature calibration. Trusts the EKF's
+  accel bias estimates and fits a model of those estimates vs
+  temperature over time.
+
+* Dynamic compass calibration.  Trusts the EKF's attitude estimate and
+  world magnetic model to fit a compass calibration model
+  incrementally over time.
+
+* Nested json configuration system with an extension to allow one
+  config file to include sub-configuration files.  (Compared to a flat
+  array of config parameters, configuration can include strings and
+  arrays as well.)
+
+* Simple message header generation (json definition file) for
+  communicating with host computer and logging.  Supports C++ and
+  python compatible messages.  It is like a mavlink-lite, and very
+  lite.
+  
 ## Short term notes to self:
 
 * Uart output on the telem ports of the Pixracer have an issue.  There
@@ -26,9 +75,11 @@ progress.
 
 ## Some major bullet point todo list items:
 
+- test servo outputs/mixing
+- pid's
 - temp and mag calibration based on EKF when it is in a high confidence state
 - move accel calibration code over and test.
-  - affine_from_points() verbocity
+  - affine_from_points() verbosity
   - (x) double check strapdown rotation matrix extracted from affine is correct
   - (x) strap down (for rotating gyros & mags) vs affine (for rotation,
     scale, and bias of accels.)

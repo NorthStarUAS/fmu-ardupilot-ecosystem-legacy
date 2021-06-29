@@ -279,37 +279,44 @@ int comms_t::write_nav_bin()
 }
 
 void comms_t::write_nav_ascii() {
-    if ( true ) {
-        // values
-        console->printf("Pos: %.7f, %.7f, %.2f",
-                        nav_node.getDouble("latitude_rad")*R2D,
-                        nav_node.getDouble("longitude_rad")*R2D,
-                        nav_node.getFloat("altitude_m"));
-        console->printf(" Vel: %.2f, %.2f, %.2f",
-                        nav_node.getFloat("vn_mps"),
-                        nav_node.getFloat("ve_mps"),
-                        nav_node.getFloat("vd_mps"));
-        console->printf(" Att: %.2f, %.2f, %.2f\n",
-                        nav_node.getFloat("phi_rad")*R2D,
-                        nav_node.getFloat("the_rad")*R2D,
-                        nav_node.getFloat("psi_rad")*R2D);
-    }
-    if (false) {
-        // covariances
-        float num = 3.0;        // how many standard deviations
-        console->printf("cov pos: %.2f, %.2f, %.2f",
-                        num * nav_node.getFloat("Pp0"),
-                        num * nav_node.getFloat("Pp1"),
-                        num * nav_node.getFloat("Pp2"));
-        console->printf(" vel: %.2f, %.2f, %.2f",
-                        num * nav_node.getFloat("Pv0"),
-                        num * nav_node.getFloat("Pv1"),
-                        num * nav_node.getFloat("Pv2"));
-        console->printf(" att: %.2f, %.2f, %.2f\n",
-                        num * nav_node.getFloat("Pa0")*R2D,
-                        num * nav_node.getFloat("Pa1")*R2D,
-                        num * nav_node.getFloat("Pa2")*R2D);
-    }
+    // values
+    console->printf("Pos: %.7f, %.7f, %.2f",
+                    nav_node.getDouble("latitude_rad")*R2D,
+                    nav_node.getDouble("longitude_rad")*R2D,
+                    nav_node.getFloat("altitude_m"));
+    console->printf(" Vel: %.2f, %.2f, %.2f",
+                    nav_node.getFloat("vn_mps"),
+                    nav_node.getFloat("ve_mps"),
+                    nav_node.getFloat("vd_mps"));
+    console->printf(" Att: %.2f, %.2f, %.2f\n",
+                    nav_node.getFloat("phi_rad")*R2D,
+                    nav_node.getFloat("the_rad")*R2D,
+                    nav_node.getFloat("psi_rad")*R2D);
+}
+
+void comms_t::write_nav_stats_ascii() {
+    // covariances
+    console->printf("gxb: %.2f %.2f %.2f",
+                    nav_node.getFloat("p_bias"),
+                    nav_node.getFloat("q_bias"),
+                    nav_node.getFloat("r_bias"));
+    console->printf(" axb: %.2f %.2f %.2f",
+                    nav_node.getFloat("ax_bias"),
+                    nav_node.getFloat("ay_bias"),
+                    nav_node.getFloat("az_bias"));
+    float num = 3.0;            // how many standard deviations
+    console->printf(" cov pos: %.2f %.2f %.2f",
+                    num * nav_node.getFloat("Pp0"),
+                    num * nav_node.getFloat("Pp1"),
+                    num * nav_node.getFloat("Pp2"));
+    console->printf(" vel: %.2f %.2f %.2f",
+                    num * nav_node.getFloat("Pv0"),
+                    num * nav_node.getFloat("Pv1"),
+                    num * nav_node.getFloat("Pv2"));
+    console->printf(" att: %.2f %.2f %.2f\n",
+                    num * nav_node.getFloat("Pa0")*R2D,
+                    num * nav_node.getFloat("Pa1")*R2D,
+                    num * nav_node.getFloat("Pa2")*R2D);
     if ( false ) {
         nav_node.pretty_print();
     }
