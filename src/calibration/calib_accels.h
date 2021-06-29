@@ -42,7 +42,6 @@ private:
             return false;
         }
     }
-    Eigen::MatrixXf compute_affine();
     float fit_metrics(Eigen::MatrixXf affine);
     
 public:

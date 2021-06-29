@@ -1,5 +1,7 @@
 #include "setup_board.h"
 
+#include "util/affine.h"
+
 #include "calib_accels.h"
 
 const float g = 9.81;
@@ -144,7 +146,12 @@ void calib_accels_t::update()  {
                 return;
             }
         }
-        Eigen::MatrixXf affine = compute_affine();
+        Eigen::MatrixXf affine;
+        if ( ! affine_from_points(Meas, Ref, true, true, affine) ) {
+            console->printf("Affine fit failed...\n");
+            state = -1;
+            return;
+        }
         for ( int j = 0; j < 4; j++ ) {
             for ( int i = 0; i < 4; i++ ) {
                 imu_calib_node.setFloat("accel_affine", i*4 + j, affine(i,j));
@@ -191,14 +198,6 @@ static void print_vector(const char *label, Eigen::VectorXf v) {
         console->printf("%.2f ", v(i));
     }
     console->printf("\n");
-}
-
-Eigen::MatrixXf calib_accels_t::compute_affine() {
-    //Eigen::Transform t;
-    //t = Eigen::umeyama(Meas.transpose(), Ref.transpose(), true);
-    Eigen::MatrixXf affine = Eigen::umeyama(Meas.transpose(), Ref.transpose(), true);
-    print_matrix(affine);
-    return affine;
 }
 
 float calib_accels_t::fit_metrics(Eigen::MatrixXf affine) {
