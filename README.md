@@ -27,7 +27,9 @@ progress.
 ## Some major bullet point todo list items:
 
 - move accel calibration code over and test.
-  - implement fit quality metrics
+  - (x) implement fit quality metrics
+  - strap down (for rotating gyros & mags) vs affine (for rotation,
+    scale, and bias of accels.)
   - save to sd card
 
 - Is there a way we can activate console type messages over the

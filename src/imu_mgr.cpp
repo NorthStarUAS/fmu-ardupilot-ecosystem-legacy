@@ -6,19 +6,15 @@
 
 // Setup imu defaults:
 void imu_mgr_t::defaults() {
-    Eigen::Matrix3f strapdown3x3 = Eigen::Matrix3f::Identity();
+    strapdown = Eigen::Matrix3f::Identity();
     for ( int i = 0; i < 9; i++ ) {
-        imu_calib_node.setFloat("strapdown", i, strapdown3x3.data()[i]);
+        imu_calib_node.setFloat("strapdown", i, strapdown.data()[i]);
     }
-    strapdown = Eigen::Matrix4f::Identity();
 
-    for ( int i = 0; i < 3; i++ ) {
-        imu_calib_node.setFloat("accel_scale", i, 1.0);
-    }
-    for ( int i = 0; i < 3; i++ ) {
-        imu_calib_node.setFloat("accel_translate", i, 0.0);
-    }
     accel_affine = Eigen::Matrix4f::Identity();
+    for ( int i = 0; i < 16; i++ ) {
+        imu_calib_node.setFloat("accel_affine", i, accel_affine.data()[i]);
+    }
     
     mag_affine = Eigen::Matrix4f::Identity();
     for ( int i = 0; i < 16; i++ ) {
@@ -28,35 +24,37 @@ void imu_mgr_t::defaults() {
 
 // Update the R matrix (called after loading/receiving any new config message)
 void imu_mgr_t::set_strapdown_calibration() {
-    strapdown = Eigen::Matrix4f::Identity();
+    strapdown = Eigen::Matrix3f::Identity();
     for ( int i = 0; i < 3; i++ ) {
         for ( int j = 0; j < 3; j++ ) {
             strapdown(i,j) = imu_calib_node.getFloat("strapdown", i*3+j);
         }
     }
-    Eigen::Matrix4f scale = Eigen::Matrix4f::Identity();
-    for (int i = 0; i < 3; i++ ) {
-        scale(i,i) = imu_calib_node.getFloat("accel_scale", i);
+    
+    console->printf("IMU strapdown calibration matrix:\n");
+    for ( int i = 0; i < 3; i++ ) {
+        console->printf("  ");
+        for ( int j = 0; j < 3; j++ ) {
+            console->printf("%.4f ", strapdown(i,j));
+        }
+        console->printf("\n");
     }
-    Eigen::Matrix4f translate = Eigen::Matrix4f::Identity();
-    for (int i = 0; i < 3; i++ ) {
-        // column major
-        translate(i,3) = imu_calib_node.getFloat("accel_translate", i);
+}
+
+// update the mag calibration matrix from the config structur
+void imu_mgr_t::set_accel_calibration() {
+    accel_affine = Eigen::Matrix4f::Identity();
+    for ( int i = 0; i < 4; i++ ) {
+        for ( int j = 0; j < 4; j++ ) {
+            accel_affine(i,j) = imu_calib_node.getFloat("accel_affine", i*4+j);
+        }
     }
-    accel_affine = translate * strapdown * scale;
-    console->printf("Accel affine calibration matrix:\n");
+
+    console->printf("Accelerometer affine matrix:\n");
     for ( int i = 0; i < 4; i++ ) {
         console->printf("  ");
         for ( int j = 0; j < 4; j++ ) {
             console->printf("%.4f ", accel_affine(i,j));
-        }
-        console->printf("\n");
-    }
-    console->printf("IMU strapdown calibration matrix:\n");
-    for ( int i = 0; i < 4; i++ ) {
-        console->printf("  ");
-        for ( int j = 0; j < 4; j++ ) {
-            console->printf("%.4f ", strapdown(i,j));
         }
         console->printf("\n");
     }
@@ -103,12 +101,13 @@ void imu_mgr_t::update() {
     imu_millis = imu_hal.raw_millis;
     
     accels_raw << imu_hal.accel.x, imu_hal.accel.y, imu_hal.accel.z, 1.0;
-    gyros_raw << imu_hal.gyro.x, imu_hal.gyro.y, imu_hal.gyro.z, 1.0;
+    gyros_raw << imu_hal.gyro.x, imu_hal.gyro.y, imu_hal.gyro.z;
     tempC = imu_hal.tempC;
 
-    Eigen::Vector4f mags_precal;
-    mags_precal << imu_hal.mag.x, imu_hal.mag.y, imu_hal.mag.z, 1.0;
-    mags_raw = strapdown * mags_precal;
+    Eigen::Vector3f mags_precal;
+    mags_precal << imu_hal.mag.x, imu_hal.mag.y, imu_hal.mag.z;
+    mags_raw.head(3) = strapdown * mags_precal;
+    mags_raw(3) = 1.0;
     
     accels_cal = accel_affine * accels_raw;
     gyros_cal = strapdown * gyros_raw;
@@ -122,7 +121,7 @@ void imu_mgr_t::update() {
     if ( gyros_calibrated < 2 ) {
         calibrate_gyros();
     } else {
-        gyros_cal.segment(0,3) -= gyro_startup_bias;
+        gyros_cal -= gyro_startup_bias;
     }
 
     // publish
@@ -159,16 +158,16 @@ void imu_mgr_t::update() {
 void imu_mgr_t::calibrate_gyros() {
     if ( gyros_calibrated == 0 ) {
         console->printf("Initialize gyro calibration: ");
-        slow = gyros_cal.segment(0,3);
-        fast = gyros_cal.segment(0,3);
+        slow = gyros_cal;
+        fast = gyros_cal;
         total_timer = AP_HAL::millis();
         good_timer = AP_HAL::millis();
         output_timer = AP_HAL::millis();
         gyros_calibrated = 1;
     }
 
-    fast = 0.95 * fast + 0.05 * gyros_cal.segment(0,3);
-    slow = 0.995 * fast + 0.005 * gyros_cal.segment(0,3);
+    fast = 0.95 * fast + 0.05 * gyros_cal;
+    slow = 0.995 * fast + 0.005 * gyros_cal;
     // use 'slow' filter value for calibration while calibrating
     gyro_startup_bias << slow;
 

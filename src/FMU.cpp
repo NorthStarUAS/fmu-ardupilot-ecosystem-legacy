@@ -75,6 +75,7 @@ void setup() {
     // initialize the IMU and calibration matrices
     imu_mgr.setup();
     imu_mgr.set_strapdown_calibration();
+    imu_mgr.set_accel_calibration();
     imu_mgr.set_mag_calibration();
     
     // initialize the pilot interface (RC in, out & mixer)

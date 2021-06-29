@@ -534,36 +534,38 @@ bool PropertyNode::setFloat( const char *name, unsigned int index, float x ) {
 }
 
 static bool load_json( const char *file_path, Value *v ) {
-    char read_buf[4096];
-    printf("reading from %s\n", file_path);
+    printf("loading from %s\n", file_path);
     
+    struct stat st;
+    if ( AP::FS().stat(file_path, &st) < 0 ) {
+        printf("Read stat failed: %s - %s\n", file_path, strerror(errno));
+        return false;
+    }
+    printf("File size: %s: %d\n", file_path, (int)st.st_size);
+    char read_buf[st.st_size];
+
     // open a file in read mode
     const int open_fd = AP::FS().open(file_path, O_RDONLY);
     if (open_fd == -1) {
-        printf("Open %s failed\n", file_path);
+        printf("Open failed: %s - %s\n", file_path, strerror(errno));
         return false;
     }
 
     // read from file
-    ssize_t read_size;
-    read_size = AP::FS().read(open_fd, read_buf, sizeof(read_buf));
-    if ( read_size == -1 ) {
-        printf("Read failed - %s\n", strerror(errno));
+    ssize_t read_len = AP::FS().read(open_fd, read_buf, sizeof(read_buf));
+    if ( read_len == -1 ) {
+        printf("Read failed: %s - %s\n", file_path, strerror(errno));
         return false;
     }
 
     // close file after reading
     AP::FS().close(open_fd);
 
-    if ( read_size >= 0 ) {
-        read_buf[read_size] = 0; // null terminate
-    }
-    printf("Read %d bytes.\n", (int)read_size);
-    // printf("Read %d bytes.\nstring: %s\n", read_size, read_buf);
+    // printf("Read %d bytes.\nstring: %s\n", read_len, read_buf);
     // hal.scheduler->delay(100);
 
     Document tmpdoc(&doc.GetAllocator());
-    tmpdoc.Parse(read_buf);
+    tmpdoc.Parse(read_buf, read_len);
     if ( tmpdoc.HasParseError() ){
         printf("json parse err: %d (%s)\n",
                tmpdoc.GetParseError(),
@@ -579,6 +581,43 @@ static bool load_json( const char *file_path, Value *v ) {
         Value &newval = tmpdoc[itr->name.GetString()];
         v->AddMember(key, newval, doc.GetAllocator());
     }
+
+    return true;
+}
+
+static bool save_json( const char *file_path, Value *v ) {
+    
+    StringBuffer buffer;
+    PrettyWriter<StringBuffer> writer(buffer);
+    v->Accept(writer);
+
+    // check disk space
+    uint64_t free_bytes = AP::FS().disk_free("/");
+    console->printf("Disk free: %dk needed: %dk\n",
+                    (unsigned int)free_bytes / 1024,
+                    (unsigned int)(buffer.GetSize() / 1024) + 1);
+
+    // rename existing file
+    // string bak = (string)file_path + ".bak";
+    // AP::FS().rename(file_path, bak.c_str());
+    
+    // open a file in write mode
+    const int open_fd = AP::FS().open(file_path, O_WRONLY | O_CREAT);
+    if (open_fd == -1) {
+        printf("Open %s failed\n", file_path, strerror(errno));
+        return false;
+    }
+
+    // write file
+    ssize_t write_size;
+    write_size = AP::FS().write(open_fd, buffer.GetString(), buffer.GetSize());
+    if ( write_size == -1 ) {
+        printf("Write failed - %s\n", strerror(errno));
+        return false;
+    }
+
+    // close file
+    AP::FS().close(open_fd);
 
     return true;
 }
@@ -610,6 +649,14 @@ bool PropertyNode::load( const char *file_path ) {
     pretty_print();
     printf("\n");
 
+    return true;
+}
+
+bool PropertyNode::save( const char *file_path ) {
+    if ( !save_json(file_path, val) ) {
+        return false;
+    }
+    printf("json file saved: %s\n", file_path);
     return true;
 }
 

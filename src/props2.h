@@ -79,6 +79,9 @@ public:
     // load/merge json file under this node
     bool load( const char *file_path );
     
+    // save contents of node as a json file
+    bool save( const char *file_path );
+
     // void print();
     void pretty_print();
 

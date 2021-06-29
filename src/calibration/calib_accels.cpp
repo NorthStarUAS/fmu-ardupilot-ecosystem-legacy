@@ -17,8 +17,19 @@ int calib_accels_t::raw_up_axis( float ax, float ay, float az ) {
 
 void calib_accels_t::setup() {
     imu_node = PropertyNode("/sensors/imu");
+    imu_calib_node = PropertyNode("/config/imu/calibration");
     state = 0;                  // active
     armed = false;
+    
+    Ref.resize(6, 3);
+    Ref <<
+        0.0, 0.0,  -g,          // level
+        0.0, 0.0,   g,          // upside down
+         -g, 0.0, 0.0,          // nose up
+          g, 0.0, 0.0,          // nose down
+        0.0,  -g, 0.0,          // right wing down
+        0.0,   g, 0.0;          // right wing up
+
     Meas.resize(6, 3);
     Meas.setZero();
 }
@@ -133,7 +144,29 @@ void calib_accels_t::update()  {
                 return;
             }
         }
-        compute_affine();
+        Eigen::MatrixXf affine = compute_affine();
+        for ( int j = 0; j < 4; j++ ) {
+            for ( int i = 0; i < 4; i++ ) {
+                imu_calib_node.setFloat("accel_affine", i*4 + j, affine(i,j));
+            }
+        }
+        float fit = fit_metrics(affine);
+        imu_calib_node.setFloat("accel_fit_mean", fit);
+        console->printf("Fit quality: %.2f\n", fit);
+        
+        // extract strapdown rotation matrix
+        Eigen::Affine3f a3f;
+        a3f.matrix() = affine;
+        Eigen::Matrix3f strapdown = a3f.rotation();
+        for ( int j = 0; j < 3; j++ ) {
+            for ( int i = 0; i < 3; i++ ) {
+                imu_calib_node.setFloat("strapdown", i*3 + j, strapdown(i,j));
+            }
+        }
+        const char *file_path = "imu-calibration.json";
+        console->printf("Saving calibration to: %s\n", file_path);
+        imu_calib_node.save(file_path);
+        
         state += 1;
     }
 }
@@ -152,17 +185,35 @@ static void print_matrix(Eigen::MatrixXf M) {
     }
 }
 
-void calib_accels_t::compute_affine() {
-    Eigen:: MatrixXf Ref;
-    Ref.resize(6, 3);
-    Ref <<
-        0.0, 0.0,  -g,          // level
-        0.0, 0.0,   g,          // upside down
-         -g, 0.0, 0.0,          // nose up
-          g, 0.0, 0.0,          // nose down
-        0.0,  -g, 0.0,          // right wing down
-        0.0,   g, 0.0;          // right wing up
+static void print_vector(const char *label, Eigen::VectorXf v) {
+    console->printf("%s: ", label);
+    for ( int i = 0; i < v.size(); i++ ) {
+        console->printf("%.2f ", v(i));
+    }
+    console->printf("\n");
+}
 
+Eigen::MatrixXf calib_accels_t::compute_affine() {
+    //Eigen::Transform t;
+    //t = Eigen::umeyama(Meas.transpose(), Ref.transpose(), true);
     Eigen::MatrixXf affine = Eigen::umeyama(Meas.transpose(), Ref.transpose(), true);
     print_matrix(affine);
+    return affine;
+}
+
+float calib_accels_t::fit_metrics(Eigen::MatrixXf affine) {
+    Eigen::VectorXf errors;
+    errors.resize(6);
+    print_matrix(Meas);
+    for ( int i = 0; i < Meas.rows(); i++ ) {
+        Eigen::Vector4f v1; v1 << Meas(i,0), Meas(i,1), Meas(i,2), 1.0;
+        Eigen::Vector4f v2 = affine * v1;
+        Eigen::Vector3f v3 = Ref.row(i);
+        print_vector("v1", v1);
+        print_vector("v2", v2);
+        print_vector("v3", v3);
+        errors[i] = (v2.head(3) - v3).norm();
+        console->printf("error[%d] = %.2f\n", i, errors[i]);
+    }
+    return errors.mean();
 }

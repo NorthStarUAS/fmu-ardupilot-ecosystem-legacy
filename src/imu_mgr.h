@@ -20,7 +20,7 @@ private:
 
     imu_hal_t imu_hal;
     
-    Eigen::Matrix4f strapdown = Eigen::Matrix4f::Identity();
+    Eigen::Matrix3f strapdown = Eigen::Matrix3f::Identity();
     Eigen::Matrix4f accel_affine = Eigen::Matrix4f::Identity();
     Eigen::Matrix4f mag_affine = Eigen::Matrix4f::Identity();
     // gyro zero'ing stuff
@@ -48,20 +48,20 @@ public:
     unsigned long imu_millis = 0;
     // raw/uncorrected sensor values
     Eigen::Vector4f accels_raw =  Eigen::Vector4f::Zero();
-    Eigen::Vector4f gyros_raw =  Eigen::Vector4f::Zero();
+    Eigen::Vector3f gyros_raw =  Eigen::Vector3f::Zero();
     Eigen::Vector4f mags_raw =  Eigen::Vector4f::Zero();
     // rotation corrected sensor values
     //Vector3f accels_nocal = Vector3f::Zero();
     //Vector3f gyros_nocal = Vector3f::Zero();
     //Vector3f mags_nocal = Vector3f::Zero();
     Eigen::Vector4f accels_cal = Eigen::Vector4f::Zero();
-    Eigen::Vector4f gyros_cal = Eigen::Vector4f::Zero();
+    Eigen::Vector3f gyros_cal = Eigen::Vector3f::Zero();
     Eigen::Vector4f mags_cal = Eigen::Vector4f::Zero();
     float tempC = 0.0;
     
     void defaults();
     void set_strapdown_calibration();
-    // void set_accel_calibration();
+    void set_accel_calibration();
     void set_mag_calibration();
     void setup();
     void update();
