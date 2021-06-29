@@ -585,6 +585,73 @@ static bool load_json( const char *file_path, Value *v ) {
     return true;
 }
 
+// hack pseudo-implementation of a rename function.  Loads the
+// original file, saves as a new file, update the mtime, and finally
+// unlink the original.
+static bool rename_file(const char *current_name, const char *new_name) {
+    printf("Renaming %s to %s\n", current_name, new_name);
+    
+    struct stat st;
+    if ( AP::FS().stat(current_name, &st) < 0 ) {
+        printf("Read stat failed: %s - %s\n", current_name, strerror(errno));
+        return false;
+    }
+    printf("%s: size %d mtime %d\n", current_name, (int)st.st_size, (int)st.st_mtim.tv_sec);
+    char read_buf[st.st_size];
+
+    int open_fd = -1;
+    
+    // open a file in read mode
+    open_fd = AP::FS().open(current_name, O_RDONLY);
+    if (open_fd == -1) {
+        printf("Open failed: %s - %s\n", current_name, strerror(errno));
+        return false;
+    }
+
+    // read from file
+    ssize_t read_len = AP::FS().read(open_fd, read_buf, sizeof(read_buf));
+    if ( read_len == -1 ) {
+        printf("Read failed: %s - %s\n", current_name, strerror(errno));
+        return false;
+    }
+
+    // close file after reading
+    AP::FS().close(open_fd);
+
+    AP::FS().unlink(new_name);  // we don't care if this doesn't exist
+
+    // check disk space
+    uint64_t free_bytes = AP::FS().disk_free("/");
+    console->printf("Disk free: %dk needed: %dk\n",
+                    (unsigned int)free_bytes / 1024,
+                    (unsigned int)(sizeof(read_buf) / 1024) + 1);
+
+    // open a file in write mode
+    open_fd = AP::FS().open(new_name, O_WRONLY | O_CREAT);
+    if (open_fd == -1) {
+        printf("Open %s failed\n", new_name, strerror(errno));
+        return false;
+    }
+
+    // write file
+    ssize_t write_size;
+    write_size = AP::FS().write(open_fd, read_buf, sizeof(read_buf));
+    if ( write_size == -1 ) {
+        printf("Write failed: %s - %s\n", new_name, strerror(errno));
+        return false;
+    }
+
+    // close file
+    AP::FS().close(open_fd);
+
+    // set the mtime of the copy to the original
+    AP::FS().set_mtime(new_name, st.st_mtim.tv_sec);
+
+    AP::FS().unlink(current_name);  // remove the original
+    
+    return true;
+}
+
 static bool save_json( const char *file_path, Value *v ) {
     
     StringBuffer buffer;
@@ -598,8 +665,8 @@ static bool save_json( const char *file_path, Value *v ) {
                     (unsigned int)(buffer.GetSize() / 1024) + 1);
 
     // rename existing file
-    // string bak = (string)file_path + ".bak";
-    // AP::FS().rename(file_path, bak.c_str());
+    string bak = (string)file_path + ".bak";
+    rename_file(file_path, bak.c_str());
     
     // open a file in write mode
     const int open_fd = AP::FS().open(file_path, O_WRONLY | O_CREAT);
