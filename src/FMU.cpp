@@ -1,12 +1,11 @@
 #include <AP_HAL/AP_HAL.h>
 #include <AP_BoardConfig/AP_BoardConfig.h>
-
-// test
-#include <AP_Common/ExpandingString.h>
+#include <AP_ExternalAHRS/AP_ExternalAHRS.h>
+#include <GCS_MAVLink/GCS_Dummy.h>
 
 #include "setup_board.h"
 
-// #include "airdata.h"
+#include "airdata.h"
 #include "comms.h"
 #include "config.h"
 #include "gps_mgr.h"
@@ -23,10 +22,22 @@ static AP_BoardConfig BoardConfig;
 AP_HAL::UARTDriver *console = hal.console;
 // AP_HAL::UARTDriver *console = hal.serial(1); // telemetry 1
 
+// needed by imu_hal and airdata(baro)
+#if HAL_EXTERNAL_AHRS_ENABLED
+static AP_ExternalAHRS eAHRS;
+#endif // HAL_EXTERNAL_AHRS_ENABLED
+
+// create fake gcs object (needed for the AP_HAL baro and gps drivers)
+GCS_Dummy _gcs;
+const AP_Param::GroupInfo GCS_MAVLINK_Parameters::var_info[] = {
+    AP_GROUPEND
+};
+
 static PropertyNode config_nav_node;
 static PropertyNode pilot_node;
 
 static config_t config;
+static airdata_t airdata;
 static gps_mgr_t gps_mgr;
 static led_t led;
 static menu_t menu;
@@ -71,6 +82,9 @@ void setup() {
     // } else {
     //     console->printf("Successfully loaded config from eeprom storage.\n");
     // }
+
+    // airdata
+    airdata.setup();
     
     // initialize the IMU and calibration matrices
     imu_mgr.setup();
@@ -184,26 +198,26 @@ void loop() {
                 //PropertyNode("/").pretty_print();
                 console->printf("\n");
 
-                if ( false ) {
-                    // system info
-                    ExpandingString dma_info {};
-                    ExpandingString mem_info {};
-                    ExpandingString uart_info {};
-                    ExpandingString thread_info {};
-                    hal.util->dma_info(dma_info);
-                    hal.util->mem_info(mem_info);
-                    hal.util->uart_info(uart_info);
-                    hal.util->thread_info(thread_info);
-                    console->printf("dma info:\n%s\n", dma_info.get_string());
-                    console->printf("mem info:\n%s\n", mem_info.get_string());
-                    console->printf("uart info:\n%s\n", uart_info.get_string());
-                    // console->printf("thread info:\n%s\n", thread_info.get_string());
-                }
+#if 0
+                // system info
+                ExpandingString dma_info {};
+                ExpandingString mem_info {};
+                ExpandingString uart_info {};
+                ExpandingString thread_info {};
+                hal.util->dma_info(dma_info);
+                hal.util->mem_info(mem_info);
+                hal.util->uart_info(uart_info);
+                hal.util->thread_info(thread_info);
+                console->printf("dma info:\n%s\n", dma_info.get_string());
+                console->printf("mem info:\n%s\n", mem_info.get_string());
+                console->printf("uart info:\n%s\n", uart_info.get_string());
+                // console->printf("thread info:\n%s\n", thread_info.get_string());
+#endif
             }
         }
         
-        // poll the pressure sensors
-        // airdata.update();
+        // airdata
+        airdata.update();
 
         // read power values
         power.update();

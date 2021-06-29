@@ -2,7 +2,6 @@
 #include <AP_InertialSensor/AP_InertialSensor.h>
 #include <AP_AHRS/AP_AHRS.h>
 #include <AP_Baro/AP_Baro.h>
-#include <AP_ExternalAHRS/AP_ExternalAHRS.h>
 #include <AP_Compass/AP_Compass.h>
 
 #include "setup_board.h"
@@ -11,9 +10,6 @@
 static AP_InertialSensor ins;
 static AP_AHRS_DCM ahrs;  // need ...
 static AP_Baro baro; // Compass tries to set magnetic model based on location.
-#if HAL_EXTERNAL_AHRS_ENABLED
-static AP_ExternalAHRS eAHRS;
-#endif // HAL_EXTERNAL_AHRS_ENABLED
 static Compass compass;
 
 // configure the IMU settings and setup the ISR to aquire the data

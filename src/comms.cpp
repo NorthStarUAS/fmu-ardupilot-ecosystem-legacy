@@ -24,6 +24,7 @@ void comms_t::setup() {
     config_node = PropertyNode("/config");
     effector_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");
+    airdata_node = PropertyNode("/sensors/airdata");
     gps_node = PropertyNode("/sensors/gps");
     imu_node = PropertyNode("/sensors/imu");
     power_node = PropertyNode("/sensors/power");
@@ -318,30 +319,27 @@ void comms_t::write_nav_ascii() {
 int comms_t::write_airdata_bin()
 {
     static message::airdata_t airdata1;
-    airdata1.baro_press_pa = airdata.baro_press;
-    airdata1.baro_temp_C = airdata.baro_temp;
-    airdata1.baro_hum = airdata.baro_hum;
-    airdata1.ext_diff_press_pa = airdata.diffPress_pa;
-    airdata1.ext_static_press_pa = 0.0; // fixme!
-    airdata1.ext_temp_C = airdata.temp_C;
-    airdata1.error_count = airdata.error_count;
+    // FIXME: proprty names
+    airdata1.baro_press_pa = airdata_node.getFloat("baro_press_pa");
+    airdata1.baro_temp_C = airdata_node.getFloat("baro_tempC");
+    airdata1.baro_hum = 0.0;
+    airdata1.ext_diff_press_pa = airdata_node.getFloat("diffPress_pa");
+    airdata1.ext_static_press_pa = airdata_node.getFloat("static_press_pa"); // fixme!
+    airdata1.ext_temp_C = airdata_node.getFloat("temp_C");
+    airdata1.error_count = airdata_node.getFloat("error_count");
     airdata1.pack();
     return serial.write_packet( airdata1.id, airdata1.payload, airdata1.len );
 }
 
 void comms_t::write_airdata_ascii()
 {
-#if 0
-    console->print("Barometer: ");
-    console->print(airdata.baro_press, 2); console->print(" (st pa) ");
-    console->print(airdata.baro_temp, 2); console->print(" (C) ");
-    console->print(airdata.baro_hum, 1); console->print(" (%RH) ");
-    console->print("Pitot: ");
-    console->print(airdata.diffPress_pa, 4); console->print(" (diff pa) ");
-    console->print(airdata.temp_C, 2); console->print(" (C) ");
-    console->print(airdata.error_count); console->print(" (errors) ");
-    console->println();
-#endif
+    console->printf("Baro: %.2f pa %.1f C ",
+                    airdata_node.getFloat("baro_press_pa"),
+                    airdata_node.getFloat("baro_tempC"));
+    console->printf("Pitot: %.4f pa %.1f C %d errors\n",
+                    airdata_node.getFloat("diffPress_pa"),
+                    airdata_node.getFloat("temp_C"),
+                    airdata_node.getUInt("error_count"));
 }
 
 // output a binary representation of various volt/amp sensors

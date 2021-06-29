@@ -3,9 +3,6 @@
 
 #include <AP_SerialManager/AP_SerialManager.h>
 
-// maybe we need these?
-#include <GCS_MAVLink/GCS_Dummy.h>
-
 #include "setup_board.h"
 
 #include "time.h"
@@ -17,13 +14,7 @@
 // Serial manager is needed for UART communications
 static AP_SerialManager serial_manager;
 
-// create fake gcs object (need for the AP gps driver)
-GCS_Dummy _gcs;
-const AP_Param::GroupInfo GCS_MAVLINK_Parameters::var_info[] = {
-    AP_GROUPEND
-};
-
-
+// fake gcs object needed and created in top level FMU code.
 
 void gps_mgr_t::setup() {
     gps_node = PropertyNode("/sensors/gps");

@@ -2,7 +2,7 @@
 
 // a class to implement a simple low pass filter
 
-class LowPassFilter {
+class rcLowPassFilter {
     
 private:
     
@@ -19,10 +19,10 @@ private:
     
 public:
     
-    LowPassFilter();
-    LowPassFilter( double time_factor );
-    LowPassFilter( double time_factor, double init );
-    ~LowPassFilter();
+    rcLowPassFilter();
+    rcLowPassFilter( double time_factor );
+    rcLowPassFilter( double time_factor, double init );
+    ~rcLowPassFilter();
     
     inline void set_time_factor( double time_factor ) {
 	_time_factor = time_factor;

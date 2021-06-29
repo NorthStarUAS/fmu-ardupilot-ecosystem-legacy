@@ -26,11 +26,14 @@ progress.
 
 ## Some major bullet point todo list items:
 
+- temp and mag calibration based on EKF when it is in a high confidence state
 - move accel calibration code over and test.
-  - (x) implement fit quality metrics
-  - strap down (for rotating gyros & mags) vs affine (for rotation,
+  - affine_from_points() verbocity
+  - (x) double check strapdown rotation matrix extracted from affine is correct
+  - (x) strap down (for rotating gyros & mags) vs affine (for rotation,
     scale, and bias of accels.)
-  - save to sd card
+  - (x) implement fit quality metrics
+  - (x) save to sd card
 
 - Is there a way we can activate console type messages over the
   telemetry port for convenience when the system is installed and
