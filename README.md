@@ -91,26 +91,25 @@ June 2021.
 - port ekf15 heap allocation changes over to ekf15_mag
 - test servo outputs/mixing
 - pid's
+- tecs
 - temp and mag calibration based on EKF when it is in a high confidence state
-- move accel calibration code over and test.
-  - affine_from_points() verbosity
+- affine_from_points() verbosity
+- figure out/test airdata connections (no external port on pixracer?)
+- decide how best to detect and choose when multiple imu and compass
+  are available.
+- Is there a way we can activate console type messages over the
+  telemetry port for convenience when the system is installed and
+  harder to access the usb console port?
+- (x) look through config messages and see what needs to be changed for
+  the new system. (new rc-flight driver to match this updated so we
+  can continue to support the goldy3 variant separately as long as we
+  have that hardware in play.)
+- (x) move accel calibration code over and test.
   - (x) double check strapdown rotation matrix extracted from affine is correct
   - (x) strap down (for rotating gyros & mags) vs affine (for rotation,
     scale, and bias of accels.)
   - (x) implement fit quality metrics
   - (x) save to sd card
-
-- Is there a way we can activate console type messages over the
-  telemetry port for convenience when the system is installed and
-  harder to access the usb console port?
-
-- figure out/test airdata connections (no external port on pixracer?)
-- decide how best to detect and choose when multiple imu and compass
-  are available.
-- look through config messages and see what needs to be changed for
-  the new system. (new rc-flight driver to match this updated so we
-  can continue to support the goldy3 variant separately as long as we
-  have that hardware in play.)
 * (x) figure out the wscript magic to allow me to organize my code in
   subdirectories
 * (x) sort out how I really want to organize classes vs. singletons
