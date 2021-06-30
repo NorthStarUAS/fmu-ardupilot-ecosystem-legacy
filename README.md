@@ -88,18 +88,21 @@ June 2021.
 
 ## Some major bullet point todo list items:
 
-- port ekf15 heap allocation changes over to ekf15_mag
+- need to test drive ekf15_mag with some sort of preliminary mag
+  calibration.
 - test servo outputs/mixing
 - pid's
 - tecs
 - temp and mag calibration based on EKF when it is in a high confidence state
 - affine_from_points() verbosity
 - figure out/test airdata connections (no external port on pixracer?)
+- direct sd card logging
 - decide how best to detect and choose when multiple imu and compass
   are available.
 - Is there a way we can activate console type messages over the
   telemetry port for convenience when the system is installed and
   harder to access the usb console port?
+- (x) port ekf15 heap allocation changes over to ekf15_mag
 - (x) look through config messages and see what needs to be changed for
   the new system. (new rc-flight driver to match this updated so we
   can continue to support the goldy3 variant separately as long as we

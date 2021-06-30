@@ -30,7 +30,6 @@ const double Rns = 6.386034030458164e+006; // earth radius
 
 const float g = 9.814;
 
-
 // BRT: (1) I think there are some several identity and sparse
 // matrices, so probably some optimization still left there.  (2)
 // Seems like a lot of the transforms could be more efficiently done
@@ -311,10 +310,6 @@ void EKF15::time_update(IMUdata imu) {
 	
     // Covariance Time Update
     P = PHI * P * PHI.transpose() + Q;			// P = PHI*P*PHI' + Q
-    //t1 = PHI * P;
-    //t2 = PHI.transpose();
-    //t3 = t1 * t2;
-    //P = t3 + Q;
     P = (P + P.transpose()) * 0.5;			// P = 0.5*(P+P')
 	
     nav.Pp0 = P(0,0);     nav.Pp1 = P(1,1);     nav.Pp2 = P(2,2);
@@ -352,9 +347,7 @@ void EKF15::measurement_update(GPSdata gps) {
     // Kalman Gain
     // K = P*H'*inv(H*P*H'+R)
     K = P * H.transpose() * (H * P * H.transpose() + R).inverse();
-    //t1_6 = H * P * H.transpose();
-    //K = P * H.transpose() * (t1_6 + R).inverse();
-		
+
     // Covariance Update
     ImKH = I15 - K * H;	                // ImKH = I - K*H
 		
@@ -409,24 +402,3 @@ NAVdata EKF15::get_nav() {
 
     return nav;
 }
-
-
-#ifdef HAVE_BOOST_PYTHON
-
-// The following constructs a python interface for this class.
-
-#include <boost/python.hpp>
-using namespace boost::python;
-
-BOOST_PYTHON_MODULE(EKF15)
-{
-    class_<EKF15>("EKF15")
-        .def("set_config", &EKF15::set_config)
-        .def("init", &EKF15::init)
-        .def("time_update", &EKF15::time_update)
-        .def("measurement_update", &EKF15::measurement_update)
-        .def("get_nav", &EKF15::get_nav)
-    ;
-}
-
-#endif // HAVE_BOOST_PYTHON

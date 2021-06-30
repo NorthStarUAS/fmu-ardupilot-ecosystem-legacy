@@ -14,12 +14,9 @@
  *
  */
 
-// #include <TimeLib.h>
-
-#include "coremag.h"
 #include "nav_constants.h"
 #include "nav_functions.h"
-
+#include "coremag.h"
 #include "ekf15_mag.h"
 
 const float P_P_INIT = 10.0;
@@ -70,6 +67,24 @@ void EKF15_mag::default_config()
 }
 
 void EKF15_mag::init(IMUdata imu, GPSdata gps) {
+    F.resize(15,15);
+    PHI.resize(15,15);
+    P.resize(15,15);
+    Qw.resize(15,15);
+    Q.resize(15,15);
+    ImKH.resize(15,15);
+    KRKt.resize(15,15);
+    I15.resize(15,15);
+
+    G.resize(15,12);
+    K.resize(15,0);
+
+    Rw.resize(12,12);
+
+    H.resize(9,15);
+
+    R.resize(6,6);
+
     I15.setIdentity();
     I3.setIdentity();
 
@@ -203,10 +218,6 @@ void EKF15_mag::time_update(IMUdata imu) {
 
     // ==================  Time Update  ===================
 
-    // AHRS Transformations
-    C_N2B = quat2dcm(quat);
-    C_B2N = C_N2B.transpose();
-	
     // Attitude Update
     // ... Calculate Navigation Rate
     Eigen::Vector3f vel_vec(nav.vn, nav.ve, nav.vd);
@@ -259,6 +270,10 @@ void EKF15_mag::time_update(IMUdata imu) {
     nav.phi = att_vec(0);
     nav.the = att_vec(1);
     nav.psi = att_vec(2);
+	
+    // AHRS Transformations
+    C_N2B = quat2dcm(quat);
+    C_B2N = C_N2B.transpose();
 	
     // Velocity Update
     dx = C_B2N * f_b;
@@ -339,7 +354,7 @@ void EKF15_mag::time_update(IMUdata imu) {
     nav.Pabx = P(9,9);    nav.Paby = P(10,10);  nav.Pabz = P(11,11);
     nav.Pgbx = P(12,12);  nav.Pgby = P(13,13);  nav.Pgbz = P(14,14);
 
-    // ==================  DONE TU  ===================
+    // ==================  DONE Time Update  ===================
 }
 
 void EKF15_mag::measurement_update(IMUdata imu, GPSdata gps) {
@@ -402,7 +417,7 @@ void EKF15_mag::measurement_update(IMUdata imu, GPSdata gps) {
     // Kalman Gain
     // K = P*H'*inv(H*P*H'+R)
     K = P * H.transpose() * (H * P * H.transpose() + R).inverse();
-		
+
     // Covariance Update
     ImKH = I15 - K * H;	                // ImKH = I - K*H
 		
@@ -429,7 +444,7 @@ void EKF15_mag::measurement_update(IMUdata imu, GPSdata gps) {
     nav.vn = nav.vn + x(3);
     nav.ve = nav.ve + x(4);
     nav.vd = nav.vd + x(5);
-		
+
     // Attitude correction
     Eigen::Quaternionf dq = Eigen::Quaternionf(1.0, x(6), x(7), x(8));
     quat = (quat * dq).normalized();

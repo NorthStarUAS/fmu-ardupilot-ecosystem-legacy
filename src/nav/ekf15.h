@@ -69,7 +69,7 @@ private:
     Vector15f x;                                       // 15x1
     Vector6f y;                                        // 6x1
     Eigen::Matrix3f C_N2B, C_B2N, I3 /* identity */, temp33;
-    Eigen::Vector3f grav, f_b, om_ib, /*nr,*/ pos_ins_ned, pos_gps_ned, dx, mag_ned;
+    Eigen::Vector3f grav, f_b, om_ib, pos_ins_ned, pos_gps_ned, dx, mag_ned;
 
     Eigen::Quaternionf quat;
 
