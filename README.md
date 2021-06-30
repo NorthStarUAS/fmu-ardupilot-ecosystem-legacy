@@ -18,17 +18,23 @@ June 2021.
 
 ## Demonstrated design ideas
 
-* Property tree, shared hierarchical data structure.
-  * Implements a publish/subscribe system.
+* Property tree: a hierarchical data structure composed of nested
+  arrays & dicts.
+  * Implements a cooperative publish/subscribe system.
+  * Simplifies and centralizes the data flow between modules.
   * Integrates cleanly with json (reading and writing.)
+  * Brings some conveniences of scripted languages to C++.  Flexibility
+    of run time data creation, reference by ascii name, type agnostic.
   * Built on top of rapidjson which provides all the low level tree
-    building and access details.
+    building and accessor functionality.
   * Eliminates (somewhat) the tangled web of interconnected #include
-    dependencies.
+    dependencies that grow organically with many substantial C++ projects.
   * Eliminates most initialization order dependencies.
+  * Supports a single interface (via the shared property tree) to
+    integrated script modules called from anywhere in the code.
     
-* Thread-less design: grand loop structure. (excepting the service and
-  driver threads that run under the hood in AP_HAL.)
+* Thread-less design: grand loop structure. (excepting the background
+  service and driver threads that are part of AP_HAL.)
 
 * Big processor / little processor architecture moves important
   functionality to the host (big) computer.  Simultaneously enables a
@@ -36,7 +42,7 @@ June 2021.
   workload between two systems leads to two simpler apps versus one
   single very complicated monolithic app.
 
-* Heavy use of python and scripted tasks on the big processor where
+* Extensive use of python and scripted tasks on the big processor where
   python is supported.
 
 * Accel calibration procedure that generates an affine matrix
