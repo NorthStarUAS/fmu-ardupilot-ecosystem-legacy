@@ -5,6 +5,7 @@
 #include "config.h"
 #include "imu_mgr.h"
 #include "pilot.h"              // reset defaults
+#include "rcfmu_messages.h"     // fixme: would like to remove this dependency
 
 // starting point for writing big eeprom struct
 static const int CONFIG_OFFSET = 2;
@@ -138,7 +139,7 @@ uint16_t config_t::set_serial_number(uint16_t value) {
 // }
 
 void config_t::actuator_gain_defaults() {
-    for ( int i = 0; i < message::pwm_channels; i++ ) {
+    for ( int i = 0; i < rcfmu_message::pwm_channels; i++ ) {
         // FIXME: defaults // pwm_cfg.act_gain[i] = 1.0;
     }
 }
@@ -151,7 +152,7 @@ void config_t::reset_defaults() {
     pilot.mixer.setup();
     pilot.mixer.sas_defaults();
     //power_cfg.have_attopilot = false;
-    //ekf_cfg.select = message::enum_nav::nav15;
+    //ekf_cfg.select = rcfmu_message::enum_nav::nav15;
 }
 
 void config_t::setup() {

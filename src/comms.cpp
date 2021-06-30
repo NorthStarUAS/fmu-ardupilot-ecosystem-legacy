@@ -14,7 +14,7 @@
 #include "pilot.h"              // update_ap()
 #include "nav/nav_constants.h"
 #include "serial_link.h"
-#include "aura4_messages.h"
+#include "rcfmu_messages.h"
 
 #include "comms.h"
 
@@ -41,8 +41,8 @@ bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size 
 
     // console->print("message id = "); console->print(id); console->print(" len = "); console->println(message_size);
     
-    if ( id == message::command_inceptors_id ) {
-        static message::command_inceptors_t inceptors;
+    if ( id == rcfmu_message::command_inceptors_id ) {
+        static rcfmu_message::command_inceptors_t inceptors;
         inceptors.unpack(buf, message_size);
         if ( message_size == inceptors.len ) {
             pilot.update_ap(&inceptors);
@@ -50,7 +50,7 @@ bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size 
         }
     // example of receiving a config message, doing something, and
     // replying with an ack
-    // } else if ( id == message::config_airdata_id ) {
+    // } else if ( id == rcfmu_message::config_airdata_id ) {
     //     config.airdata_cfg.unpack(buf, message_size);
     //     if ( message_size == config.airdata_cfg.len ) {
     //         console->printf("received new airdata config\n");
@@ -60,12 +60,12 @@ bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size 
     //         write_ack_bin( id, 0 );
     //         result = true;
     //     }
-    } else if ( id == message::command_zero_gyros_id && message_size == 1 ) {
+    } else if ( id == rcfmu_message::command_zero_gyros_id && message_size == 1 ) {
         console->printf("received zero gyros command\n");
         imu_mgr.gyros_calibrated = 0;   // start state
         write_ack_bin( id, 0 );
         result = true;
-    } else if ( id == message::command_reset_ekf_id && message_size == 1 ) {
+    } else if ( id == rcfmu_message::command_reset_ekf_id && message_size == 1 ) {
         console->printf("received reset ekf command\n");
         nav_mgr.reinit();
         write_ack_bin( id, 0 );
@@ -80,7 +80,7 @@ bool comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size 
 // output an acknowledgement of a message received
 int comms_t::write_ack_bin( uint8_t command_id, uint8_t subcommand_id )
 {
-    static message::command_ack_t ack;
+    static rcfmu_message::command_ack_t ack;
     ack.command_id = command_id;
     ack.subcommand_id = subcommand_id;
     ack.pack();
@@ -91,14 +91,14 @@ int comms_t::write_ack_bin( uint8_t command_id, uint8_t subcommand_id )
 // output a binary representation of the pilot manual (rc receiver) data
 int comms_t::write_pilot_in_bin()
 {
-    static message::pilot_t pilot1;
+    static rcfmu_message::pilot_t pilot1;
 
-    if (message::sbus_channels > MAX_RCIN_CHANNELS) {
+    if (rcfmu_message::sbus_channels > MAX_RCIN_CHANNELS) {
         return 0;
     }
     
     // receiver data
-    for ( int i = 0; i < message::sbus_channels; i++ ) {
+    for ( int i = 0; i < rcfmu_message::sbus_channels; i++ ) {
         pilot1.channel[i] = pilot_node.getFloat("manual", i);
     }
 
@@ -161,7 +161,7 @@ int comms_t::write_imu_bin()
     const float magScale = 0.01;
     const float tempScale = 0.01;
     
-    static message::imu_t imu1;
+    static rcfmu_message::imu_t imu1;
     imu1.millis = imu_node.getUInt("millis");
     imu1.raw[0] = intround(imu_node.getFloat("ax_raw") / accelScale);
     imu1.raw[1] = intround(imu_node.getFloat("ay_raw") / accelScale);
@@ -205,7 +205,7 @@ int comms_t::write_gps_bin()
     if ( gps_node.getUInt("millis") != gps_last_millis ) {
 #if 0 // fixme
         gps_last_millis = gps_node.getUInt("millis");
-        return serial.write_packet( message::aura_nav_pvt_id,
+        return serial.write_packet( rcfmu_message::aura_nav_pvt_id,
                                     (uint8_t *)(&(gps_mgr.gps_data)),
                                     sizeof(gps_mgr.gps_data) );
 #else
@@ -241,7 +241,7 @@ void comms_t::write_gps_ascii() {
 // output a binary representation of the Nav data
 int comms_t::write_nav_bin()
 {
-    static message::ekf_t nav_msg;
+    static rcfmu_message::ekf_t nav_msg;
     nav_msg.millis = imu_node.getUInt("millis"); // fixme?
     nav_msg.lat_rad = nav_node.getDouble("latitude_rad");
     nav_msg.lon_rad = nav_node.getDouble("longitude_rad");
@@ -325,7 +325,7 @@ void comms_t::write_nav_stats_ascii() {
 // output a binary representation of the barometer data
 int comms_t::write_airdata_bin()
 {
-    static message::airdata_t airdata1;
+    static rcfmu_message::airdata_t airdata1;
     // FIXME: proprty names
     airdata1.baro_press_pa = airdata_node.getFloat("baro_press_pa");
     airdata1.baro_temp_C = airdata_node.getFloat("baro_tempC");
@@ -352,7 +352,7 @@ void comms_t::write_airdata_ascii()
 // output a binary representation of various volt/amp sensors
 int comms_t::write_power_bin()
 {
-    static message::power_t power1;
+    static rcfmu_message::power_t power1;
     power1.avionics_v = power_node.getFloat("avionics_v");
     power1.int_main_v = power_node.getFloat("battery_volts");
     power1.ext_main_amp = power_node.getFloat("battery_amps");
@@ -372,7 +372,7 @@ void comms_t::write_power_ascii()
 int comms_t::write_status_info_bin()
 {
     static uint32_t write_millis = AP_HAL::millis();
-    static message::status_t status;
+    static rcfmu_message::status_t status;
 
     // This info is static or slow changing so we don't need to send
     // it at a high rate.

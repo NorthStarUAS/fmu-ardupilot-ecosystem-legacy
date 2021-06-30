@@ -5,7 +5,6 @@
 #include <AP_HAL/AP_HAL.h>
 
 #include "props2.h"
-#include "aura4_messages.h"
 
 class config_t {
     

@@ -3,7 +3,7 @@
 #include "setup_board.h"
 #include "props2.h"
 
-#include "aura4_messages.h"
+#include "rcfmu_messages.h"
 #include "mixer.h"
 
 class pilot_t {
@@ -87,7 +87,7 @@ public:
     bool read();
     void write();
     
-    void update_ap( message::command_inceptors_t *inceptors );
+    void update_ap( rcfmu_message::command_inceptors_t *inceptors );
 
 };
 

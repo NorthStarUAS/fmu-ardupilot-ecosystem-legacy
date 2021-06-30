@@ -88,7 +88,9 @@ June 2021.
 
 ## Some major bullet point todo list items:
 
+- rc-flight side driver, messaging, and 2 byte pkt_len serial_link version.
 - need to test drive ekf15_mag with some sort of preliminary mag
+  - messaging: payload[] needs to be exposed clearly
   calibration.
 - test servo outputs/mixing
 - pid's
@@ -102,6 +104,8 @@ June 2021.
 - Is there a way we can activate console type messages over the
   telemetry port for convenience when the system is installed and
   harder to access the usb console port?
+- (X) serial_link packet communication: (x) read len (x)write len (x)
+  checksum (x) payload new/realloc
 - (x) port ekf15 heap allocation changes over to ekf15_mag
 - (x) look through config messages and see what needs to be changed for
   the new system. (new rc-flight driver to match this updated so we

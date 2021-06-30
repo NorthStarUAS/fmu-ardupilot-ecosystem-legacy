@@ -5,7 +5,6 @@
 #include <AP_Baro/AP_Baro.h>
 
 #include "props2.h"
-#include "aura4_messages.h"
 
 class airdata_t {
 
