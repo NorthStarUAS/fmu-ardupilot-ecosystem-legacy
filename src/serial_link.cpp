@@ -27,6 +27,7 @@ void SerialLink::checksum( uint8_t id, uint8_t len_lo, uint8_t len_hi,
         c0 += (uint8_t)buf[i];
         c1 += c0;
     }
+
     *cksum0 = c0;
     *cksum1 = c1;
 }
@@ -94,8 +95,8 @@ bool SerialLink::update() {
         if ( _port->available() >= 2 ) {
             pkt_len_lo = _port->read();
             pkt_len_hi = _port->read();
-            pkt_len = pkt_len_hi << 8 & pkt_len_lo;
-            console->printf("size=%d\n", pkt_len);
+            pkt_len = pkt_len_hi << 8 | pkt_len_lo;
+            // console->printf("size=%d\n", pkt_len);
             if ( pkt_len > 4096 ) {
                 console->printf("nonsense packet size, skipping.\n");
                 // ignore nonsensical sizes
@@ -107,7 +108,7 @@ bool SerialLink::update() {
     }
     if ( state == 4 ) {
         if ( pkt_len > payload_len ) {
-            // reallocate buffer is new payload is larger than
+            // reallocate buffer if new payload is larger than
             // anything we've read so far.
             void *newbuf = hal.util->std_realloc(payload, pkt_len);
             if ( newbuf == nullptr ) {

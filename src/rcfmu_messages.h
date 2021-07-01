@@ -1,5 +1,14 @@
 #pragma once
 
+// Ardupilot realloc() support
+#if defined(ARDUPILOT_BUILD)
+  #include <AP_HAL/AP_HAL.h>
+  extern const AP_HAL::HAL& hal;
+  #define REALLOC(X, Y) hal.util->std_realloc( (X), (Y) )
+#else
+  #define REALLOC(X, Y) std::realloc( (X), (Y) )
+#endif
+
 #include <stdint.h>  // uint8_t, et. al.
 #include <stdlib.h>  // malloc() / free()
 #include <string.h>  // memcpy()
@@ -73,7 +82,7 @@ public:
         len = sizeof(_compact_t);
         // compute dynamic packet size (if neede)
         int size = len;
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         // copy values
         _compact_t *_buf = (_compact_t *)payload;
         _buf->command_id = command_id;
@@ -120,7 +129,7 @@ public:
         int size = len;
         size += path.length();
         size += json.length();
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         // copy values
         _compact_t *_buf = (_compact_t *)payload;
         _buf->path_len = path.length();
@@ -169,7 +178,7 @@ public:
         len = sizeof(_compact_t);
         // compute dynamic packet size (if neede)
         int size = len;
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         // copy values
         _compact_t *_buf = (_compact_t *)payload;
         for (int _i=0; _i<ap_channels; _i++) _buf->channel[_i] = intround(channel[_i] * 16384);
@@ -208,7 +217,7 @@ public:
         len = sizeof(_compact_t);
         // compute dynamic packet size (if neede)
         int size = len;
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         return true;
     }
 
@@ -242,7 +251,7 @@ public:
         len = sizeof(_compact_t);
         // compute dynamic packet size (if neede)
         int size = len;
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         return true;
     }
 
@@ -276,7 +285,7 @@ public:
         len = sizeof(_compact_t);
         // compute dynamic packet size (if neede)
         int size = len;
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         return true;
     }
 
@@ -314,7 +323,7 @@ public:
         len = sizeof(_compact_t);
         // compute dynamic packet size (if neede)
         int size = len;
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         // copy values
         _compact_t *_buf = (_compact_t *)payload;
         for (int _i=0; _i<sbus_channels; _i++) _buf->channel[_i] = intround(channel[_i] * 16384);
@@ -361,7 +370,7 @@ public:
         len = sizeof(_compact_t);
         // compute dynamic packet size (if neede)
         int size = len;
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         // copy values
         _compact_t *_buf = (_compact_t *)payload;
         _buf->millis = millis;
@@ -468,7 +477,7 @@ public:
         len = sizeof(_compact_t);
         // compute dynamic packet size (if neede)
         int size = len;
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         // copy values
         _compact_t *_buf = (_compact_t *)payload;
         _buf->iTOW = iTOW;
@@ -583,7 +592,7 @@ public:
         len = sizeof(_compact_t);
         // compute dynamic packet size (if neede)
         int size = len;
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         // copy values
         _compact_t *_buf = (_compact_t *)payload;
         _buf->baro_press_pa = baro_press_pa;
@@ -642,7 +651,7 @@ public:
         len = sizeof(_compact_t);
         // compute dynamic packet size (if neede)
         int size = len;
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         // copy values
         _compact_t *_buf = (_compact_t *)payload;
         _buf->int_main_v = uintround(int_main_v * 100);
@@ -699,7 +708,7 @@ public:
         len = sizeof(_compact_t);
         // compute dynamic packet size (if neede)
         int size = len;
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         // copy values
         _compact_t *_buf = (_compact_t *)payload;
         _buf->serial_number = serial_number;
@@ -788,7 +797,7 @@ public:
         len = sizeof(_compact_t);
         // compute dynamic packet size (if neede)
         int size = len;
-        payload = (uint8_t *)malloc(size);
+        payload = (uint8_t *)REALLOC(payload, size);
         // copy values
         _compact_t *_buf = (_compact_t *)payload;
         _buf->millis = millis;
