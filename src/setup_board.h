@@ -4,6 +4,7 @@
 #if HAL_OS_POSIX_IO
 #include <stdio.h>
 #endif
+#include <AP_SerialManager/AP_SerialManager.h>
 
 // work around these type errors:
 //   error: 'vsnprintf' was not declared in this scope
@@ -18,6 +19,16 @@ const int FIRMWARE_REV = 500;
 // * console->printf()
 extern const AP_HAL::HAL& hal;
 extern AP_HAL::UARTDriver *console;
+extern AP_SerialManager serial_manager;
+
+#include <AP_InertialSensor/AP_InertialSensor.h>
+#include <AP_AHRS/AP_AHRS.h>
+#include <AP_Baro/AP_Baro.h>
+#include <AP_Compass/AP_Compass.h>
+extern AP_InertialSensor ins;
+extern AP_AHRS_DCM ahrs;  // need ...
+extern AP_Baro baro; // Compass tries to set magnetic model based on location.
+extern Compass compass;
 
 // it would be nice if these were dynamically detected, but they drive
 // structure allocations and I need to think through that part of it

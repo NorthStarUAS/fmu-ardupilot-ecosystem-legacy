@@ -362,10 +362,10 @@ int comms_t::write_power_bin()
 
 void comms_t::write_power_ascii()
 {
-    console->printf("Avionics v: %.2f  Batt v: %.2f  Batt amp: %.2f\n",
-                    power_node.getFloat("avionics_v"),
-                    power_node.getFloat("battery_volts"),
-                    power_node.getFloat("battery_amps"));
+    printf("Avionics v: %.2f  Batt v: %.2f  Batt amp: %.2f\n",
+           power_node.getFloat("avionics_v"),
+           power_node.getFloat("battery_volts"),
+           power_node.getFloat("battery_amps"));
 }
 
 // output a binary representation of various status and config information
@@ -406,11 +406,11 @@ void comms_t::write_status_info_ascii()
 {
     // This info is static so we don't need to send it at a high rate ... once every 10 seconds (?)
     // with an immediate message at the start.
-    console->printf("Uptime: %d(sec)", (unsigned int)(AP_HAL::millis() / 1000));
-    console->printf(" SN: %d", config_node.getInt("serial_number"));
-    console->printf(" Firmware: %d", FIRMWARE_REV);
-    console->printf(" Main loop hz: %d", MASTER_HZ);
-    console->printf(" Baud: %d\n", DEFAULT_BAUD);
+    printf("Uptime: %d(sec)", (unsigned int)(AP_HAL::millis() / 1000));
+    printf(" SN: %d", config_node.getInt("serial_number"));
+    printf(" Firmware: %d", FIRMWARE_REV);
+    printf(" Main loop hz: %d", MASTER_HZ);
+    printf(" Baud: %d\n", DEFAULT_BAUD);
 }
 
 void comms_t::read_commands() {

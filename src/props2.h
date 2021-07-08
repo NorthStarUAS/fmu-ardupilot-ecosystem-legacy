@@ -37,7 +37,7 @@ public:
 
     bool hasChild(const char *name );
     PropertyNode getChild( const char *name, bool create=true );
-    PropertyNode getChild( const char *name, int index, bool create=true );
+    PropertyNode getChild( const char *name, unsigned int index, bool create=true );
 
     bool isNull();		// return true if pObj pointer is NULL
     
@@ -60,7 +60,7 @@ public:
     // indexed value getters
     bool getBool( const char *name, int index ); // return value as a bool
     int getInt( const char *name, int index ); // return value as an int
-    unsigned int getUInt( const char *name, int index ); // return value as an unsigned int
+    unsigned int getUInt( const char *name, unsigned int index ); // return value as an unsigned int
     float getFloat( const char *name, unsigned int index ); // return value as a float
     double getDouble( const char *name, unsigned int index ); // return value as a double
     string getString( const char *name, unsigned int index ); // return value as a string
@@ -74,6 +74,7 @@ public:
     bool setString( const char *name, string s ); // returns true if successful
 
     // indexed value setters
+    bool setUInt( const char *name, unsigned int index, unsigned int u ); // returns true if successful
     bool setFloat( const char *name, unsigned int index, float x ); // returns true if successful
 
     // load/merge json file under this node

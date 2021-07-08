@@ -81,8 +81,13 @@ void imu_mgr_t::set_mag_calibration() {
 
 // configure the IMU settings and setup the ISR to aquire the data
 void imu_mgr_t::setup() {
+    printf("imu_mgr.setup()\n\n");
+    hal.scheduler->delay(500);
     imu_node = PropertyNode("/sensors/imu");
     imu_calib_node = PropertyNode("/config/imu/calibration");
+    hal.scheduler->delay(100);
+    printf("before imu_hal.setup()\n");
+    hal.scheduler->delay(100);
     imu_hal.setup();
 }
 

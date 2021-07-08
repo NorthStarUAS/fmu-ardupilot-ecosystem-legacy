@@ -1,6 +1,7 @@
 #include <AP_HAL/AP_HAL.h>
 #include <AP_BoardConfig/AP_BoardConfig.h>
 #include <AP_ExternalAHRS/AP_ExternalAHRS.h>
+#include <AP_IOMCU/AP_IOMCU.h>
 #include <GCS_MAVLink/GCS_Dummy.h>
 
 #include "setup_board.h"
@@ -19,8 +20,20 @@
 
 const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 static AP_BoardConfig BoardConfig;
-AP_HAL::UARTDriver *console = hal.console;
+AP_HAL::UARTDriver *console;
 // AP_HAL::UARTDriver *console = hal.serial(1); // telemetry 1
+
+// Serial manager is needed for UART communications
+AP_SerialManager serial_manager;
+
+#include <AP_InertialSensor/AP_InertialSensor.h>
+#include <AP_AHRS/AP_AHRS.h>
+#include <AP_Baro/AP_Baro.h>
+#include <AP_Compass/AP_Compass.h>
+AP_InertialSensor ins;
+AP_AHRS_DCM ahrs;  // need ...
+AP_Baro baro; // Compass tries to set magnetic model based on location.
+Compass compass;
 
 // needed by imu_hal and airdata(baro)
 #if HAL_EXTERNAL_AHRS_ENABLED
@@ -32,6 +45,11 @@ GCS_Dummy _gcs;
 const AP_Param::GroupInfo GCS_MAVLINK_Parameters::var_info[] = {
     AP_GROUPEND
 };
+
+#if CONFIG_HAL_BOARD == HAL_BOARD_SITL
+#include <SITL/SITL.h>
+SITL::SITL sitl;
+#endif
 
 static PropertyNode config_nav_node;
 static PropertyNode pilot_node;
@@ -49,7 +67,9 @@ void loop();
 
 void setup() {
     BoardConfig.init();         // setup any board specific drivers
+    serial_manager.init();
 
+    console = hal.console;
     console->begin(57600);
     hal.scheduler->delay(2000); // give the electrons a chance to settle
     
@@ -87,6 +107,7 @@ void setup() {
     airdata.setup();
     
     // initialize the IMU and calibration matrices
+    console->printf("before imu_mgr.setup()\n");
     imu_mgr.setup();
     imu_mgr.set_strapdown_calibration();
     imu_mgr.set_accel_calibration();
@@ -114,8 +135,8 @@ void setup() {
 
     menu.setup();
     
-    console->printf("Setup finished.\n");
-    console->printf("Ready and transmitting...\n");
+    printf("Setup finished.\n");
+    printf("Ready and transmitting...\n");
 }
 
 // main loop
@@ -128,6 +149,7 @@ void loop() {
     static uint32_t counter = 0;
 
     // this is the heartbeat of the system here (DT_MILLIS)
+    // printf("%d - %d >= %d\n", AP_HAL::millis(), mainTimer, DT_MILLIS);
     if ( AP_HAL::millis() - mainTimer >= DT_MILLIS ) {
         if ( AP_HAL::millis() - mainTimer > DT_MILLIS ) {
             comms.main_loop_timer_misses++;

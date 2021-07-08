@@ -1,5 +1,6 @@
 // Module to query air data sensors
 
+#include "setup_board.h"
 #include "airdata.h"
 
 void airdata_t::setup() {
@@ -7,6 +8,7 @@ void airdata_t::setup() {
     error_count = 0;
     airdata_node.setUInt("error_count", error_count);
     // initialize the barometer
+    console->printf("Initializing & calibrating barometer...\n");
     barometer.init();
     barometer.calibrate();
 }

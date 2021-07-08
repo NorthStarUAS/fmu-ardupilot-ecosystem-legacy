@@ -11,8 +11,6 @@
 #include "nav/nav_constants.h"
 #include "gps_mgr.h"
 
-// Serial manager is needed for UART communications
-static AP_SerialManager serial_manager;
 
 // fake gcs object needed and created in top level FMU code.
 
@@ -20,7 +18,7 @@ void gps_mgr_t::setup() {
     gps_node = PropertyNode("/sensors/gps");
     
     // Initialize the UART for GPS system
-    serial_manager.init();
+    //    serial_manager.init();
     gps.init(serial_manager);
 }
 

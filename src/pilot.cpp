@@ -43,6 +43,7 @@ void pilot_t::setup() {
     config_eff_gains = PropertyNode("/config/pwm");
     effector_node = PropertyNode("/effectors");
     pilot_node = PropertyNode("/pilot");
+    rcin_node = PropertyNode("/sensors/rc-input");
     
     manual_inputs[0] = ap_inputs[0] = -1.0; // autopilot disabled (manual)
     manual_inputs[1] = ap_inputs[1] = -1.0; // throttle safety enabled
@@ -57,7 +58,17 @@ void pilot_t::setup() {
         config_eff_gains.setFloat("gains", i, 1.0);
     }
     
+    // enable channels
+    hal.rcout->force_safety_off();
+    for ( uint8_t i = size; i < MAX_RCOUT_CHANNELS; i++ ) {
+        hal.rcout->enable_ch(i);
+    }
+    // for ( uint8_t i = MAX_RCOUT_CHANNELS; i < 14; i++ ) {
+    //     hal.rcout->enable_ch(i);
+    // }
+    
     mixer.setup();
+    switches.setup();
 }
 
 bool pilot_t::read() {
@@ -69,6 +80,7 @@ bool pilot_t::read() {
         last_input = AP_HAL::millis();
         nchannels = hal.rcin->read(pwm_inputs, MAX_RCIN_CHANNELS);
         for ( uint8_t i = 0; i < nchannels; i++ ) {
+            rcin_node.setUInt("channel", i, pwm_inputs[i]);
             manual_inputs[i] = pwm2norm(pwm_inputs[i], i);
         }
         
@@ -104,13 +116,21 @@ void pilot_t::write() {
     // available inputs have been parsed/sorted so do the mixing right
     // before outputing the effector commands.
     mixer.update();
+    switches.update();
+    
     for ( uint8_t i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
         // float norm_val = mixer.outputs[i] * config.pwm_cfg.act_gain[i];
         float norm_val = effector_node.getFloat("channel", i)
             * config_eff_gains.getFloat("gains", i);
         uint16_t pwm_val = norm2pwm(norm_val, i);
+        // console->printf("%d ", pwm_val);
         hal.rcout->write(i, pwm_val);
     }
+    // console->printf("\n");
+    // pwm_test = 1000 + (AP_HAL::millis() % 5000) / 5;
+    // for ( uint8_t i = MAX_RCOUT_CHANNELS; i < 14; i++ ) {
+    //     hal.rcout->write(i, pwm_test);
+    // }
     changed = false;
 }
 

@@ -1,0 +1,11 @@
+{
+    "manual-override": {
+        "rc-channel": 0,
+        "states": 2
+    },
+    "throttle-safety": {
+        "rc-channel": 1,
+        "states": 2
+    }
+}
+

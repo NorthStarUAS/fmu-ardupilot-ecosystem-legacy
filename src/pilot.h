@@ -5,6 +5,7 @@
 
 #include "rcfmu_messages.h"
 #include "mixer.h"
+#include "switches.h"
 
 class pilot_t {
     
@@ -21,6 +22,7 @@ private:
     PropertyNode config_eff_gains;
     PropertyNode effector_node;
     PropertyNode pilot_node;
+    PropertyNode rcin_node;
 
     // convenience
     inline bool ap_enabled() { return manual_inputs[0] >= 0.0; }
@@ -82,6 +84,7 @@ public:
     bool changed = false;
 
     mixer_t mixer;
+    switches_t switches;
     
     void setup();
     bool read();

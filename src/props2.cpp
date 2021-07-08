@@ -65,7 +65,7 @@ static Value *find_node_from_path(Value *start_node, string path, bool create) {
         if ( tokens[i].length() == 0 ) {
             continue;
         }
-        // printf("  token: %s\n", tokens[i].c_str());
+        //printf("  token: %s\n", tokens[i].c_str());
         if ( is_integer(tokens[i]) ) {
             // array reference
             int index = std::stoi(tokens[i].c_str());
@@ -96,7 +96,7 @@ static Value *find_node_from_path(Value *start_node, string path, bool create) {
             node = &(*node)[0];
         }
     }
-    // printf(" found/create node->%d\n", (int)node);
+    // printf(" found/create node->%p\n", node);
     return node;
 }
 
@@ -124,6 +124,15 @@ bool PropertyNode::hasChild( const char *name ) {
 }
 
 PropertyNode PropertyNode::getChild( const char *name, bool create ) {
+    if ( val->IsObject() ) {
+        Value *child = find_node_from_path(val, name, create);
+        return PropertyNode(child);
+    }
+    printf("%s not an object...\n", name);
+    return PropertyNode();
+}
+
+PropertyNode PropertyNode::getChild( const char *name, unsigned int index, bool create ) {
     if ( val->IsObject() ) {
         Value *child = find_node_from_path(val, name, create);
         return PropertyNode(child);
@@ -388,6 +397,28 @@ string PropertyNode::getString( const char *name ) {
     return (string)name + ": not an object";
 }
 
+unsigned int PropertyNode::getUInt( const char *name, unsigned int index ) {
+    if ( val->IsObject() ) {
+        if ( val->HasMember(name) ) {
+            Value &v = (*val)[name];
+            if ( v.IsArray() ) {
+                if ( index < v.Size() ) {
+                    return getValueAsUInt(v[index]);
+                } else {
+                    printf("index out of bounds: %s\n", name);
+                }
+            } else {
+                printf("not an array: %s\n", name);
+            }
+        } else {
+            // printf("no member in getFloat(%s, %d)\n", name, index);
+        }
+    } else {
+        printf("v is not an object\n");
+    }
+    return 0;
+}
+
 float PropertyNode::getFloat( const char *name, unsigned int index ) {
     if ( val->IsObject() ) {
         if ( val->HasMember(name) ) {
@@ -505,6 +536,31 @@ bool PropertyNode::setString( const char *name, string s ) {
         // printf("%s already exists\n", name);
     }
     (*val)[name].SetString(s.c_str(), s.length(), doc.GetAllocator());
+    return true;
+}
+
+bool PropertyNode::setUInt( const char *name, unsigned int index, unsigned int u ) {
+    if ( !val->IsObject() ) {
+        printf("  converting value to object\n");
+        // hal.scheduler->delay(100);
+        val->SetObject();
+    }
+    if ( !val->HasMember(name) ) {
+        // printf("creating %s\n", name);
+        Value key(name, doc.GetAllocator());
+        Value a(kArrayType);
+        val->AddMember(key, a, doc.GetAllocator());
+    } else {
+        // printf("%s already exists\n", name);
+        Value &a = (*val)[name];
+        if ( ! a.IsArray() ) {
+            printf("converting member to array: %s\n", name);
+            a.SetArray();
+        }
+    }
+    Value &a = (*val)[name];
+    extend_array(&a, index);    // protect against out of range
+    a[index] = u;
     return true;
 }
 
@@ -629,7 +685,7 @@ static bool rename_file(const char *current_name, const char *new_name) {
     // open a file in write mode
     open_fd = AP::FS().open(new_name, O_WRONLY | O_CREAT);
     if (open_fd == -1) {
-        printf("Open %s failed\n", new_name, strerror(errno));
+        printf("Open %s failed: %s\n", new_name, strerror(errno));
         return false;
     }
 
@@ -671,7 +727,7 @@ static bool save_json( const char *file_path, Value *v ) {
     // open a file in write mode
     const int open_fd = AP::FS().open(file_path, O_WRONLY | O_CREAT);
     if (open_fd == -1) {
-        printf("Open %s failed\n", file_path, strerror(errno));
+        printf("Open %s failed: %s\n", file_path, strerror(errno));
         return false;
     }
 
@@ -712,9 +768,9 @@ bool PropertyNode::load( const char *file_path ) {
     }
     recursively_expand_includes(val);
     
-    printf("Updated node contents:\n");
-    pretty_print();
-    printf("\n");
+    // printf("Updated node contents:\n");
+    // pretty_print();
+    // printf("\n");
 
     return true;
 }
