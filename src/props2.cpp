@@ -251,6 +251,30 @@ static unsigned int getValueAsUInt( Value &v ) {
     return 0;
 }
 
+static uint64_t getValueAsUInt64( Value &v ) {
+    if ( v.IsBool() ) {
+        return v.GetBool();
+    } else if ( v.IsInt() ) {
+        return v.GetInt();
+    } else if ( v.IsUint() ) {
+        return v.GetUint();
+    } else if ( v.IsInt64() ) {
+        return v.GetInt64();
+    } else if ( v.IsUint64() ) {
+        return v.GetUint64();
+    } else if ( v.IsFloat() ) {
+        return v.GetFloat();
+    } else if ( v.IsDouble() ) {
+        return v.GetDouble();
+    } else if ( v.IsString() ) {
+        string s = v.GetString();
+        return std::stoi(s);
+    } else {
+        printf("Unknown type in getValueAsUInt()\n");
+    }
+    return 0;
+}
+
 static float getValueAsFloat( Value &v ) {
     if ( v.IsBool() ) {
         return v.GetBool();
@@ -359,6 +383,15 @@ unsigned int PropertyNode::getUInt( const char *name ) {
     if ( val->IsObject() ) {
         if ( val->HasMember(name) ) {
             return getValueAsUInt((*val)[name]);
+        }
+    }
+    return 0;
+}
+
+uint64_t PropertyNode::getUInt64( const char *name ) {
+    if ( val->IsObject() ) {
+        if ( val->HasMember(name) ) {
+            return getValueAsUInt64((*val)[name]);
         }
     }
     return 0;
@@ -486,6 +519,22 @@ bool PropertyNode::setUInt( const char *name, unsigned int u ) {
         // printf("%s already exists\n", name);
     }
     (*val)[name] = u;
+    return true;
+}
+
+bool PropertyNode::setUInt64( const char *name, uint64_t u64 ) {
+    if ( !val->IsObject() ) {
+        val->SetObject();
+    }
+    Value newval(u64);
+    if ( !val->HasMember(name) ) {
+        // printf("creating %s\n", name);
+        Value key(name, doc.GetAllocator());
+        val->AddMember(key, newval, doc.GetAllocator());
+    } else {
+        // printf("%s already exists\n", name);
+    }
+    (*val)[name] = u64;
     return true;
 }
 
