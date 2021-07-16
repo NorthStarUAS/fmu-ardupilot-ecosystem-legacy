@@ -177,7 +177,7 @@ void loop() {
         if ( true) {
             comms.output_counter += comms.write_pilot_in_bin();
             comms.output_counter += comms.write_gps_bin();
-            // comms.output_counter += comms.write_airdata_bin();
+            comms.output_counter += comms.write_airdata_bin();
             comms.output_counter += comms.write_power_bin();
             // do a little extra dance with the return value because
             // write_status_info_bin() can reset comms.output_counter (but
