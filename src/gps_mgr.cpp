@@ -73,8 +73,8 @@ void gps_mgr_t::update() {
         
         // publish
         gps_node.setUInt("millis", gps_millis);
-        gps_node.setFloat("timestamp", gps_millis / 1000.0);
-        gps_node.setFloat("unix_sec", unix_sec);
+        gps_node.setDouble("timestamp", gps_millis / 1000.0);
+        gps_node.setUInt64("unix_usec",  time_usec);
         const Location &loc = gps.location();
         gps_node.setInt("latitude_raw", loc.lat);
         gps_node.setInt("longitude_raw", loc.lng);
