@@ -80,7 +80,7 @@ void nav_mgr_t::configure() {
 void nav_mgr_t::update() {
 #if defined(AURA_ONBOARD_EKF)
     IMUdata imu1;
-    imu1.time = imu_node.getFloat("timestamp");
+    imu1.time = imu_node.getDouble("timestamp");
     imu1.p = imu_node.getFloat("p_rps");
     imu1.q = imu_node.getFloat("q_rps");
     imu1.r = imu_node.getFloat("r_rps");
@@ -92,8 +92,8 @@ void nav_mgr_t::update() {
     imu1.hz = imu_node.getFloat("hz");
     
     GPSdata gps1;
-    gps1.time = gps_node.getFloat("timestamp");
-    gps1.unix_sec = gps_node.getFloat("unix_sec");
+    gps1.time = gps_node.getDouble("timestamp");
+    gps1.unix_sec = gps_node.getDouble("unix_sec");
     gps1.lat = gps_node.getDouble("latitude_deg");
     gps1.lon = gps_node.getDouble("longitude_deg");
     gps1.alt = gps_node.getFloat("altitude_m");

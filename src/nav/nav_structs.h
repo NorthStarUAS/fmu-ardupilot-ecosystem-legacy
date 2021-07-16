@@ -13,7 +13,7 @@
 #pragma once
 
 struct IMUdata {
-    float time;                 // seconds
+    double time;                // seconds
     float p, q, r;		// rad/sec
     float ax, ay, az;		// m/sec^2
     float hx, hy, hz;		// guass
@@ -21,7 +21,7 @@ struct IMUdata {
 };
 
 struct GPSdata {
-    float time;                 // seconds
+    double time;                // seconds
     double unix_sec;		// seconds in unix time reference
     double lat, lon;            // rad
     float alt;                  // meter
@@ -30,7 +30,7 @@ struct GPSdata {
 };
 
 struct Airdata {
-    float time;                 // seconds
+    double time;                // seconds
     float static_press;         // mbar
     float diff_press;		// pa
     float temp;                 // degree C
@@ -52,7 +52,7 @@ enum errdefs {
 
 /// Navigation filter data structure
 struct NAVdata {
-    float time;              // [sec], timestamp of NAV filter
+    double time;             // [sec], timestamp of NAV filter
     double lat;              // [rad], geodetic latitude estimate
     double lon;              // [rad], geodetic longitude estimate
     float alt;               // [m], altitude relative to WGS84 estimate
