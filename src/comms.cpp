@@ -202,15 +202,29 @@ void comms_t::write_imu_ascii()
 // output a binary representation of the GPS data
 int comms_t::write_gps_bin()
 {
+    static rcfmu_message::gps_t gps_msg;
     if ( gps_node.getUInt("millis") != gps_last_millis ) {
-#if 0 // fixme
         gps_last_millis = gps_node.getUInt("millis");
-        return serial.write_packet( rcfmu_message::aura_nav_pvt_id,
-                                    (uint8_t *)(&(gps_mgr.gps_data)),
-                                    sizeof(gps_mgr.gps_data) );
-#else
-        return 0;
-#endif
+        gps_msg.millis = gps_node.getUInt("millis");
+        gps_msg.unix_usec = gps_node.getUInt64("unix_usec");
+        // for ( int i = 0; i < 8; i++ ) {
+        //     printf("%02X ", *(uint8_t *)(&(gps_msg.unix_usec) + i));
+        // }
+        // printf("%ld\n", gps_msg.unix_usec);
+        gps_msg.num_sats = gps_node.getInt("satellites");
+        gps_msg.status = gps_node.getInt("status");
+        gps_msg.latitude_raw = gps_node.getInt("latitude_raw");
+        gps_msg.longitude_raw = gps_node.getInt("longitude_raw");
+        gps_msg.altitude_m = gps_node.getDouble("altitude_m");
+        gps_msg.vn_mps = gps_node.getFloat("vn_mps");
+        gps_msg.ve_mps = gps_node.getFloat("ve_mps");
+        gps_msg.vd_mps = gps_node.getFloat("vd_mps");
+        gps_msg.hAcc = gps_node.getFloat("hAcc");
+        gps_msg.vAcc = gps_node.getFloat("vAcc");
+        gps_msg.hdop = gps_node.getFloat("hdop");
+        gps_msg.vdop = gps_node.getFloat("vdop");
+        gps_msg.pack();
+        return serial.write_packet( gps_msg.id, gps_msg.payload, gps_msg.len );
     } else {
         return 0;
     }
