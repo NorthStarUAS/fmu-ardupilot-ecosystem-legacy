@@ -1,4 +1,5 @@
 #include <AP_HAL/AP_HAL.h>
+#include <AP_BoardConfig/AP_BoardConfig.h> // fixme: debugging
 
 #include "setup_board.h"
 
@@ -11,9 +12,9 @@ static const uint16_t PWM_CENTER = (PWM_MIN + PWM_MAX) / 2;
 static const uint16_t PWM_HALF_RANGE = PWM_MAX - PWM_CENTER;
 static const uint16_t PWM_RANGE = PWM_MAX - PWM_MIN;
 
-float pilot_t::pwm2norm(uint16_t pwm_val, uint8_t i) {
+float pilot_t::rcin2norm(uint16_t pwm_val, uint8_t channel) {
     float norm = 0.0;
-    if ( pwm_symmetrical & (1<<i) ) {
+    if ( rcin_symmetrical & (1<<channel) ) {
         // i.e. aileron, rudder, elevator
         norm = (float)((int)pwm_val - PWM_CENTER) / PWM_HALF_RANGE;
     } else {
@@ -23,9 +24,9 @@ float pilot_t::pwm2norm(uint16_t pwm_val, uint8_t i) {
     return norm;
 }
 
-uint16_t pilot_t::norm2pwm(float norm_val, uint8_t i) {
+uint16_t pilot_t::norm2rcout(float norm_val, uint8_t channel) {
     uint16_t output = PWM_CENTER;
-    if ( pwm_symmetrical & (1<<i) ) {
+    if ( rcout_symmetrical & (1<<channel) ) {
         output = PWM_CENTER + (int)(PWM_HALF_RANGE * norm_val); // * config.pwm_cfg.act_gain[i]);
     } else {
         output = PWM_MIN + (int)(PWM_RANGE * norm_val); // * config.pwm_cfg.act_gain[i]);
@@ -59,13 +60,14 @@ void pilot_t::setup() {
     }
     
     // enable channels
-    hal.rcout->force_safety_off();
-    for ( uint8_t i = size; i < MAX_RCOUT_CHANNELS; i++ ) {
+    for ( uint8_t i = 0; i < 6 /*MAX_RCOUT_CHANNELS*/; i++ ) {
         hal.rcout->enable_ch(i);
     }
     // for ( uint8_t i = MAX_RCOUT_CHANNELS; i < 14; i++ ) {
     //     hal.rcout->enable_ch(i);
     // }
+    hal.rcout->force_safety_off();
+    hal.util->set_soft_armed(true);
     
     mixer.setup();
     switches.setup();
@@ -81,7 +83,7 @@ bool pilot_t::read() {
         nchannels = hal.rcin->read(pwm_inputs, MAX_RCIN_CHANNELS);
         for ( uint8_t i = 0; i < nchannels; i++ ) {
             rcin_node.setUInt("channel", i, pwm_inputs[i]);
-            manual_inputs[i] = pwm2norm(pwm_inputs[i], i);
+            manual_inputs[i] = rcin2norm(pwm_inputs[i], i);
         }
         
         // publish
@@ -117,12 +119,16 @@ void pilot_t::write() {
     // before outputing the effector commands.
     mixer.update();
     switches.update();
-    
+
+    /*console->printf("safety: %d armed: %d\n",
+                    hal.util->safety_switch_state(),
+                    hal.util->get_soft_armed());*/
+
     for ( uint8_t i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
         // float norm_val = mixer.outputs[i] * config.pwm_cfg.act_gain[i];
         float norm_val = effector_node.getFloat("channel", i)
             * config_eff_gains.getFloat("gains", i);
-        uint16_t pwm_val = norm2pwm(norm_val, i);
+        uint16_t pwm_val = norm2rcout(norm_val, i);
         // console->printf("%d ", pwm_val);
         hal.rcout->write(i, pwm_val);
     }
