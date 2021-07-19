@@ -70,30 +70,19 @@ June 2021.
   lab 15-state EKF (and magnetometer version.)  Designed to run
   continuously and ubiquitously.
   
-## Short term notes to self:
-
-* Uart output on the telem ports of the Pixracer have an issue.  There
-  is no data loss, but my packets are getting clumped together into
-  50hz chunks, not the 100hz (or whatever the main loop rate is.)  I
-  chased this all around and it really looks like AP_HAL / ChibiOS are
-  doing everything right and flushing out the buffers to DMA and
-  getting a signal back from DMA that the work is done.  The tx buffer
-  is empty at the start of every main loop iteration (100hz.)  So I
-  don't know ... the problem may be in Pixracer hardware, something
-  with my ftdi cable, I don't know.  I'm giving up on it now, but know
-  that I tried everything I could think of.
-
-  Note that all this works as intended if I write data out the console
-  (usb) port on the Pixracer.
-
 ## Some major bullet point todo list items:
 
-- rc-flight side driver, messaging, and 2 byte pkt_len serial_link version.
 - need to test drive ekf15_mag with some sort of preliminary mag
-  - messaging: payload[] needs to be exposed clearly
   calibration.
-- test servo outputs/mixing
+- test servo outputs (seems to be working?)
+  - throttle scaling wrong (not-symmetrical)
+  
 - pid's
+- switches / modes
+  - ap/thr-safe based on switch config or hard coded?
+  - a 3-pos switch in binary mode ... what happens in that ill defined
+    middle state?
+  
 - tecs
 - temp and mag calibration based on EKF when it is in a high confidence state
 - affine_from_points() verbosity
@@ -104,14 +93,22 @@ June 2021.
 - Is there a way we can activate console type messages over the
   telemetry port for convenience when the system is installed and
   harder to access the usb console port?
-- (X) serial_link packet communication: (x) read len (x)write len (x)
+
+* (x) Breadboard with pixracer + beaglebone (for lab testing)
+  - (x) external power / 5v from where?  Needs to power both pixracer and
+    beaglebone @ 5v
+  - (x) telemetry: beaglebone usb
+  - (x) custom uart cable from pixracer <-> beaglebone
+* (x) fix gps message
+* (x) rc-flight side driver, messaging, and 2 byte pkt_len serial_link version.
+* (x) serial_link packet communication: (x) read len (x)write len (x)
   checksum (x) payload new/realloc
-- (x) port ekf15 heap allocation changes over to ekf15_mag
-- (x) look through config messages and see what needs to be changed for
+* (x) port ekf15 heap allocation changes over to ekf15_mag
+* (x) look through config messages and see what needs to be changed for
   the new system. (new rc-flight driver to match this updated so we
   can continue to support the goldy3 variant separately as long as we
   have that hardware in play.)
-- (x) move accel calibration code over and test.
+* (x) move accel calibration code over and test.
   - (x) double check strapdown rotation matrix extracted from affine is correct
   - (x) strap down (for rotating gyros & mags) vs affine (for rotation,
     scale, and bias of accels.)
