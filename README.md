@@ -74,8 +74,6 @@ June 2021.
 
 - need to test drive ekf15_mag with some sort of preliminary mag
   calibration.
-- test servo outputs (seems to be working?)
-  - throttle scaling wrong (not-symmetrical)
   
 - pid's
 - switches / modes
@@ -86,7 +84,6 @@ June 2021.
 - tecs
 - temp and mag calibration based on EKF when it is in a high confidence state
 - affine_from_points() verbosity
-- figure out/test airdata connections (no external port on pixracer?)
 - direct sd card logging
 - decide how best to detect and choose when multiple imu and compass
   are available.
@@ -94,6 +91,10 @@ June 2021.
   telemetry port for convenience when the system is installed and
   harder to access the usb console port?
 
+* (x) figure out/test airdata connections (external port on mro gps - ms5525)
+  - (x) for now just hacked the default sensor in AP_Airdata.cpp
+* (x) test servo outputs (seems to be working?)
+  - (x) throttle scaling wrong (not-symmetrical)
 * (x) Breadboard with pixracer + beaglebone (for lab testing)
   - (x) external power / 5v from where?  Needs to power both pixracer and
     beaglebone @ 5v

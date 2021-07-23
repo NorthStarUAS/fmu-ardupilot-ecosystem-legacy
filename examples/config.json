@@ -82,5 +82,8 @@
         "pilot_tune": {
             "enable": "True"
         }
+    },
+    "switches": {
+        "include": "switches.json"
     }
 }

@@ -357,8 +357,8 @@ void comms_t::write_airdata_ascii()
     console->printf("Baro: %.2f pa %.1f C ",
                     airdata_node.getFloat("baro_press_pa"),
                     airdata_node.getFloat("baro_tempC"));
-    console->printf("Pitot: %.4f pa %.1f C %d errors\n",
-                    airdata_node.getFloat("diffPress_pa"),
+    console->printf("Pitot: %.4f mps %.1f C %d errors\n",
+                    airdata_node.getFloat("airspeed_mps"),
                     airdata_node.getFloat("temp_C"),
                     airdata_node.getUInt("error_count"));
 }
