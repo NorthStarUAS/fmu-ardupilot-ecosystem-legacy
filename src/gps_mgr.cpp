@@ -11,9 +11,6 @@
 #include "nav/nav_constants.h"
 #include "gps_mgr.h"
 
-
-// fake gcs object needed and created in top level FMU code.
-
 void gps_mgr_t::setup() {
     gps_node = PropertyNode("/sensors/gps");
     
