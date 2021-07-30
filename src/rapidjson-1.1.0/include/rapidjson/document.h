@@ -1848,8 +1848,9 @@ private:
         kTypeMask = 0x07
     };
 
-    static const SizeType kDefaultArrayCapacity = 16;
-    static const SizeType kDefaultObjectCapacity = 16;
+    // original is 16, but trade some memory efficiency for performance
+    static const SizeType kDefaultArrayCapacity = 8;
+    static const SizeType kDefaultObjectCapacity = 8;
 
     struct Flag {
 #if RAPIDJSON_48BITPOINTER_OPTIMIZATION
