@@ -47,9 +47,9 @@ void calib_accels_t::update()  {
     }
     last_millis = AP_HAL::millis();
     
-    float ax = imu_node.getFloat("ax_raw");
-    float ay = imu_node.getFloat("ay_raw");
-    float az = imu_node.getFloat("az_raw");
+    float ax = imu_node.getDouble("ax_raw");
+    float ay = imu_node.getDouble("ay_raw");
+    float az = imu_node.getDouble("az_raw");
     ax_slow.update(ax, dt);
     ax_fast.update(ax, dt);
     ay_slow.update(ay, dt);
@@ -154,11 +154,11 @@ void calib_accels_t::update()  {
         }
         for ( int j = 0; j < 4; j++ ) {
             for ( int i = 0; i < 4; i++ ) {
-                imu_calib_node.setFloat("accel_affine", i*4 + j, affine(i,j));
+                imu_calib_node.setDouble("accel_affine", i*4 + j, affine(i,j));
             }
         }
         float fit = fit_metrics(affine);
-        imu_calib_node.setFloat("accel_fit_mean", fit);
+        imu_calib_node.setDouble("accel_fit_mean", fit);
         console->printf("Fit quality: %.2f\n", fit);
         
         // extract strapdown rotation matrix
@@ -167,7 +167,7 @@ void calib_accels_t::update()  {
         Eigen::Matrix3f strapdown = a3f.rotation();
         for ( int j = 0; j < 3; j++ ) {
             for ( int i = 0; i < 3; i++ ) {
-                imu_calib_node.setFloat("strapdown", i*3 + j, strapdown(i,j));
+                imu_calib_node.setDouble("strapdown", i*3 + j, strapdown(i,j));
             }
         }
         const char *file_path = "imu-calibration.json";

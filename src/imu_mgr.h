@@ -57,7 +57,7 @@ public:
     Eigen::Vector4f accels_cal = Eigen::Vector4f::Zero();
     Eigen::Vector3f gyros_cal = Eigen::Vector3f::Zero();
     Eigen::Vector4f mags_cal = Eigen::Vector4f::Zero();
-    float tempC = 0.0;
+    float temp_C = 0.0;
     
     void defaults();
     void set_strapdown_calibration();

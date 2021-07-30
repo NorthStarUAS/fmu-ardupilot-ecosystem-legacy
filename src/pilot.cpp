@@ -56,7 +56,7 @@ void pilot_t::setup() {
     // config file
     uint8_t size = config_eff_gains.getLen("gains");
     for ( uint8_t i = size; i < MAX_RCOUT_CHANNELS; i++ ) {
-        config_eff_gains.setFloat("gains", i, 1.0);
+        config_eff_gains.setDouble("gains", i, 1.0);
     }
     
     // enable channels
@@ -88,20 +88,20 @@ bool pilot_t::read() {
         
         // publish
         for ( uint8_t i = 0; i < nchannels; i++ ) {
-            pilot_node.setFloat("manual", i, manual_inputs[i]);
+            pilot_node.setDouble("manual", i, manual_inputs[i]);
         }
         // logical values
         pilot_node.setBool("failsafe", false); // good
         pilot_node.setBool("ap_enabled", ap_enabled());
         pilot_node.setBool("throttle_safety", throttle_safety());
-        pilot_node.setFloat("aileron", get_aileron());
-        pilot_node.setFloat("elevator", get_elevator());
-        pilot_node.setFloat("throttle", get_throttle());
-        pilot_node.setFloat("rudder", get_rudder());
-        pilot_node.setFloat("flaps", get_flap());
-        pilot_node.setFloat("gear", get_gear());
-        pilot_node.setFloat("aux1", get_aux1());
-        pilot_node.setFloat("aux2", get_aux2());
+        pilot_node.setDouble("aileron", get_aileron());
+        pilot_node.setDouble("elevator", get_elevator());
+        pilot_node.setDouble("throttle", get_throttle());
+        pilot_node.setDouble("rudder", get_rudder());
+        pilot_node.setDouble("flaps", get_flap());
+        pilot_node.setDouble("gear", get_gear());
+        pilot_node.setDouble("aux1", get_aux1());
+        pilot_node.setDouble("aux2", get_aux2());
         // console->printf("%d ", nchannels);
         // for ( uint8_t i = 0; i < 8; i++ ) {
         //     console->printf("%.2f ", manual_inputs[i]);
@@ -126,8 +126,8 @@ void pilot_t::write() {
 
     for ( uint8_t i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
         // float norm_val = mixer.outputs[i] * config.pwm_cfg.act_gain[i];
-        float norm_val = effector_node.getFloat("channel", i)
-            * config_eff_gains.getFloat("gains", i);
+        float norm_val = effector_node.getDouble("channel", i)
+            * config_eff_gains.getDouble("gains", i);
         uint16_t pwm_val = norm2rcout(norm_val, i);
         // console->printf("%d ", pwm_val);
         hal.rcout->write(i, pwm_val);
@@ -152,7 +152,7 @@ void pilot_t::update_ap( rcfmu_message::command_inceptors_t *inceptors ) {
     ap_inputs[6] = inceptors->channel[4]; // flap
     ap_inputs[7] = inceptors->channel[5]; // gear
     for ( int i = 0; i < MAX_RCIN_CHANNELS; i++ ) {
-        pilot_node.setFloat("auto", i, ap_inputs[i]);
+        pilot_node.setDouble("auto", i, ap_inputs[i]);
     }
     changed = true;
 }

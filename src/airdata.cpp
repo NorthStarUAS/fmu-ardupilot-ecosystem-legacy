@@ -22,11 +22,11 @@ void airdata_t::update() {
     // assumes we are being called at 100hz
     airspeed.update(false);
     if ( airspeed.healthy() ) {
-        airdata_node.setFloat("airspeed_mps", airspeed.get_airspeed());
-        airdata_node.setFloat("diffPress_pa", airspeed.get_differential_pressure());
+        airdata_node.setDouble("airspeed_mps", airspeed.get_airspeed());
+        airdata_node.setDouble("diffPress_pa", airspeed.get_differential_pressure());
         float temperature;
         airspeed.get_temperature(temperature);
-        airdata_node.setFloat("temp_C", temperature);
+        airdata_node.setDouble("temp_C", temperature);
     }
     
     // collect readings @ 20hz
@@ -36,8 +36,8 @@ void airdata_t::update() {
         barometer.update();
 
         if ( barometer.healthy() ) {
-            airdata_node.setFloat("baro_press_pa", barometer.get_pressure());
-            airdata_node.setFloat("baro_tempC", barometer.get_temperature());
+            airdata_node.setDouble("baro_press_pa", barometer.get_pressure());
+            airdata_node.setDouble("baro_tempC", barometer.get_temperature());
         }
     }
     if ( !airspeed.healthy() or !barometer.healthy() ) {

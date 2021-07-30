@@ -8,17 +8,17 @@
 void imu_mgr_t::defaults() {
     strapdown = Eigen::Matrix3f::Identity();
     for ( int i = 0; i < 9; i++ ) {
-        imu_calib_node.setFloat("strapdown", i, strapdown.data()[i]);
+        imu_calib_node.setDouble("strapdown", i, strapdown.data()[i]);
     }
 
     accel_affine = Eigen::Matrix4f::Identity();
     for ( int i = 0; i < 16; i++ ) {
-        imu_calib_node.setFloat("accel_affine", i, accel_affine.data()[i]);
+        imu_calib_node.setDouble("accel_affine", i, accel_affine.data()[i]);
     }
     
     mag_affine = Eigen::Matrix4f::Identity();
     for ( int i = 0; i < 16; i++ ) {
-        imu_calib_node.setFloat("mag_affine", i, mag_affine.data()[i]);
+        imu_calib_node.setDouble("mag_affine", i, mag_affine.data()[i]);
     }
 }
 
@@ -27,7 +27,7 @@ void imu_mgr_t::set_strapdown_calibration() {
     strapdown = Eigen::Matrix3f::Identity();
     for ( int i = 0; i < 3; i++ ) {
         for ( int j = 0; j < 3; j++ ) {
-            strapdown(i,j) = imu_calib_node.getFloat("strapdown", i*3+j);
+            strapdown(i,j) = imu_calib_node.getDouble("strapdown", i*3+j);
         }
     }
     
@@ -46,7 +46,7 @@ void imu_mgr_t::set_accel_calibration() {
     accel_affine = Eigen::Matrix4f::Identity();
     for ( int i = 0; i < 4; i++ ) {
         for ( int j = 0; j < 4; j++ ) {
-            accel_affine(i,j) = imu_calib_node.getFloat("accel_affine", i*4+j);
+            accel_affine(i,j) = imu_calib_node.getDouble("accel_affine", i*4+j);
         }
     }
 
@@ -65,7 +65,7 @@ void imu_mgr_t::set_mag_calibration() {
     mag_affine = Eigen::Matrix4f::Identity();
     for ( int i = 0; i < 4; i++ ) {
         for ( int j = 0; j < 4; j++ ) {
-            mag_affine(i,j) = imu_calib_node.getFloat("mag_affine", i*4+j);
+            mag_affine(i,j) = imu_calib_node.getDouble("mag_affine", i*4+j);
         }
     }
 
@@ -107,7 +107,7 @@ void imu_mgr_t::update() {
     
     accels_raw << imu_hal.accel.x, imu_hal.accel.y, imu_hal.accel.z, 1.0;
     gyros_raw << imu_hal.gyro.x, imu_hal.gyro.y, imu_hal.gyro.z;
-    tempC = imu_hal.tempC;
+    temp_C = imu_hal.temp_C;
 
     Eigen::Vector3f mags_precal;
     mags_precal << imu_hal.mag.x, imu_hal.mag.y, imu_hal.mag.z;
@@ -117,9 +117,9 @@ void imu_mgr_t::update() {
     accels_cal = accel_affine * accels_raw;
     gyros_cal = strapdown * gyros_raw;
 
-    //accels_cal(0) = ax_cal.calibrate(accels_nocal(0), tempC);
-    //accels_cal(1) = ay_cal.calibrate(accels_nocal(1), tempC);
-    //accels_cal(2) = az_cal.calibrate(accels_nocal(2), tempC);
+    //accels_cal(0) = ax_cal.calibrate(accels_nocal(0), temp_C);
+    //accels_cal(1) = ay_cal.calibrate(accels_nocal(1), temp_C);
+    //accels_cal(2) = az_cal.calibrate(accels_nocal(2), temp_C);
         
     mags_cal = mag_affine * mags_raw;
     
@@ -132,25 +132,22 @@ void imu_mgr_t::update() {
     // publish
     imu_node.setUInt("millis", imu_millis);
     imu_node.setDouble("timestamp", imu_millis / 1000.0);
-    imu_node.setFloat("ax_raw", accels_raw(0));
-    imu_node.setFloat("ay_raw", accels_raw(1));
-    imu_node.setFloat("az_raw", accels_raw(2));
-    imu_node.setFloat("p_raw", gyros_raw(0));
-    imu_node.setFloat("q_raw", gyros_raw(1));
-    imu_node.setFloat("r_raw", gyros_raw(2));
-    imu_node.setFloat("hx_raw", mags_raw(0));
-    imu_node.setFloat("hy_raw", mags_raw(1));
-    imu_node.setFloat("hz_raw", mags_raw(2));
-    imu_node.setFloat("ax_mps2", accels_cal(0));
-    imu_node.setFloat("ay_mps2", accels_cal(1));
-    imu_node.setFloat("az_mps2", accels_cal(2));
-    imu_node.setFloat("p_rps", gyros_cal(0));
-    imu_node.setFloat("q_rps", gyros_cal(1));
-    imu_node.setFloat("r_rps", gyros_cal(2));
-    imu_node.setFloat("hx", mags_cal(0));
-    imu_node.setFloat("hy", mags_cal(1));
-    imu_node.setFloat("hz", mags_cal(2));
-    imu_node.setFloat("tempC", tempC);
+    imu_node.setDouble("ax_raw", accels_raw(0));
+    imu_node.setDouble("ay_raw", accels_raw(1));
+    imu_node.setDouble("az_raw", accels_raw(2));
+    imu_node.setDouble("hx_raw", mags_raw(0));
+    imu_node.setDouble("hy_raw", mags_raw(1));
+    imu_node.setDouble("hz_raw", mags_raw(2));
+    imu_node.setDouble("ax_mps2", accels_cal(0));
+    imu_node.setDouble("ay_mps2", accels_cal(1));
+    imu_node.setDouble("az_mps2", accels_cal(2));
+    imu_node.setDouble("p_rps", gyros_cal(0));
+    imu_node.setDouble("q_rps", gyros_cal(1));
+    imu_node.setDouble("r_rps", gyros_cal(2));
+    imu_node.setDouble("hx", mags_cal(0));
+    imu_node.setDouble("hy", mags_cal(1));
+    imu_node.setDouble("hz", mags_cal(2));
+    imu_node.setDouble("temp_C", temp_C);
 
     calib_accels.update();      // run if requested
 }

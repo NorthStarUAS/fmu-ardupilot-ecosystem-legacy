@@ -41,7 +41,7 @@ void imu_hal_t::update() {
     // for now just go with the 0'th INS sensor
     accel = ins.get_accel(0);
     gyro = ins.get_gyro(0);
-    tempC = ins.get_temperature(0);
+    temp_C = ins.get_temperature(0);
 
     compass.read();
     mag = compass.get_field(0);

@@ -12,9 +12,9 @@ void mixer_t::sas_defaults() {
     stab_pitch_node.setBool("enable", true);
     stab_yaw_node.setBool("enable", true);
     stab_tune_node.setBool("false", true);
-    stab_roll_node.setFloat("gain", 0.2);
-    stab_pitch_node.setFloat("gain", 0.2);
-    stab_yaw_node.setFloat("gain", 0.2);
+    stab_roll_node.setDouble("gain", 0.2);
+    stab_pitch_node.setDouble("gain", 0.2);
+    stab_yaw_node.setDouble("gain", 0.2);
 };
 
 
@@ -34,37 +34,37 @@ void mixer_t::update_matrix() {
     hal.scheduler->delay(100);
 
     if ( autocoord_node.getBool("enable") ) {
-        M(3,1) = -autocoord_node.getFloat("gain1");
+        M(3,1) = -autocoord_node.getDouble("gain1");
         if (vtail_node.getBool("enable") && !elevon_node.getBool("enable")) {
-            M(2,1) = autocoord_node.getFloat("gain1");
+            M(2,1) = autocoord_node.getDouble("gain1");
         }
     }
     if ( throttletrim_node.getBool("enable") ) {
-        M(2,0) = throttletrim_node.getFloat("gain1");
+        M(2,0) = throttletrim_node.getDouble("gain1");
     }
     if ( flaptrim_node.getBool("enable") ) {
-        M(2,4) = flaptrim_node.getFloat("gain1");
+        M(2,4) = flaptrim_node.getDouble("gain1");
         if ( vtail_node.getBool("enable") && !elevon_node.getBool("enable")) {
-            M(3,4) = flaptrim_node.getFloat("gain1");
+            M(3,4) = flaptrim_node.getDouble("gain1");
         }
     }
     if ( elevon_node.getBool("enable") ) {
-        M(1,1) = elevon_node.getFloat("gain1");
-        M(1,2) = elevon_node.getFloat("gain2");
-        M(2,1) = elevon_node.getFloat("gain1");
-        M(2,2) = -elevon_node.getFloat("gain2");
+        M(1,1) = elevon_node.getDouble("gain1");
+        M(1,2) = elevon_node.getDouble("gain2");
+        M(2,1) = elevon_node.getDouble("gain1");
+        M(2,2) = -elevon_node.getDouble("gain2");
     } else if ( flaperon_node.getBool("enable") ) {
-        M(1,1) = flaperon_node.getFloat("gain1");
-        M(1,4) = flaperon_node.getFloat("gain2");
-        M(4,1) = -flaperon_node.getFloat("gain1");
-        M(4,4) = flaperon_node.getFloat("gain2");
+        M(1,1) = flaperon_node.getDouble("gain1");
+        M(1,4) = flaperon_node.getDouble("gain2");
+        M(4,1) = -flaperon_node.getDouble("gain1");
+        M(4,4) = flaperon_node.getDouble("gain2");
     }
     // vtail mixing can't work with elevon mixing
     if ( vtail_node.getBool("enable") && !elevon_node.getBool("enable") ) {
-        M(2,2) = vtail_node.getFloat("gain1");
-        M(2,3) = vtail_node.getFloat("gain2");
-        M(3,2) = vtail_node.getFloat("gain1");
-        M(3,3) = -vtail_node.getFloat("gain2");
+        M(2,2) = vtail_node.getDouble("gain1");
+        M(2,3) = vtail_node.getDouble("gain2");
+        M(3,2) = vtail_node.getDouble("gain1");
+        M(3,3) = -vtail_node.getDouble("gain2");
     }
     if ( diffthrust_node.getBool("eanbled") ) {
         // fixme: never tested in the wild (need to think through channel assignments)
@@ -116,7 +116,7 @@ void mixer_t::sas_update() {
     float tune = 1.0;
     float max_tune = 2.0;
     if ( stab_tune_node.getBool("enable") ) {
-        tune = max_tune * pilot_node.getFloat("manual", 7);
+        tune = max_tune * pilot_node.getDouble("manual", 7);
         if ( tune < 0.0 ) {
             tune = 0.0;
         } else if ( tune > max_tune ) {
@@ -125,16 +125,16 @@ void mixer_t::sas_update() {
     }
 
     if ( stab_roll_node.getBool("enable") ) {
-        inputs[1] -= tune * stab_roll_node.getFloat("gain")
-            * imu_node.getFloat("p_rps");
+        inputs[1] -= tune * stab_roll_node.getDouble("gain")
+            * imu_node.getDouble("p_rps");
     }
     if ( stab_pitch_node.getBool("enable") ) {
-        inputs[2] += tune * stab_pitch_node.getFloat("gain")
-            * imu_node.getFloat("q_rps");
+        inputs[2] += tune * stab_pitch_node.getDouble("gain")
+            * imu_node.getDouble("q_rps");
     }
     if ( stab_yaw_node.getBool("enable") ) {
-        inputs[3] += tune * stab_yaw_node.getFloat("gain")
-            * imu_node.getFloat("r_rps");
+        inputs[3] += tune * stab_yaw_node.getDouble("gain")
+            * imu_node.getDouble("r_rps");
     }
 }
 
@@ -149,17 +149,17 @@ void mixer_t::mixing_update() {
 
     // publish
     for ( int i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
-        effector_node.setFloat("channel", i, outputs[i]);
+        effector_node.setDouble("channel", i, outputs[i]);
     }
 }
 
 void mixer_t::update() {
     // the pilot.get_* interface is smart to return manual
     // vs. autopilot depending on switch state.
-    inputs << pilot_node.getFloat("throttle"), pilot_node.getFloat("aileron"),
-        pilot_node.getFloat("elevator"), pilot_node.getFloat("rudder"),
-        pilot_node.getFloat("flaps"), pilot_node.getFloat("gear"),
-        pilot_node.getFloat("aux1"), pilot_node.getFloat("aux2");
+    inputs << pilot_node.getDouble("throttle"), pilot_node.getDouble("aileron"),
+        pilot_node.getDouble("elevator"), pilot_node.getDouble("rudder"),
+        pilot_node.getDouble("flaps"), pilot_node.getDouble("gear"),
+        pilot_node.getDouble("aux1"), pilot_node.getDouble("aux2");
     
     sas_update();
     mixing_update();

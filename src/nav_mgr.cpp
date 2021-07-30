@@ -81,25 +81,25 @@ void nav_mgr_t::update() {
 #if defined(AURA_ONBOARD_EKF)
     IMUdata imu1;
     imu1.time = imu_node.getDouble("timestamp");
-    imu1.p = imu_node.getFloat("p_rps");
-    imu1.q = imu_node.getFloat("q_rps");
-    imu1.r = imu_node.getFloat("r_rps");
-    imu1.ax = imu_node.getFloat("ax_mps2");
-    imu1.ay = imu_node.getFloat("ay_mps2");
-    imu1.az = imu_node.getFloat("az_mps2");
-    imu1.hx = imu_node.getFloat("hx");
-    imu1.hy = imu_node.getFloat("hy");
-    imu1.hz = imu_node.getFloat("hz");
+    imu1.p = imu_node.getDouble("p_rps");
+    imu1.q = imu_node.getDouble("q_rps");
+    imu1.r = imu_node.getDouble("r_rps");
+    imu1.ax = imu_node.getDouble("ax_mps2");
+    imu1.ay = imu_node.getDouble("ay_mps2");
+    imu1.az = imu_node.getDouble("az_mps2");
+    imu1.hx = imu_node.getDouble("hx");
+    imu1.hy = imu_node.getDouble("hy");
+    imu1.hz = imu_node.getDouble("hz");
     
     GPSdata gps1;
     gps1.time = gps_node.getDouble("timestamp");
     gps1.unix_sec = gps_node.getDouble("unix_sec");
     gps1.lat = gps_node.getDouble("latitude_deg");
     gps1.lon = gps_node.getDouble("longitude_deg");
-    gps1.alt = gps_node.getFloat("altitude_m");
-    gps1.vn = gps_node.getFloat("vn_mps");
-    gps1.ve = gps_node.getFloat("ve_mps");
-    gps1.vd = gps_node.getFloat("vd_mps");
+    gps1.alt = gps_node.getDouble("altitude_m");
+    gps1.vn = gps_node.getDouble("vn_mps");
+    gps1.ve = gps_node.getDouble("ve_mps");
+    gps1.vd = gps_node.getDouble("vd_mps");
 
     string selected = config_nav_node.getString("select");
     if ( !ekf_inited and gps_node.getBool("settle") ) {
@@ -149,28 +149,28 @@ void nav_mgr_t::update() {
         // publish
         nav_node.setDouble("latitude_rad", data.lat);
         nav_node.setDouble("longitude_rad", data.lon);
-        nav_node.setFloat("altitude_m", data.alt);
-        nav_node.setFloat("vn_mps", data.vn);
-        nav_node.setFloat("ve_mps", data.ve);
-        nav_node.setFloat("vd_mps", data.vd);
-        nav_node.setFloat("phi_rad", data.phi);
-        nav_node.setFloat("the_rad", data.the);
-        nav_node.setFloat("psi_rad", data.psi);
-        nav_node.setFloat("p_bias", data.gbx);
-        nav_node.setFloat("q_bias", data.gby);
-        nav_node.setFloat("r_bias", data.gbz);
-        nav_node.setFloat("ax_bias", data.abx);
-        nav_node.setFloat("ay_bias", data.aby);
-        nav_node.setFloat("az_bias", data.abz);
-        nav_node.setFloat("Pp0", data.Pp0);
-        nav_node.setFloat("Pp1", data.Pp1);
-        nav_node.setFloat("Pp2", data.Pp2);
-        nav_node.setFloat("Pv0", data.Pv0);
-        nav_node.setFloat("Pv1", data.Pv1);
-        nav_node.setFloat("Pv2", data.Pv2);
-        nav_node.setFloat("Pa0", data.Pa0);
-        nav_node.setFloat("Pa1", data.Pa1);
-        nav_node.setFloat("Pa2", data.Pa2);
+        nav_node.setDouble("altitude_m", data.alt);
+        nav_node.setDouble("vn_mps", data.vn);
+        nav_node.setDouble("ve_mps", data.ve);
+        nav_node.setDouble("vd_mps", data.vd);
+        nav_node.setDouble("phi_rad", data.phi);
+        nav_node.setDouble("the_rad", data.the);
+        nav_node.setDouble("psi_rad", data.psi);
+        nav_node.setDouble("p_bias", data.gbx);
+        nav_node.setDouble("q_bias", data.gby);
+        nav_node.setDouble("r_bias", data.gbz);
+        nav_node.setDouble("ax_bias", data.abx);
+        nav_node.setDouble("ay_bias", data.aby);
+        nav_node.setDouble("az_bias", data.abz);
+        nav_node.setDouble("Pp0", data.Pp0);
+        nav_node.setDouble("Pp1", data.Pp1);
+        nav_node.setDouble("Pp2", data.Pp2);
+        nav_node.setDouble("Pv0", data.Pv0);
+        nav_node.setDouble("Pv1", data.Pv1);
+        nav_node.setDouble("Pv2", data.Pv2);
+        nav_node.setDouble("Pa0", data.Pa0);
+        nav_node.setDouble("Pa1", data.Pa1);
+        nav_node.setDouble("Pa2", data.Pa2);
     } else {
         status = 0;             // not initialized
     }

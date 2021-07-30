@@ -99,7 +99,7 @@ int comms_t::write_pilot_in_bin()
     
     // receiver data
     for ( int i = 0; i < rcfmu_message::sbus_channels; i++ ) {
-        pilot1.channel[i] = pilot_node.getFloat("manual", i);
+        pilot1.channel[i] = pilot_node.getDouble("manual", i);
     }
 
     // flags
@@ -126,7 +126,7 @@ void comms_t::write_pilot_in_ascii()
         console->printf("(Throttle enable) ");
     }
     for ( int i = 0; i < 8; i++ ) {
-        console->printf("%.3f ", pilot_node.getFloat("manual", i));
+        console->printf("%.3f ", pilot_node.getDouble("manual", i));
     }
     console->printf("\n");
 }
@@ -136,7 +136,7 @@ void comms_t::write_actuator_out_ascii()
     // actuator output
     console->printf("RCOUT:");
     for ( int i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
-        console->printf("%.2f ", effector_node.getFloat("channel", i));
+        console->printf("%.2f ", effector_node.getDouble("channel", i));
     }
     console->printf("\n");
 }
@@ -148,37 +148,8 @@ static inline int32_t intround(float f) {
 // output a binary representation of the IMU data (note: scaled to 16bit values)
 int comms_t::write_imu_bin()
 {
-    const float _pi = 3.14159265358979323846;
-    const float _g = 9.807;
-    const float _d2r = _pi / 180.0;
-    
-    const float _gyro_lsb_per_dps = 32767.5 / 500;  // -500 to +500 spread across 65535
-    const float gyroScale = _d2r / _gyro_lsb_per_dps;
-    
-    const float _accel_lsb_per_dps = 32767.5 / 8;   // -4g to +4g spread across 65535
-    const float accelScale = _g / _accel_lsb_per_dps;
-
-    const float magScale = 0.01;
-    const float tempScale = 0.01;
-    
     static rcfmu_message::imu_t imu1;
-    imu1.millis = imu_node.getUInt("millis");
-    imu1.raw[0] = intround(imu_node.getFloat("ax_raw") / accelScale);
-    imu1.raw[1] = intround(imu_node.getFloat("ay_raw") / accelScale);
-    imu1.raw[2] = intround(imu_node.getFloat("az_raw") / accelScale);
-    imu1.raw[3] = intround(imu_node.getFloat("hx_raw") / magScale);
-    imu1.raw[4] = intround(imu_node.getFloat("hy_raw") / magScale);
-    imu1.raw[5] = intround(imu_node.getFloat("hz_raw") / magScale);
-    imu1.cal[0] = intround(imu_node.getFloat("ax_mps2") / accelScale);
-    imu1.cal[1] = intround(imu_node.getFloat("ay_mps2") / accelScale);
-    imu1.cal[2] = intround(imu_node.getFloat("az_mps2") / accelScale);
-    imu1.cal[3] = intround(imu_node.getFloat("p_rps") / gyroScale);
-    imu1.cal[4] = intround(imu_node.getFloat("q_rps") / gyroScale);
-    imu1.cal[5] = intround(imu_node.getFloat("r_rps") / gyroScale);
-    imu1.cal[6] = intround(imu_node.getFloat("hx") / magScale);
-    imu1.cal[7] = intround(imu_node.getFloat("hy") / magScale);
-    imu1.cal[8] = intround(imu_node.getFloat("hz") / magScale);
-    imu1.cal[9] = intround(imu_node.getFloat("tempC") / tempScale);
+    imu1.props2msg(imu_node);
     imu1.pack();
     int result = serial.write_packet( imu1.id, imu1.payload, imu1.len );
     return result;
@@ -188,14 +159,14 @@ void comms_t::write_imu_ascii()
 {
     // output imu data
     console->printf("IMU: ");
-    console->printf("%.3f ", imu_node.getFloat("timestamp"));
-    console->printf("%.2f ", imu_node.getFloat("p_rps"));
-    console->printf("%.2f ", imu_node.getFloat("q_rps"));
-    console->printf("%.2f ", imu_node.getFloat("r_rps"));
-    console->printf("%.2f ", imu_node.getFloat("ax_mps2"));
-    console->printf("%.2f ", imu_node.getFloat("ay_mps2"));
-    console->printf("%.2f ", imu_node.getFloat("az_mps2"));
-    console->printf("%.2f ", imu_node.getFloat("tempC"));
+    console->printf("%.3f ", imu_node.getDouble("timestamp"));
+    console->printf("%.2f ", imu_node.getDouble("p_rps"));
+    console->printf("%.2f ", imu_node.getDouble("q_rps"));
+    console->printf("%.2f ", imu_node.getDouble("r_rps"));
+    console->printf("%.2f ", imu_node.getDouble("ax_mps2"));
+    console->printf("%.2f ", imu_node.getDouble("ay_mps2"));
+    console->printf("%.2f ", imu_node.getDouble("az_mps2"));
+    console->printf("%.2f ", imu_node.getDouble("temp_C"));
     console->printf("\n");
 }
 
@@ -216,13 +187,13 @@ int comms_t::write_gps_bin()
         gps_msg.latitude_raw = gps_node.getInt("latitude_raw");
         gps_msg.longitude_raw = gps_node.getInt("longitude_raw");
         gps_msg.altitude_m = gps_node.getDouble("altitude_m");
-        gps_msg.vn_mps = gps_node.getFloat("vn_mps");
-        gps_msg.ve_mps = gps_node.getFloat("ve_mps");
-        gps_msg.vd_mps = gps_node.getFloat("vd_mps");
-        gps_msg.hAcc = gps_node.getFloat("hAcc");
-        gps_msg.vAcc = gps_node.getFloat("vAcc");
-        gps_msg.hdop = gps_node.getFloat("hdop");
-        gps_msg.vdop = gps_node.getFloat("vdop");
+        gps_msg.vn_mps = gps_node.getDouble("vn_mps");
+        gps_msg.ve_mps = gps_node.getDouble("ve_mps");
+        gps_msg.vd_mps = gps_node.getDouble("vd_mps");
+        gps_msg.hAcc = gps_node.getDouble("hAcc");
+        gps_msg.vAcc = gps_node.getDouble("vAcc");
+        gps_msg.hdop = gps_node.getDouble("hdop");
+        gps_msg.vdop = gps_node.getDouble("vdop");
         gps_msg.pack();
         return serial.write_packet( gps_msg.id, gps_msg.payload, gps_msg.len );
     } else {
@@ -234,11 +205,11 @@ void comms_t::write_gps_ascii() {
     console->printf("GPS:");
     console->printf(" Lat: %.7f", gps_node.getDouble("latitude_deg"));
     console->printf(" Lon: %.7f", gps_node.getDouble("longitude_deg"));
-    console->printf(" Alt: %.1f", gps_node.getFloat("altitude_m"));
+    console->printf(" Alt: %.1f", gps_node.getDouble("altitude_m"));
     console->printf(" Vel: %.1f %.1f %.1f",
-                    gps_node.getFloat("vn_mps"),
-                    gps_node.getFloat("ve_mps"),
-                    gps_node.getFloat("vd_mps"));
+                    gps_node.getDouble("vn_mps"),
+                    gps_node.getDouble("ve_mps"),
+                    gps_node.getDouble("vd_mps"));
     console->printf(" Sat: %d", gps_node.getInt("satellites"));
     console->printf(" Fix: %d", gps_node.getInt("status"));
     console->printf(" Time: %02d:%02d:%02d ",
@@ -259,32 +230,32 @@ int comms_t::write_nav_bin()
     nav_msg.millis = imu_node.getUInt("millis"); // fixme?
     nav_msg.lat_rad = nav_node.getDouble("latitude_rad");
     nav_msg.lon_rad = nav_node.getDouble("longitude_rad");
-    nav_msg.altitude_m = nav_node.getFloat("altitude_m");
-    nav_msg.vn_ms = nav_node.getFloat("vn_mps");
-    nav_msg.ve_ms = nav_node.getFloat("ve_mps");
-    nav_msg.vd_ms = nav_node.getFloat("vd_mps");
-    nav_msg.phi_rad = nav_node.getFloat("phi_rad");
-    nav_msg.the_rad = nav_node.getFloat("the_rad");
-    nav_msg.psi_rad = nav_node.getFloat("psi_rad");
-    nav_msg.p_bias = nav_node.getFloat("p_bias");
-    nav_msg.q_bias = nav_node.getFloat("q_bias");
-    nav_msg.r_bias = nav_node.getFloat("r_bias");
-    nav_msg.ax_bias = nav_node.getFloat("ax_bias");
-    nav_msg.ay_bias = nav_node.getFloat("ay_bias");
-    nav_msg.az_bias = nav_node.getFloat("az_bias");
-    float max_pos_cov = nav_node.getFloat("Pp0");
-    if ( nav_node.getFloat("Pp1") > max_pos_cov ) { max_pos_cov = nav_node.getFloat("Pp1"); }
-    if ( nav_node.getFloat("Pp2") > max_pos_cov ) { max_pos_cov = nav_node.getFloat("Pp2"); }
+    nav_msg.altitude_m = nav_node.getDouble("altitude_m");
+    nav_msg.vn_ms = nav_node.getDouble("vn_mps");
+    nav_msg.ve_ms = nav_node.getDouble("ve_mps");
+    nav_msg.vd_ms = nav_node.getDouble("vd_mps");
+    nav_msg.phi_rad = nav_node.getDouble("phi_rad");
+    nav_msg.the_rad = nav_node.getDouble("the_rad");
+    nav_msg.psi_rad = nav_node.getDouble("psi_rad");
+    nav_msg.p_bias = nav_node.getDouble("p_bias");
+    nav_msg.q_bias = nav_node.getDouble("q_bias");
+    nav_msg.r_bias = nav_node.getDouble("r_bias");
+    nav_msg.ax_bias = nav_node.getDouble("ax_bias");
+    nav_msg.ay_bias = nav_node.getDouble("ay_bias");
+    nav_msg.az_bias = nav_node.getDouble("az_bias");
+    float max_pos_cov = nav_node.getDouble("Pp0");
+    if ( nav_node.getDouble("Pp1") > max_pos_cov ) { max_pos_cov = nav_node.getDouble("Pp1"); }
+    if ( nav_node.getDouble("Pp2") > max_pos_cov ) { max_pos_cov = nav_node.getDouble("Pp2"); }
     if ( max_pos_cov > 655.0 ) { max_pos_cov = 655.0; }
     nav_msg.max_pos_cov = max_pos_cov;
-    float max_vel_cov = nav_node.getFloat("Pv0");
-    if ( nav_node.getFloat("Pv1") > max_vel_cov ) { max_vel_cov = nav_node.getFloat("Pv1"); }
-    if ( nav_node.getFloat("Pv2") > max_vel_cov ) { max_vel_cov = nav_node.getFloat("Pv2"); }
+    float max_vel_cov = nav_node.getDouble("Pv0");
+    if ( nav_node.getDouble("Pv1") > max_vel_cov ) { max_vel_cov = nav_node.getDouble("Pv1"); }
+    if ( nav_node.getDouble("Pv2") > max_vel_cov ) { max_vel_cov = nav_node.getDouble("Pv2"); }
     if ( max_vel_cov > 65.5 ) { max_vel_cov = 65.5; }
     nav_msg.max_vel_cov = max_vel_cov;
-    float max_att_cov = nav_node.getFloat("Pa0");
-    if ( nav_node.getFloat("Pa1") > max_att_cov ) { max_att_cov = nav_node.getFloat("Pa1"); }
-    if ( nav_node.getFloat("Pa2") > max_att_cov ) { max_att_cov = nav_node.getFloat("Pa2"); }
+    float max_att_cov = nav_node.getDouble("Pa0");
+    if ( nav_node.getDouble("Pa1") > max_att_cov ) { max_att_cov = nav_node.getDouble("Pa1"); }
+    if ( nav_node.getDouble("Pa2") > max_att_cov ) { max_att_cov = nav_node.getDouble("Pa2"); }
     if ( max_att_cov > 6.55 ) { max_vel_cov = 6.55; }
     nav_msg.max_att_cov = max_att_cov;
     nav_msg.status = nav_node.getInt("status");
@@ -297,40 +268,40 @@ void comms_t::write_nav_ascii() {
     console->printf("Pos: %.7f, %.7f, %.2f",
                     nav_node.getDouble("latitude_rad")*R2D,
                     nav_node.getDouble("longitude_rad")*R2D,
-                    nav_node.getFloat("altitude_m"));
+                    nav_node.getDouble("altitude_m"));
     console->printf(" Vel: %.2f, %.2f, %.2f",
-                    nav_node.getFloat("vn_mps"),
-                    nav_node.getFloat("ve_mps"),
-                    nav_node.getFloat("vd_mps"));
+                    nav_node.getDouble("vn_mps"),
+                    nav_node.getDouble("ve_mps"),
+                    nav_node.getDouble("vd_mps"));
     console->printf(" Att: %.2f, %.2f, %.2f\n",
-                    nav_node.getFloat("phi_rad")*R2D,
-                    nav_node.getFloat("the_rad")*R2D,
-                    nav_node.getFloat("psi_rad")*R2D);
+                    nav_node.getDouble("phi_rad")*R2D,
+                    nav_node.getDouble("the_rad")*R2D,
+                    nav_node.getDouble("psi_rad")*R2D);
 }
 
 void comms_t::write_nav_stats_ascii() {
     // covariances
     console->printf("gxb: %.2f %.2f %.2f",
-                    nav_node.getFloat("p_bias"),
-                    nav_node.getFloat("q_bias"),
-                    nav_node.getFloat("r_bias"));
+                    nav_node.getDouble("p_bias"),
+                    nav_node.getDouble("q_bias"),
+                    nav_node.getDouble("r_bias"));
     console->printf(" axb: %.2f %.2f %.2f",
-                    nav_node.getFloat("ax_bias"),
-                    nav_node.getFloat("ay_bias"),
-                    nav_node.getFloat("az_bias"));
+                    nav_node.getDouble("ax_bias"),
+                    nav_node.getDouble("ay_bias"),
+                    nav_node.getDouble("az_bias"));
     float num = 3.0;            // how many standard deviations
     console->printf(" cov pos: %.2f %.2f %.2f",
-                    num * nav_node.getFloat("Pp0"),
-                    num * nav_node.getFloat("Pp1"),
-                    num * nav_node.getFloat("Pp2"));
+                    num * nav_node.getDouble("Pp0"),
+                    num * nav_node.getDouble("Pp1"),
+                    num * nav_node.getDouble("Pp2"));
     console->printf(" vel: %.2f %.2f %.2f",
-                    num * nav_node.getFloat("Pv0"),
-                    num * nav_node.getFloat("Pv1"),
-                    num * nav_node.getFloat("Pv2"));
+                    num * nav_node.getDouble("Pv0"),
+                    num * nav_node.getDouble("Pv1"),
+                    num * nav_node.getDouble("Pv2"));
     console->printf(" att: %.2f %.2f %.2f\n",
-                    num * nav_node.getFloat("Pa0")*R2D,
-                    num * nav_node.getFloat("Pa1")*R2D,
-                    num * nav_node.getFloat("Pa2")*R2D);
+                    num * nav_node.getDouble("Pa0")*R2D,
+                    num * nav_node.getDouble("Pa1")*R2D,
+                    num * nav_node.getDouble("Pa2")*R2D);
     if ( false ) {
         nav_node.pretty_print();
     }
@@ -341,13 +312,13 @@ int comms_t::write_airdata_bin()
 {
     static rcfmu_message::airdata_t airdata1;
     // FIXME: proprty names
-    airdata1.baro_press_pa = airdata_node.getFloat("baro_press_pa");
-    airdata1.baro_temp_C = airdata_node.getFloat("baro_tempC");
+    airdata1.baro_press_pa = airdata_node.getDouble("baro_press_pa");
+    airdata1.baro_temp_C = airdata_node.getDouble("baro_tempC");
     airdata1.baro_hum = 0.0;
-    airdata1.ext_diff_press_pa = airdata_node.getFloat("diffPress_pa");
-    airdata1.ext_static_press_pa = airdata_node.getFloat("static_press_pa"); // fixme!
-    airdata1.ext_temp_C = airdata_node.getFloat("temp_C");
-    airdata1.error_count = airdata_node.getFloat("error_count");
+    airdata1.ext_diff_press_pa = airdata_node.getDouble("diffPress_pa");
+    airdata1.ext_static_press_pa = airdata_node.getDouble("static_press_pa"); // fixme!
+    airdata1.ext_temp_C = airdata_node.getDouble("temp_C");
+    airdata1.error_count = airdata_node.getDouble("error_count");
     airdata1.pack();
     return serial.write_packet( airdata1.id, airdata1.payload, airdata1.len );
 }
@@ -355,11 +326,11 @@ int comms_t::write_airdata_bin()
 void comms_t::write_airdata_ascii()
 {
     console->printf("Baro: %.2f pa %.1f C ",
-                    airdata_node.getFloat("baro_press_pa"),
-                    airdata_node.getFloat("baro_tempC"));
+                    airdata_node.getDouble("baro_press_pa"),
+                    airdata_node.getDouble("baro_tempC"));
     console->printf("Pitot: %.4f mps %.1f C %d errors\n",
-                    airdata_node.getFloat("airspeed_mps"),
-                    airdata_node.getFloat("temp_C"),
+                    airdata_node.getDouble("airspeed_mps"),
+                    airdata_node.getDouble("temp_C"),
                     airdata_node.getUInt("error_count"));
 }
 
@@ -367,9 +338,9 @@ void comms_t::write_airdata_ascii()
 int comms_t::write_power_bin()
 {
     static rcfmu_message::power_t power1;
-    power1.avionics_v = power_node.getFloat("avionics_v");
-    power1.int_main_v = power_node.getFloat("battery_volts");
-    power1.ext_main_amp = power_node.getFloat("battery_amps");
+    power1.avionics_v = power_node.getDouble("avionics_v");
+    power1.int_main_v = power_node.getDouble("battery_volts");
+    power1.ext_main_amp = power_node.getDouble("battery_amps");
     power1.pack();
     return serial.write_packet( power1.id, power1.payload, power1.len );
 }
@@ -377,9 +348,9 @@ int comms_t::write_power_bin()
 void comms_t::write_power_ascii()
 {
     printf("Avionics v: %.2f  Batt v: %.2f  Batt amp: %.2f\n",
-           power_node.getFloat("avionics_v"),
-           power_node.getFloat("battery_volts"),
-           power_node.getFloat("battery_amps"));
+           power_node.getDouble("avionics_v"),
+           power_node.getDouble("battery_volts"),
+           power_node.getDouble("battery_amps"));
 }
 
 // output a binary representation of various status and config information
