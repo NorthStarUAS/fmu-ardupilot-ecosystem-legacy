@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(ARDUPILOT_BUILD)
-#  undef _GLIBCXX_USE_C99_STDIO   // vsnprintf() not defind
+#  undef _GLIBCXX_USE_C99_STDIO   // vsnprintf() not defined
 #endif
 
 #include <stdio.h>
@@ -19,50 +19,46 @@ using namespace rapidjson;
 // property system style interface with a rapidjson document as the backend
 //
 
-extern Document doc;
+class DocPointerWrapper {
+public:
+    Document *doc;
+};
 
-class PropertyNode
-{
+class PropertyNode {
+
 public:
     // Constructor.
     PropertyNode();
     PropertyNode(string abs_path, bool create=true);
     PropertyNode(Value *v);
 
-    // Destructor.
-    // ~PropertyNode();
-
-    // operator =
-    // PropertyNode & operator= (const PropertyNode &node);
-
     bool hasChild(const char *name );
-    PropertyNode getChild( const char *name, bool create=true );
-    PropertyNode getChild( const char *name, unsigned int index, bool create=true );
+    PropertyNode getChild( const char *name, bool create );
+    PropertyNode getChild( const char *name ) {
+        return getChild( name, true );
+    }
 
-    bool isNull();		// return true if pObj pointer is NULL
-    
+    bool isNull();		// return true if value pointer is NULL
+    bool isParent(const char *name);
+    bool isArray(const char *name);
+    bool isValue(const char *name);
     int getLen( const char *name ); // return len if node is an array (else 0)
-    void setLen(int size); // set array len of node, extend if necessary
-    void setLen(int size, double init_val); // set array size, extend and init
 
     vector<string> getChildren(bool expand=true); // return list of children
 
-    bool isLeaf( const char *name); // return true if pObj/name is leaf
-    
     // value getters
-    bool getBool( const char *name );	  // return value as a bool
-    int getInt( const char *name );	  // return value as an int
+    bool getBool( const char *name );         // return value as a bool
+    int getInt( const char *name );           // return value as an int
     unsigned int getUInt( const char *name ); // return value as an unsigned int
-    uint64_t getUInt64( const char *name ); // return value as an unsigned int
-    float getFloat( const char *name );   // return value as a float
-    double getDouble( const char *name ); // return value as a double
-    string getString( const char *name ); // return value as a string
+    int64_t getInt64( const char *name );     // return value as an int64_t
+    uint64_t getUInt64( const char *name );   // return value as an uint64_t
+    double getDouble( const char *name );     // return value as a double
+    string getString( const char *name );     // return value as a string
 
     // indexed value getters
-    bool getBool( const char *name, int index ); // return value as a bool
-    int getInt( const char *name, int index ); // return value as an int
+    bool getBool( const char *name, unsigned int index ); // return value as a bool
+    int getInt( const char *name, unsigned int index ); // return value as an int
     unsigned int getUInt( const char *name, unsigned int index ); // return value as an unsigned int
-    float getFloat( const char *name, unsigned int index ); // return value as a float
     double getDouble( const char *name, unsigned int index ); // return value as a double
     string getString( const char *name, unsigned int index ); // return value as a string
 
@@ -70,14 +66,14 @@ public:
     bool setBool( const char *name, bool b ); // returns true if successful
     bool setInt( const char *name, int n );     // returns true if successful
     bool setUInt( const char *name, unsigned int u ); // returns true if successful
-    bool setUInt64( const char *name, uint64_t u64 ); // returns true if successful
-    bool setFloat( const char *name, float x ); // returns true if successful
+    bool setInt64( const char *name, int64_t n );     // returns true if successful
+    bool setUInt64( const char *name, uint64_t u ); // returns true if successful
     bool setDouble( const char *name, double x ); // returns true if successful
     bool setString( const char *name, string s ); // returns true if successful
 
     // indexed value setters
     bool setUInt( const char *name, unsigned int index, unsigned int u ); // returns true if successful
-    bool setFloat( const char *name, unsigned int index, float x ); // returns true if successful
+    bool setDouble( const char *name, double x, unsigned int u ); // returns true if successful
 
     // load/merge json file under this node
     bool load( const char *file_path );
@@ -88,9 +84,35 @@ public:
     // void print();
     void pretty_print();
 
-    Value *get_valptr() {  return val; }
+    DocPointerWrapper get_Document() {
+        init_Document();
+        DocPointerWrapper d;
+        d.doc = doc;
+        return d;
+    }
+    
+    void set_Document( DocPointerWrapper d ) {
+        doc = d.doc;
+    }
     
 private:
-    // Pointer p;
+    // shared document instance
+#if defined(ARDUPILOT_BUILD)
+    static Document *doc;
+#else
+    inline static Document *doc = nullptr;
+#endif
+
+    // pointer to rapidjson Object;
     Value *val = nullptr;
+
+    inline void init_Document() {
+        if ( doc == nullptr ) {
+            doc = new Document;
+        }
+    }
+    bool extend_array(Value *node, int size);
+    Value *find_node_from_path(Value *start_node, string path, bool create);
+    bool load_json( const char *file_path, Value *v );
+    void recursively_expand_includes(string base_path, Value *v);
 };

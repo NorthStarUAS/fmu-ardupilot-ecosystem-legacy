@@ -1,10 +1,19 @@
-
 #if defined(ARDUPILOT_BUILD)
 #  include <AP_Filesystem/AP_Filesystem.h>
 #  undef _GLIBCXX_USE_C99_STDIO   // vsnprintf() not defined
 #  include "setup_board.h"
+#else
+#  include <sys/stat.h>
+#  include <sys/statfs.h>
+#  include <sys/types.h>
+#  include <fcntl.h>            // open()
+#  include <unistd.h>           // read()
+#endif
+#if defined(__PX4_POSIX)
+#  include <px4_platform_common/posix.h>
 #endif
 
+#include <math.h>
 #include <stdio.h>
 
 #include <vector>
@@ -16,16 +25,13 @@ using std::string;
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/prettywriter.h"
 
-#include "util/strutils.h"
-#include "props2.h"
+#if defined(ARDUPILOT_BUILD)
+#  include "util/strutils.h"
+#else
+#  include "strutils.h"
+#endif
 
-static void pretty_print_tree(Value *v) {
-    StringBuffer buffer;
-    PrettyWriter<StringBuffer> writer(buffer);
-    v->Accept(writer);
-    //const char* output = buffer.GetString();
-    printf("%s\n", buffer.GetString());
-}
+#include "props2.h"
 
 static bool is_integer(const string val) {
     for ( unsigned int i = 0; i < val.length(); i++ ) {
@@ -36,22 +42,23 @@ static bool is_integer(const string val) {
     return true;
 }
 
-static bool extend_array(Value *node, int size) {
+bool PropertyNode::extend_array(Value *node, int size) {
     if ( !node->IsArray() ) {
         node->SetArray();
     }
-    for ( int i = node->Size(); i <= size; i++ ) {
+    for ( int i = node->Size(); i < size; i++ ) {
         // printf("    extending: %d\n", i);
         Value newobj(kObjectType);
-        node->PushBack(newobj, doc.GetAllocator());
+        node->PushBack(newobj, doc->GetAllocator());
     }
     return true;
 }
 
 PropertyNode::PropertyNode() {
+    init_Document();
 }
 
-static Value *find_node_from_path(Value *start_node, string path, bool create) {
+Value *PropertyNode::find_node_from_path(Value *start_node, string path, bool create) {
     Value *node = start_node;
     printf("PropertyNode(%s)\n", path.c_str());
     if ( !node->IsObject() ) {
@@ -65,7 +72,7 @@ static Value *find_node_from_path(Value *start_node, string path, bool create) {
         if ( tokens[i].length() == 0 ) {
             continue;
         }
-        //printf("  token: %s\n", tokens[i].c_str());
+        // printf("  token: %s\n", tokens[i].c_str());
         if ( is_integer(tokens[i]) ) {
             // array reference
             int index = std::stoi(tokens[i].c_str());
@@ -80,9 +87,9 @@ static Value *find_node_from_path(Value *start_node, string path, bool create) {
             } else if ( create ) {
                 printf("    creating %s\n", tokens[i].c_str());
                 Value key;
-                key.SetString(tokens[i].c_str(), tokens[i].length(), doc.GetAllocator());
+                key.SetString(tokens[i].c_str(), tokens[i].length(), doc->GetAllocator());
                 Value newobj(kObjectType);
-                node->AddMember(key, newobj, doc.GetAllocator());
+                node->AddMember(key, newobj, doc->GetAllocator());
                 node = &(*node)[tokens[i].c_str()];
                 // printf("  new node: %p\n", node);
             } else {
@@ -101,16 +108,18 @@ static Value *find_node_from_path(Value *start_node, string path, bool create) {
 }
 
 PropertyNode::PropertyNode(string abs_path, bool create) {
+    init_Document();
     // printf("PropertyNode(%s) %d\n", abs_path.c_str(), (int)&doc);
     if ( abs_path[0] != '/' ) {
         printf("  not an absolute path\n");
         return;
     }
-    val = find_node_from_path(&doc, abs_path, create);
+    val = find_node_from_path(doc, abs_path, create);
     // pretty_print();
 }
 
 PropertyNode::PropertyNode(Value *v) {
+    init_Document();
     val = v;
 }
 
@@ -132,17 +141,38 @@ PropertyNode PropertyNode::getChild( const char *name, bool create ) {
     return PropertyNode();
 }
 
-PropertyNode PropertyNode::getChild( const char *name, unsigned int index, bool create ) {
-    if ( val->IsObject() ) {
-        Value *child = find_node_from_path(val, name, create);
-        return PropertyNode(child);
-    }
-    printf("%s not an object...\n", name);
-    return PropertyNode();
-}
-
 bool PropertyNode::isNull() {
     return val == nullptr;
+}
+
+bool PropertyNode::isParent(const char *name) {
+    if ( val->IsObject() ) {
+        if ( val->HasMember(name) ) {
+            Value &v = (*val)[name];
+            return v.IsObject();
+        }
+    }
+    return false;
+}
+
+bool PropertyNode::isArray(const char *name) {
+    if ( val->IsObject() ) {
+        if ( val->HasMember(name) ) {
+            Value &v = (*val)[name];
+            return v.IsArray();
+        }
+    }
+    return false;
+}
+
+bool PropertyNode::isValue(const char *name) {
+    if ( val->IsObject() ) {
+        if ( val->HasMember(name) ) {
+            Value &v = (*val)[name];
+            return !v.IsObject() and !v.IsArray();
+        }
+    }
+    return false;
 }
 
 int PropertyNode::getLen( const char *name ) {
@@ -186,10 +216,8 @@ static bool getValueAsBool( Value &v ) {
         return v.GetInt64();
     } else if ( v.IsUint64() ) {
         return v.GetUint64();
-    } else if ( v.IsFloat() ) {
-        return v.GetFloat() == 0.0;
     } else if ( v.IsDouble() ) {
-        return v.GetDouble() == 0.0;
+	return fabs(v.GetDouble()) < 0.0000001;
     } else if ( v.IsString() ) {
         string s = v.GetString();
         if ( s == "true" or s == "True" or s == "TRUE" ) {
@@ -214,8 +242,6 @@ static int getValueAsInt( Value &v ) {
         return v.GetInt64();
     } else if ( v.IsUint64() ) {
         return v.GetUint64();
-    } else if ( v.IsFloat() ) {
-        return v.GetFloat();
     } else if ( v.IsDouble() ) {
         return v.GetDouble();
     } else if ( v.IsString() ) {
@@ -238,8 +264,6 @@ static unsigned int getValueAsUInt( Value &v ) {
         return v.GetInt64();
     } else if ( v.IsUint64() ) {
         return v.GetUint64();
-    } else if ( v.IsFloat() ) {
-        return v.GetFloat();
     } else if ( v.IsDouble() ) {
         return v.GetDouble();
     } else if ( v.IsString() ) {
@@ -247,6 +271,28 @@ static unsigned int getValueAsUInt( Value &v ) {
         return std::stoi(s);
     } else {
         printf("Unknown type in getValueAsUInt()\n");
+    }
+    return 0;
+}
+
+static int64_t getValueAsInt64( Value &v ) {
+    if ( v.IsBool() ) {
+        return v.GetBool();
+    } else if ( v.IsInt() ) {
+        return v.GetInt();
+    } else if ( v.IsUint() ) {
+        return v.GetUint();
+    } else if ( v.IsInt64() ) {
+        return v.GetInt64();
+    } else if ( v.IsUint64() ) {
+        return v.GetUint64();
+    } else if ( v.IsDouble() ) {
+        return v.GetDouble();
+    } else if ( v.IsString() ) {
+        string s = v.GetString();
+        return std::stoi(s);
+    } else {
+        printf("Unknown type in getValueAsInt64()\n");
     }
     return 0;
 }
@@ -262,41 +308,15 @@ static uint64_t getValueAsUInt64( Value &v ) {
         return v.GetInt64();
     } else if ( v.IsUint64() ) {
         return v.GetUint64();
-    } else if ( v.IsFloat() ) {
-        return v.GetFloat();
     } else if ( v.IsDouble() ) {
         return v.GetDouble();
     } else if ( v.IsString() ) {
         string s = v.GetString();
         return std::stoi(s);
     } else {
-        printf("Unknown type in getValueAsUInt()\n");
+        printf("Unknown type in getValueAsUInt64()\n");
     }
     return 0;
-}
-
-static float getValueAsFloat( Value &v ) {
-    if ( v.IsBool() ) {
-        return v.GetBool();
-    } else if ( v.IsInt() ) {
-        return v.GetInt();
-    } else if ( v.IsUint() ) {
-        return v.GetUint();
-    } else if ( v.IsInt64() ) {
-        return v.GetInt64();
-    } else if ( v.IsUint64() ) {
-        return v.GetUint64();
-    } else if ( v.IsFloat() ) {
-        return v.GetFloat();
-    } else if ( v.IsDouble() ) {
-        return v.GetDouble();
-    } else if ( v.IsString() ) {
-        string s = v.GetString();
-        return std::stof(s);
-    } else {
-        printf("Unknown type in getValueAsFloat()\n");
-    }
-    return 0.0;
 }
 
 static double getValueAsDouble( Value &v ) {
@@ -310,8 +330,6 @@ static double getValueAsDouble( Value &v ) {
         return v.GetInt64();
     } else if ( v.IsUint64() ) {
         return v.GetUint64();
-    } else if ( v.IsFloat() ) {
-        return v.GetFloat();
     } else if ( v.IsDouble() ) {
         return v.GetDouble();
     } else if ( v.IsString() ) {
@@ -338,14 +356,6 @@ static string getValueAsString( Value &v ) {
         return std::to_string(v.GetInt64());
     } else if ( v.IsUint64() ) {
         return std::to_string(v.GetUint64());
-    } else if ( v.IsFloat() ) {
-#if defined(ARDUPILOT_BUILD)
-        char buf[30];
-        hal.util->snprintf(buf, 30, "%f", v.GetFloat());
-        return buf;
-#else
-        return std::to_string(v.GetFloat());
-#endif
     } else if ( v.IsDouble() ) {
 #if defined(ARDUPILOT_BUILD)
         char buf[30];
@@ -388,6 +398,15 @@ unsigned int PropertyNode::getUInt( const char *name ) {
     return 0;
 }
 
+int64_t PropertyNode::getInt64( const char *name ) {
+    if ( val->IsObject() ) {
+        if ( val->HasMember(name) ) {
+            return getValueAsInt64((*val)[name]);
+        }
+    }
+    return 0;
+}
+
 uint64_t PropertyNode::getUInt64( const char *name ) {
     if ( val->IsObject() ) {
         if ( val->HasMember(name) ) {
@@ -395,19 +414,6 @@ uint64_t PropertyNode::getUInt64( const char *name ) {
         }
     }
     return 0;
-}
-
-float PropertyNode::getFloat( const char *name ) {
-    if ( val->IsObject() ) {
-        if ( val->HasMember(name) ) {
-            return getValueAsFloat((*val)[name]);
-        // } else {
-        //     printf("no member in getFloat(%s)\n", name);
-        }
-    } else {
-        printf("v is not an object\n");
-    }
-    return 0.0;
 }
 
 double PropertyNode::getDouble( const char *name ) {
@@ -424,10 +430,10 @@ string PropertyNode::getString( const char *name ) {
         if ( val->HasMember(name) ) {
             return getValueAsString((*val)[name]);
         } else {
-            return (string)name + ": not a member";
+            return "";
         }
     }
-    return (string)name + ": not an object";
+    return "";
 }
 
 unsigned int PropertyNode::getUInt( const char *name, unsigned int index ) {
@@ -444,7 +450,7 @@ unsigned int PropertyNode::getUInt( const char *name, unsigned int index ) {
                 printf("not an array: %s\n", name);
             }
         } else {
-            // printf("no member in getFloat(%s, %d)\n", name, index);
+            // printf("no member in getUInt(%s, %d)\n", name, index);
         }
     } else {
         printf("v is not an object\n");
@@ -452,13 +458,13 @@ unsigned int PropertyNode::getUInt( const char *name, unsigned int index ) {
     return 0;
 }
 
-float PropertyNode::getFloat( const char *name, unsigned int index ) {
+double PropertyNode::getDouble( const char *name, unsigned int index ) {
     if ( val->IsObject() ) {
         if ( val->HasMember(name) ) {
             Value &v = (*val)[name];
             if ( v.IsArray() ) {
                 if ( index < v.Size() ) {
-                    return getValueAsFloat(v[index]);
+                    return getValueAsDouble(v[index]);
                 } else {
                     printf("index out of bounds: %s\n", name);
                 }
@@ -466,12 +472,34 @@ float PropertyNode::getFloat( const char *name, unsigned int index ) {
                 printf("not an array: %s\n", name);
             }
         } else {
-            // printf("no member in getFloat(%s, %d)\n", name, index);
+            // printf("no member in getDouble(%s, %d)\n", name, index);
         }
     } else {
         printf("v is not an object\n");
     }
     return 0.0;
+}
+
+string PropertyNode::getString( const char *name, unsigned int index ) {
+    if ( val->IsObject() ) {
+        if ( val->HasMember(name) ) {
+            Value &v = (*val)[name];
+            if ( v.IsArray() ) {
+                if ( index < v.Size() ) {
+                    return getValueAsString(v[index]);
+                } else {
+                    printf("index out of bounds: %s\n", name);
+                }
+            } else {
+                printf("not an array: %s\n", name);
+            }
+        } else {
+            // printf("no member in getString(%s, %d)\n", name, index);
+        }
+    } else {
+        printf("v is not an object\n");
+    }
+    return "";
 }
 
 bool PropertyNode::setBool( const char *name, bool b ) {
@@ -481,8 +509,8 @@ bool PropertyNode::setBool( const char *name, bool b ) {
     Value newval(b);
     if ( !val->HasMember(name) ) {
         // printf("creating %s\n", name);
-        Value key(name, doc.GetAllocator());
-        val->AddMember(key, newval, doc.GetAllocator());
+        Value key(name, doc->GetAllocator());
+        val->AddMember(key, newval, doc->GetAllocator());
     } else {
         // printf("%s already exists\n", name);
     }
@@ -497,8 +525,8 @@ bool PropertyNode::setInt( const char *name, int n ) {
     Value newval(n);
     if ( !val->HasMember(name) ) {
         // printf("creating %s\n", name);
-        Value key(name, doc.GetAllocator());
-        val->AddMember(key, newval, doc.GetAllocator());
+        Value key(name, doc->GetAllocator());
+        val->AddMember(key, newval, doc->GetAllocator());
     } else {
         // printf("%s already exists\n", name);
     }
@@ -513,8 +541,8 @@ bool PropertyNode::setUInt( const char *name, unsigned int u ) {
     Value newval(u);
     if ( !val->HasMember(name) ) {
         // printf("creating %s\n", name);
-        Value key(name, doc.GetAllocator());
-        val->AddMember(key, newval, doc.GetAllocator());
+        Value key(name, doc->GetAllocator());
+        val->AddMember(key, newval, doc->GetAllocator());
     } else {
         // printf("%s already exists\n", name);
     }
@@ -522,37 +550,35 @@ bool PropertyNode::setUInt( const char *name, unsigned int u ) {
     return true;
 }
 
-bool PropertyNode::setUInt64( const char *name, uint64_t u64 ) {
+bool PropertyNode::setInt64( const char *name, int64_t n ) {
     if ( !val->IsObject() ) {
         val->SetObject();
     }
-    Value newval(u64);
+    Value newval(n);
     if ( !val->HasMember(name) ) {
-        // printf("creating %s\n", name);
-        Value key(name, doc.GetAllocator());
-        val->AddMember(key, newval, doc.GetAllocator());
+        printf("creating %s\n", name);
+        Value key(name, doc->GetAllocator());
+        val->AddMember(key, newval, doc->GetAllocator());
     } else {
         // printf("%s already exists\n", name);
     }
-    (*val)[name] = u64;
+    (*val)[name] = n;
     return true;
 }
 
-bool PropertyNode::setFloat( const char *name, float x ) {
+bool PropertyNode::setUInt64( const char *name, uint64_t u ) {
     if ( !val->IsObject() ) {
-        printf("  converting value to object\n");
         val->SetObject();
     }
-    Value newval(x);
+    Value newval(u);
     if ( !val->HasMember(name) ) {
         // printf("creating %s\n", name);
-        Value key(name, doc.GetAllocator());
-        val->AddMember(key, newval, doc.GetAllocator());
+        Value key(name, doc->GetAllocator());
+        val->AddMember(key, newval, doc->GetAllocator());
     } else {
         // printf("%s already exists\n", name);
     }
-    (*val)[name] = x;
-    // hal.scheduler->delay(100);
+    (*val)[name] = u;
     return true;
 }
 
@@ -563,8 +589,8 @@ bool PropertyNode::setDouble( const char *name, double x ) {
     Value newval(x);
     if ( !val->HasMember(name) ) {
         // printf("creating %s\n", name);
-        Value key(name, doc.GetAllocator());
-        val->AddMember(key, newval, doc.GetAllocator());
+        Value key(name, doc->GetAllocator());
+        val->AddMember(key, newval, doc->GetAllocator());
     } else {
         // printf("%s already exists\n", name);
     }
@@ -579,16 +605,16 @@ bool PropertyNode::setString( const char *name, string s ) {
     if ( !val->HasMember(name) ) {
         Value newval("");
         // printf("creating %s\n", name);
-        Value key(name, doc.GetAllocator());
-        val->AddMember(key, newval, doc.GetAllocator());
+        Value key(name, doc->GetAllocator());
+        val->AddMember(key, newval, doc->GetAllocator());
     } else {
         // printf("%s already exists\n", name);
     }
-    (*val)[name].SetString(s.c_str(), s.length(), doc.GetAllocator());
+    (*val)[name].SetString(s.c_str(), s.length(), doc->GetAllocator());
     return true;
 }
 
-bool PropertyNode::setUInt( const char *name, unsigned int index, unsigned int u ) {
+bool PropertyNode::setUInt( const char *name, unsigned int u, unsigned int index ) {
     if ( !val->IsObject() ) {
         printf("  converting value to object\n");
         // hal.scheduler->delay(100);
@@ -596,9 +622,9 @@ bool PropertyNode::setUInt( const char *name, unsigned int index, unsigned int u
     }
     if ( !val->HasMember(name) ) {
         // printf("creating %s\n", name);
-        Value key(name, doc.GetAllocator());
+        Value key(name, doc->GetAllocator());
         Value a(kArrayType);
-        val->AddMember(key, a, doc.GetAllocator());
+        val->AddMember(key, a, doc->GetAllocator());
     } else {
         // printf("%s already exists\n", name);
         Value &a = (*val)[name];
@@ -613,7 +639,7 @@ bool PropertyNode::setUInt( const char *name, unsigned int index, unsigned int u
     return true;
 }
 
-bool PropertyNode::setFloat( const char *name, unsigned int index, float x ) {
+bool PropertyNode::setDouble( const char *name, double x, unsigned int index ) {
     if ( !val->IsObject() ) {
         printf("  converting value to object\n");
         // hal.scheduler->delay(100);
@@ -621,9 +647,9 @@ bool PropertyNode::setFloat( const char *name, unsigned int index, float x ) {
     }
     if ( !val->HasMember(name) ) {
         // printf("creating %s\n", name);
-        Value key(name, doc.GetAllocator());
+        Value key(name, doc->GetAllocator());
         Value a(kArrayType);
-        val->AddMember(key, a, doc.GetAllocator());
+        val->AddMember(key, a, doc->GetAllocator());
     } else {
         // printf("%s already exists\n", name);
         Value &a = (*val)[name];
@@ -638,11 +664,15 @@ bool PropertyNode::setFloat( const char *name, unsigned int index, float x ) {
     return true;
 }
 
-static bool load_json( const char *file_path, Value *v ) {
+bool PropertyNode::load_json( const char *file_path, Value *v ) {
     printf("loading from %s\n", file_path);
     
     struct stat st;
+#if defined(ARDUPILOT_BUILD)
     if ( AP::FS().stat(file_path, &st) < 0 ) {
+#else
+    if ( stat(file_path, &st) < 0 ) {
+#endif
         printf("Read stat failed: %s - %s\n", file_path, strerror(errno));
         return false;
     }
@@ -650,27 +680,39 @@ static bool load_json( const char *file_path, Value *v ) {
     char read_buf[st.st_size];
 
     // open a file in read mode
+#if defined(ARDUPILOT_BUILD)
     const int open_fd = AP::FS().open(file_path, O_RDONLY);
+#else
+    const int open_fd = open(file_path, O_RDONLY);
+#endif
     if (open_fd == -1) {
         printf("Open failed: %s - %s\n", file_path, strerror(errno));
         return false;
     }
 
     // read from file
+#if defined(ARDUPILOT_BUILD)
     ssize_t read_len = AP::FS().read(open_fd, read_buf, sizeof(read_buf));
+#else
+    ssize_t read_len = read(open_fd, read_buf, sizeof(read_buf));
+#endif
     if ( read_len == -1 ) {
         printf("Read failed: %s - %s\n", file_path, strerror(errno));
         return false;
     }
 
     // close file after reading
+#if defined(ARDUPILOT_BUILD)
     AP::FS().close(open_fd);
+#else
+    close(open_fd);
+#endif
 
     // printf("Read %d bytes.\nstring: %s\n", read_len, read_buf);
     // hal.scheduler->delay(100);
 
-    Document tmpdoc(&doc.GetAllocator());
-    tmpdoc.Parse(read_buf, read_len);
+    Document tmpdoc(&(doc->GetAllocator()));
+    tmpdoc.Parse<kParseCommentsFlag>(read_buf, read_len);
     if ( tmpdoc.HasParseError() ){
         printf("json parse err: %d (%s)\n",
                tmpdoc.GetParseError(),
@@ -682,9 +724,9 @@ static bool load_json( const char *file_path, Value *v ) {
     for (Value::ConstMemberIterator itr = tmpdoc.MemberBegin(); itr != tmpdoc.MemberEnd(); ++itr) {
         printf(" merging: %s\n", itr->name.GetString());
         Value key;
-        key.SetString(itr->name.GetString(), itr->name.GetStringLength(), doc.GetAllocator());
+        key.SetString(itr->name.GetString(), itr->name.GetStringLength(), doc->GetAllocator());
         Value &newval = tmpdoc[itr->name.GetString()];
-        v->AddMember(key, newval, doc.GetAllocator());
+        v->AddMember(key, newval, doc->GetAllocator());
     }
 
     return true;
@@ -695,7 +737,8 @@ static bool load_json( const char *file_path, Value *v ) {
 // unlink the original.
 static bool rename_file(const char *current_name, const char *new_name) {
     printf("Renaming %s to %s\n", current_name, new_name);
-    
+
+#if defined(ARDUPILOT_BUILD)
     struct stat st;
     if ( AP::FS().stat(current_name, &st) < 0 ) {
         printf("Read stat failed: %s - %s\n", current_name, strerror(errno));
@@ -753,7 +796,10 @@ static bool rename_file(const char *current_name, const char *new_name) {
     AP::FS().set_mtime(new_name, st.st_mtim.tv_sec);
 
     AP::FS().unlink(current_name);  // remove the original
-    
+#else
+    rename(current_name, new_name);
+#endif
+      
     return true;
 }
 
@@ -764,17 +810,34 @@ static bool save_json( const char *file_path, Value *v ) {
     v->Accept(writer);
 
     // check disk space
+#if defined(ARDUPILOT_BUILD)
     uint64_t free_bytes = AP::FS().disk_free("/");
-    console->printf("Disk free: %dk needed: %dk\n",
-                    (unsigned int)free_bytes / 1024,
-                    (unsigned int)(buffer.GetSize() / 1024) + 1);
+#else
+    struct statfs statfs_buf;
+    uint64_t free_bytes;
+    if (statfs("/", &statfs_buf) != 0) {
+        printf("statfs() failed\n");
+        free_bytes = 0;
+    } else {
+        free_bytes = statfs_buf.f_bavail * statfs_buf.f_bsize;
+    }
+#endif
+    printf("Disk free: %dk needed: %dk\n",
+           (unsigned int)free_bytes / 1024,
+           (unsigned int)(buffer.GetSize() / 1024) + 1);
 
     // rename existing file
     string bak = (string)file_path + ".bak";
     rename_file(file_path, bak.c_str());
     
     // open a file in write mode
+#if defined(ARDUPILOT_BUILD)
     const int open_fd = AP::FS().open(file_path, O_WRONLY | O_CREAT);
+#elif defined(__PX4_POSIX)
+    const int open_fd = ::open(file_path, O_WRONLY | O_CREAT, PX4_O_MODE_666);
+#else
+    const int open_fd = ::open(file_path, O_WRONLY | O_CREAT, 0660);
+#endif
     if (open_fd == -1) {
         printf("Open %s failed: %s\n", file_path, strerror(errno));
         return false;
@@ -782,30 +845,48 @@ static bool save_json( const char *file_path, Value *v ) {
 
     // write file
     ssize_t write_size;
+#if defined(ARDUPILOT_BUILD)
     write_size = AP::FS().write(open_fd, buffer.GetString(), buffer.GetSize());
+#else
+    write_size = write(open_fd, buffer.GetString(), buffer.GetSize());
+#endif
     if ( write_size == -1 ) {
         printf("Write failed - %s\n", strerror(errno));
         return false;
     }
 
     // close file
+#if defined(ARDUPILOT_BUILD)
     AP::FS().close(open_fd);
+#else
+    close(open_fd);
+#endif
 
     return true;
 }
 
 // fixme: currently no mechanism to override include values
-static void recursively_expand_includes(Value *v) {
+void PropertyNode::recursively_expand_includes(string base_path, Value *v) {
     if ( v->IsObject() ) {
         if ( v->HasMember("include") and (*v)["include"].IsString() ) {
-            printf("Need to include: %s\n", (*v)["include"].GetString());
-            load_json( (*v)["include"].GetString(), v );
+            string full_path = base_path + "/" + (*v)["include"].GetString();
+            printf("Need to include: %s\n", full_path.c_str());
+            load_json( full_path.c_str(), v );
             v->RemoveMember("include");
         } else {
             for (Value::MemberIterator itr = v->MemberBegin(); itr != v->MemberEnd(); ++itr) {
-                if ( itr->value.IsObject() ) {
-                    recursively_expand_includes( &itr->value );
+                if ( itr->value.IsObject() or itr->value.IsArray() ) {
+                    printf("expanding: %s\n", itr->name.GetString());
+                    recursively_expand_includes(base_path, &itr->value );
                 }
+            }
+        }
+    } else if ( v->IsArray() ) {
+        printf("Is an array\n");
+        for (Value::ValueIterator itr = v->Begin(); itr != v->End(); ++itr) {
+            if ( itr->IsObject() or itr->IsArray() ) {
+                printf("recurse array\n");
+                recursively_expand_includes(base_path, itr );
             }
         }
     }
@@ -815,7 +896,13 @@ bool PropertyNode::load( const char *file_path ) {
     if ( !load_json(file_path, val) ) {
         return false;
     }
-    recursively_expand_includes(val);
+    string full_path = file_path;
+    size_t pos = full_path.rfind("/");
+    string base_path = "";
+    if ( pos > 0 and pos != string::npos ) {
+        base_path = full_path.substr(0, pos);
+    }
+    recursively_expand_includes(base_path, val);
     
     // printf("Updated node contents:\n");
     // pretty_print();
@@ -848,15 +935,20 @@ void PropertyNode::pretty_print() {
     const char *ptr = buffer.GetString();
     for ( unsigned int i = 0; i < buffer.GetSize(); i++ ) {
         printf("%c", ptr[i]);
+#if defined(ARDUPILOT_BUILD)
+        // needed so we don't overwhelm the serial output thread buffer
         if ( i % 256 == 0 ) {
             hal.scheduler->delay(50);
         }
+#endif
     }
-    console->printf("\n");
+    printf("\n");
 }
 
-Document doc;
-
+#if defined(ARDUPILOT_BUILD)
+Document *PropertyNode::doc = nullptr;
+#endif
+ 
 #if 0
 int main() {
    // suck in all the input
