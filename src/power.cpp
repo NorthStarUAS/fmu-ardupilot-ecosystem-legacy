@@ -7,7 +7,7 @@
 // fixme/configurable
 static float amps_offset = 0.0;
 
-void power_t::setup() {
+void power_t::init() {
     power_node = PropertyNode("/sensors/power");
     PropertyNode("/sensors/power");
     hal.scheduler->delay(1000);

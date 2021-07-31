@@ -2,7 +2,7 @@
 
 #include "nav_mgr.h"
 
-void nav_mgr_t::setup() {
+void nav_mgr_t::init() {
     config_nav_node = PropertyNode("/config/nav");
     gps_node = PropertyNode("/sensors/gps");
     imu_node = PropertyNode("/sensors/imu");

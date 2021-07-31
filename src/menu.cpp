@@ -16,7 +16,7 @@ void menu_t::display() {
                     "  Reboot: type \"reboot\"\n");
 }
 
-void menu_t::setup() {
+void menu_t::init() {
     imu_node = PropertyNode("/sensors/imu");
     // flush input buffer
     while ( console->available() ) {

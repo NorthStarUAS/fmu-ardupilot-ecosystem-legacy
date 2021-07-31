@@ -14,7 +14,7 @@ private:
     PropertyNode gps_node;
     
 public:
-    void setup();
+    void init();
     void do_policy(int gyros_calibrated);
     void update();
 

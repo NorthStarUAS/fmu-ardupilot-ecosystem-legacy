@@ -20,7 +20,7 @@
 
 #include <AP_HAL/AP_HAL.h>
 
-void comms_t::setup() {
+void comms_t::init() {
     config_node = PropertyNode("/config");
     effector_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");

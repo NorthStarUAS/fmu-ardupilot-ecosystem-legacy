@@ -11,7 +11,7 @@
 #include "nav/nav_constants.h"
 #include "gps_mgr.h"
 
-void gps_mgr_t::setup() {
+void gps_mgr_t::init() {
     gps_node = PropertyNode("/sensors/gps");
     
     // Initialize the UART for GPS system

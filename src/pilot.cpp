@@ -40,7 +40,7 @@ uint16_t pilot_t::norm2rcout(float norm_val, uint8_t channel) {
     return output;
 }
 
-void pilot_t::setup() {
+void pilot_t::init() {
     config_eff_gains = PropertyNode("/config/pwm");
     effector_node = PropertyNode("/effectors");
     pilot_node = PropertyNode("/pilot");
@@ -69,8 +69,8 @@ void pilot_t::setup() {
     hal.rcout->force_safety_off();
     hal.util->set_soft_armed(true);
     
-    mixer.setup();
-    switches.setup();
+    mixer.init();
+    switches.init();
 }
 
 bool pilot_t::read() {

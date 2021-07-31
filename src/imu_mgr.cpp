@@ -80,15 +80,13 @@ void imu_mgr_t::set_mag_calibration() {
 }
 
 // configure the IMU settings and setup the ISR to aquire the data
-void imu_mgr_t::setup() {
-    printf("imu_mgr.setup()\n\n");
+void imu_mgr_t::init() {
+    printf("imu_mgr.init()\n\n");
     hal.scheduler->delay(500);
     imu_node = PropertyNode("/sensors/imu");
     imu_calib_node = PropertyNode("/config/imu/calibration");
     hal.scheduler->delay(100);
-    printf("before imu_hal.setup()\n");
-    hal.scheduler->delay(100);
-    imu_hal.setup();
+    imu_hal.init();
 }
 
 // query the imu and update the structures
@@ -99,7 +97,7 @@ void imu_mgr_t::update() {
     string request = imu_node.getString("request");
     if ( request == "calibrate-accels" ) {
         imu_node.setString("request", "received: calibrate-accels");
-        calib_accels.setup();
+        calib_accels.init();
     }
     
     imu_hal.update();

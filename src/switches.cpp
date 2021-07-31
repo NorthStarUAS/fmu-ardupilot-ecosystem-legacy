@@ -1,6 +1,6 @@
 #include "switches.h"
 
-void switches_t::setup() {
+void switches_t::init() {
     console->printf("setting up switch configuration:\n");
     config_node = PropertyNode("/config/switches");
     rcin_node = PropertyNode("/sensors/rc-input");

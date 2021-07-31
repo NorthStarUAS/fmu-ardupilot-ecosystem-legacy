@@ -87,7 +87,7 @@ public:
     mixer_t mixer;
     switches_t switches;
     
-    void setup();
+    void init();
     bool read();
     void write();
     

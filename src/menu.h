@@ -17,6 +17,6 @@ public:
     bool display_nav_stats = false;
     bool display_act = false;
         
-    void setup();
+    void init();
     void update();
 };

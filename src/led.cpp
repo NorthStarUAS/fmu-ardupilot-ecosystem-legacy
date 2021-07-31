@@ -4,7 +4,7 @@
 
 #include "led.h"
 
-void led_t::setup() {
+void led_t::init() {
 #if defined(HAL_HAVE_PIXRACER_LED)
     console->printf("Have Pixracer LED\n");
 #endif

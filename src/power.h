@@ -16,6 +16,6 @@ public:
     float battery_volts = 0.0;
     float battery_amps = 0.0;
     
-    void setup();
+    void init();
     void update();
 };

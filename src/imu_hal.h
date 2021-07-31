@@ -14,6 +14,6 @@ public:
     float temp_C;
     Vector3f mag;
     
-    void setup();
+    void init();
     void update();
 };

@@ -28,7 +28,7 @@ private:
 public:
     NAVdata data;
     uint8_t status;             // 0 = uninitted, 1 = no gps, 2 = 0k
-    void setup();
+    void init();
     void configure();
     void update();
     void reinit();              // request the filter reinit itself

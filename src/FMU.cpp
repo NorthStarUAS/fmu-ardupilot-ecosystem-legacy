@@ -78,7 +78,7 @@ void setup() {
     console->printf("Sensor/config communication is on Serial1 @ %d baud (N81) no flow control.\n", DEFAULT_BAUD);
 
     // load config from sd card
-    config.setup();
+    config.init();
     if ( !config.load_json_config() ) {
         config.reset_defaults();
     }
@@ -92,48 +92,37 @@ void setup() {
     console->printf("Serial Number: %d\n", config.read_serial_number());
     hal.scheduler->delay(100);
 
-    config_nav_node = PropertyNode("/config/nav"); // after config.setup()
+    config_nav_node = PropertyNode("/config/nav"); // after config.init()
     pilot_node = PropertyNode("/pilot");
     
-    // if ( !config.read_storage() ) {
-    //     console->printf("Resetting eeprom to default values.");
-    //     config.reset_defaults();
-    //     config.write_storage();
-    // } else {
-    //     console->printf("Successfully loaded config from eeprom storage.\n");
-    // }
-
     // airdata
-    airdata.setup();
+    airdata.init();
     
     // initialize the IMU and calibration matrices
-    console->printf("before imu_mgr.setup()\n");
-    imu_mgr.setup();
+    console->printf("before imu_mgr.init()\n");
+    imu_mgr.init();
     imu_mgr.set_strapdown_calibration();
     imu_mgr.set_accel_calibration();
     imu_mgr.set_mag_calibration();
     
     // initialize the pilot interface (RC in, out & mixer)
-    pilot.setup();
+    pilot.init();
 
     // initialize the gps receiver
-    gps_mgr.setup();
+    gps_mgr.init();
 
-    // initialize air data (marmot v1)
-    // airdata.setup();
-    
     // power sensing
-    power.setup();
+    power.init();
     
     // led status
-    led.setup();
+    led.init();
 
     // ekf init (just prints availability status)
-    nav_mgr.setup();
+    nav_mgr.init();
 
-    comms.setup();              // do this after gps initialization
+    comms.init();              // do this after gps initialization
 
-    menu.setup();
+    menu.init();
     
     printf("Setup finished.\n");
     printf("Ready and transmitting...\n");

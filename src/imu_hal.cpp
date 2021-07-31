@@ -13,8 +13,8 @@
 // static AP_Baro baro; // Compass tries to set magnetic model based on location.
 // static Compass compass;
 
-// configure the IMU settings and setup the ISR to aquire the data
-void imu_hal_t::setup() {
+// initialize the imu sensor(s)
+void imu_hal_t::init() {
     printf("AP_InertialSensor startup...\n");
     hal.scheduler->delay(100);
     ins.init(100);
@@ -28,7 +28,7 @@ void imu_hal_t::setup() {
     hal.scheduler->delay(100);
 }
 
-// query the imu and update the structures
+// query the imu
 void imu_hal_t::update() {
     // static uint8_t accel_count = ins.get_accel_count();
     // static uint8_t gyro_count = ins.get_gyro_count();

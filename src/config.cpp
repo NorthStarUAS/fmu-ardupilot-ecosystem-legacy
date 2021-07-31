@@ -149,13 +149,13 @@ void config_t::reset_defaults() {
     // board_cfg.board = 0;
     imu_mgr.defaults();
     actuator_gain_defaults();
-    pilot.mixer.setup();
+    pilot.mixer.init();
     pilot.mixer.sas_defaults();
     //power_cfg.have_attopilot = false;
     //ekf_cfg.select = rcfmu_message::enum_nav::nav15;
 }
 
-void config_t::setup() {
+void config_t::init() {
     config_node = PropertyNode("/config");
 }
 

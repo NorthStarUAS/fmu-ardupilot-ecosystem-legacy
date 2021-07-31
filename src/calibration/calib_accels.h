@@ -46,7 +46,7 @@ private:
     
 public:
 
-    void setup();
+    void init();
     void update();
     
 };

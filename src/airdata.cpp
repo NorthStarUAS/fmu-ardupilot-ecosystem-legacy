@@ -3,7 +3,7 @@
 #include "setup_board.h"
 #include "airdata.h"
 
-void airdata_t::setup() {
+void airdata_t::init() {
     airdata_node = PropertyNode("/sensors/airdata");
     error_count = 0;
     airdata_node.setUInt("error_count", error_count);
