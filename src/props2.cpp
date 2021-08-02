@@ -634,7 +634,7 @@ bool PropertyNode::setUInt( const char *name, unsigned int u, unsigned int index
         }
     }
     Value &a = (*val)[name];
-    extend_array(&a, index);    // protect against out of range
+    extend_array(&a, index+1);    // protect against out of range
     a[index] = u;
     return true;
 }
@@ -659,7 +659,7 @@ bool PropertyNode::setDouble( const char *name, double x, unsigned int index ) {
         }
     }
     Value &a = (*val)[name];
-    extend_array(&a, index);    // protect against out of range
+    extend_array(&a, index+1);    // protect against out of range
     a[index] = x;
     return true;
 }
@@ -945,9 +945,7 @@ void PropertyNode::pretty_print() {
     printf("\n");
 }
 
-#if defined(ARDUPILOT_BUILD)
 Document *PropertyNode::doc = nullptr;
-#endif
  
 #if 0
 int main() {
