@@ -26,7 +26,7 @@
     "power": {
         "external_amp_offset": 0.0, 
         "external_amp_ratio": 15.00, 
-        "volt_divider_ratio": 4.127
+        "batt_volt_divider": 10.278
     },
     "pwm": {
         "pwm_hz": 50,
