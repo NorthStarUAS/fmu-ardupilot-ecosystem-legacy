@@ -30,7 +30,7 @@
     },
     "pwm": {
         "pwm_hz": 50,
-        "gains": [ 1.0, 1.0, -1.0, 1.0, -1.0 ]
+        "gains": [ 1.0, 1.0, -1.0, -1.0, -1.0 ]
     },
     "mixer": {
         "auto_coordination": {
@@ -38,12 +38,12 @@
             "gain1": "0.3" 
         }, 
         "throttle_trim": {
-            "enable": "False", 
-            "gain1": "-0.1" 
+            "enable": "True", 
+            "gain1": "0.4" 
         }, 
         "flap_trim": {
-            "enable": "True", 
-            "gain1": "0.3" 
+            "enable": "False", 
+            "gain1": "0.0" 
         }, 
         "elevon": {
             "enable": "False", 
@@ -51,12 +51,12 @@
             "gain2": "1.0" 
         }, 
         "flaperon": {
-            "enable": "True", 
+            "enable": "False",
             "gain1": "1.0", 
             "gain2": "1.0" 
         }, 
         "vtail": {
-            "enable": "True", 
+            "enable": "False",
             "gain1": "1.0", 
             "gain2": "1.0" 
         }, 
@@ -69,15 +69,15 @@
     "stability_damper": {
         "roll": {
             "enable": "True",
-            "gain": "0.2"
+            "gain": "0.15"
         }, 
         "pitch": {
             "enable": "True",
-            "gain": "0.3"
+            "gain": "0.25"
         }, 
         "yaw": {
             "enable": "True",
-            "gain": "-0.2"
+            "gain": "0.15"
         },
         "pilot_tune": {
             "enable": "True"
