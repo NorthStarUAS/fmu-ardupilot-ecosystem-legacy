@@ -34,9 +34,9 @@ void mixer_t::update_matrix() {
     hal.scheduler->delay(100);
 
     if ( autocoord_node.getBool("enable") ) {
-        M(3,1) = -autocoord_node.getDouble("gain1");
+        M(3,1) = autocoord_node.getDouble("gain1");
         if (vtail_node.getBool("enable") && !elevon_node.getBool("enable")) {
-            M(2,1) = autocoord_node.getDouble("gain1");
+            M(2,1) = -autocoord_node.getDouble("gain1");
         }
     }
     if ( throttletrim_node.getBool("enable") ) {
@@ -149,7 +149,7 @@ void mixer_t::mixing_update() {
 
     // publish
     for ( int i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
-        effector_node.setDouble("channel", i, outputs[i]);
+        effector_node.setDouble("channel", outputs[i], i);
     }
 }
 

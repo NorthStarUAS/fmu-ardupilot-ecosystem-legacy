@@ -56,7 +56,7 @@ void pilot_t::init() {
     // config file
     uint8_t size = config_eff_gains.getLen("gains");
     for ( uint8_t i = size; i < MAX_RCOUT_CHANNELS; i++ ) {
-        config_eff_gains.setDouble("gains", i, 1.0);
+        config_eff_gains.setDouble("gains", 1.0, i);
     }
     
     // enable channels
@@ -82,14 +82,11 @@ bool pilot_t::read() {
         last_input = AP_HAL::millis();
         nchannels = hal.rcin->read(pwm_inputs, MAX_RCIN_CHANNELS);
         for ( uint8_t i = 0; i < nchannels; i++ ) {
-            rcin_node.setUInt("channel", i, pwm_inputs[i]);
+            rcin_node.setUInt("channel", pwm_inputs[i], i);
             manual_inputs[i] = rcin2norm(pwm_inputs[i], i);
+            pilot_node.setDouble("manual", manual_inputs[i], i);
         }
         
-        // publish
-        for ( uint8_t i = 0; i < nchannels; i++ ) {
-            pilot_node.setDouble("manual", i, manual_inputs[i]);
-        }
         // logical values
         pilot_node.setBool("failsafe", false); // good
         pilot_node.setBool("ap_enabled", ap_enabled());
@@ -152,7 +149,7 @@ void pilot_t::update_ap( rcfmu_message::command_inceptors_t *inceptors ) {
     ap_inputs[6] = inceptors->channel[4]; // flap
     ap_inputs[7] = inceptors->channel[5]; // gear
     for ( int i = 0; i < MAX_RCIN_CHANNELS; i++ ) {
-        pilot_node.setDouble("auto", i, ap_inputs[i]);
+        pilot_node.setDouble("auto", ap_inputs[i], i);
     }
     changed = true;
 }
