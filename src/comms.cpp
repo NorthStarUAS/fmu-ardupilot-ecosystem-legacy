@@ -93,10 +93,6 @@ int comms_t::write_pilot_in_bin()
 {
     static rcfmu_message::pilot_t pilot1;
 
-    if (rcfmu_message::sbus_channels > MAX_RCIN_CHANNELS) {
-        return 0;
-    }
-    
     // receiver data
     for ( int i = 0; i < rcfmu_message::sbus_channels; i++ ) {
         pilot1.channel[i] = pilot_node.getDouble("manual", i);
