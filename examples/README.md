@@ -7,5 +7,5 @@ set of rc-fmu-ap expands and matures.
     { "include": "file.json" }
 
 It is important to note the additional feature on top of pure json
-that enables a top level json file to include sub json files (much
-like a C preprocessor #include.)
+that enables a top level json file to include sub json files in
+specific locations of the tree (a bit like a C preprocessor #include.)
