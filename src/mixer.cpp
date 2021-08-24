@@ -133,7 +133,7 @@ void mixer_t::sas_update() {
             * imu_node.getDouble("q_rps");
     }
     if ( stab_yaw_node.getBool("enable") ) {
-        inputs[3] += tune * stab_yaw_node.getDouble("gain")
+        inputs[3] -= tune * stab_yaw_node.getDouble("gain")
             * imu_node.getDouble("r_rps");
     }
 }
