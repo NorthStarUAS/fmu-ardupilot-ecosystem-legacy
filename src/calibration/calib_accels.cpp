@@ -18,6 +18,9 @@ int calib_accels_t::raw_up_axis( float ax, float ay, float az ) {
 }
 
 void calib_accels_t::init() {
+    // we can't do file ops when armed so turn off soft arm
+    hal.util->set_soft_armed(false);
+    
     imu_node = PropertyNode("/sensors/imu");
     imu_calib_node = PropertyNode("/config/imu/calibration");
     state = 0;                  // active
@@ -154,7 +157,7 @@ void calib_accels_t::update()  {
         }
         for ( int j = 0; j < 4; j++ ) {
             for ( int i = 0; i < 4; i++ ) {
-                imu_calib_node.setDouble("accel_affine", i*4 + j, affine(i,j));
+                imu_calib_node.setDouble("accel_affine", affine(i,j), i*4 + j);
             }
         }
         float fit = fit_metrics(affine);
@@ -167,13 +170,15 @@ void calib_accels_t::update()  {
         Eigen::Matrix3f strapdown = a3f.rotation();
         for ( int j = 0; j < 3; j++ ) {
             for ( int i = 0; i < 3; i++ ) {
-                imu_calib_node.setDouble("strapdown", i*3 + j, strapdown(i,j));
+                imu_calib_node.setDouble("strapdown", strapdown(i,j), i*3 + j);
             }
         }
-        const char *file_path = "imu-calibration.json";
+        imu_calib_node.pretty_print();
+        const char *file_path = "/imu-calibration.json";
         console->printf("Saving calibration to: %s\n", file_path);
         imu_calib_node.save(file_path);
-        
+
+        console->printf("If calibration was successful you should reboot or powercycle to get the new config.\n");
         state += 1;
     }
 }
