@@ -8,17 +8,17 @@
 void imu_mgr_t::defaults() {
     strapdown = Eigen::Matrix3f::Identity();
     for ( int i = 0; i < 9; i++ ) {
-        imu_calib_node.setDouble("strapdown", i, strapdown.data()[i]);
+        imu_calib_node.setDouble("strapdown", strapdown.data()[i], i);
     }
 
     accel_affine = Eigen::Matrix4f::Identity();
     for ( int i = 0; i < 16; i++ ) {
-        imu_calib_node.setDouble("accel_affine", i, accel_affine.data()[i]);
+        imu_calib_node.setDouble("accel_affine", accel_affine.data()[i], i);
     }
     
     mag_affine = Eigen::Matrix4f::Identity();
     for ( int i = 0; i < 16; i++ ) {
-        imu_calib_node.setDouble("mag_affine", i, mag_affine.data()[i]);
+        imu_calib_node.setDouble("mag_affine", mag_affine.data()[i], i);
     }
 }
 
