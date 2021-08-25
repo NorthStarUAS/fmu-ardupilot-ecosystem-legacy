@@ -39,7 +39,7 @@
         }, 
         "throttle_trim": {
             "enable": "True", 
-            "gain1": "0.4" 
+            "gain1": "-0.4"
         }, 
         "flap_trim": {
             "enable": "False", 
