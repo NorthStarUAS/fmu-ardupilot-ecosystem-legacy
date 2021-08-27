@@ -16,6 +16,7 @@ private:
     uint8_t counter = 0;
     uint32_t error_count = 0;
     PropertyNode airdata_node;
+    bool ready = false;
     
 public:
 

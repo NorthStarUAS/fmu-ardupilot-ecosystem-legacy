@@ -6,6 +6,7 @@
 void airdata_t::init() {
     airdata_node = PropertyNode("/sensors/airdata");
     error_count = 0;
+    ready = false;
     airdata_node.setUInt("error_count", error_count);
 
     console->printf("Initializing & calibrating airspeed...\n");
@@ -41,8 +42,12 @@ void airdata_t::update() {
         }
     }
     if ( !airspeed.healthy() or !barometer.healthy() ) {
-        error_count++;
-        airdata_node.setUInt("error_count", error_count);
+        if ( ready ) {
+            error_count++;
+            airdata_node.setUInt("error_count", error_count);
+        }
+    } else {
+        ready = true;
     }
 }
 
