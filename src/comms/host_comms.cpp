@@ -16,7 +16,7 @@
 #include "serial_link.h"
 #include "rcfmu_messages.h"
 
-#include "comms.h"
+#include "host_comms.h"
 
 #include <AP_HAL/AP_HAL.h>
 

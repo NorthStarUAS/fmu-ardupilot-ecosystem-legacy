@@ -7,7 +7,7 @@
 #include "setup_board.h"
 
 #include "airdata.h"
-#include "comms.h"
+#include "comms/host_comms.h"
 #include "config.h"
 #include "gps_mgr.h"
 #include "imu_mgr.h"

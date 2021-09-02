@@ -1,11 +1,10 @@
 #include "setup_board.h"
 
-#include "airdata.h"
-#include "comms.h"
+//#include "airdata.h"
 #include "config.h"
 #include "imu_mgr.h"
 #include "pilot.h"              // reset defaults
-#include "rcfmu_messages.h"     // fixme: would like to remove this dependency
+//#include "rcfmu_messages.h"     // fixme: would like to remove this dependency
 
 // starting point for writing big eeprom struct
 static const int CONFIG_OFFSET = 2;
@@ -139,9 +138,9 @@ uint16_t config_t::set_serial_number(uint16_t value) {
 // }
 
 void config_t::actuator_gain_defaults() {
-    for ( int i = 0; i < rcfmu_message::pwm_channels; i++ ) {
+    //for ( int i = 0; i < rcfmu_message::pwm_channels; i++ ) {
         // FIXME: defaults // pwm_cfg.act_gain[i] = 1.0;
-    }
+    //}
 }
 
 void config_t::reset_defaults() {
