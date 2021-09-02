@@ -105,10 +105,6 @@ int gcs_link_t::write_pilot_in()
     return serial.write_packet( pilot1.id, pilot1.payload, pilot1.len);
 }
 
-static inline int32_t intround(float f) {
-    return (int32_t)(f >= 0.0 ? (f + 0.5) : (f - 0.5));
-}
-
 // output a binary representation of the IMU data (note: scaled to 16bit values)
 int gcs_link_t::write_imu()
 {

@@ -60,10 +60,6 @@ void info_t::write_actuator_out_ascii()
     console->printf("\n");
 }
 
-static inline int32_t intround(float f) {
-    return (int32_t)(f >= 0.0 ? (f + 0.5) : (f - 0.5));
-}
-
 void info_t::write_imu_ascii()
 {
     // output imu data
