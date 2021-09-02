@@ -7,7 +7,8 @@
 #include "setup_board.h"
 
 #include "airdata.h"
-#include "comms/host_comms.h"
+#include "comms/host_link.h"
+#include "comms/info.h"
 #include "config.h"
 #include "gps_mgr.h"
 #include "imu_mgr.h"
@@ -57,7 +58,8 @@ static PropertyNode pilot_node;
 static config_t config;
 static airdata_t airdata;
 static gps_mgr_t gps_mgr;
-static host_comms_t host_comms;
+static host_link_t host_link;
+static info_t info;
 static led_t led;
 static menu_t menu;
 static power_t power;
@@ -121,7 +123,8 @@ void setup() {
     // ekf init (just prints availability status)
     nav_mgr.init();
 
-    host_comms.init();              // do this after gps initialization
+    host_link.init();              // do this after gps initialization
+    info.init();                   // do this after gps initialization
 
     menu.init();
     
@@ -142,9 +145,9 @@ void loop() {
     // printf("%d - %d >= %d\n", AP_HAL::millis(), mainTimer, DT_MILLIS);
     if ( AP_HAL::millis() - mainTimer >= DT_MILLIS ) {
         if ( AP_HAL::millis() - mainTimer > DT_MILLIS ) {
-            host_comms.main_loop_timer_misses++;
+            host_link.main_loop_timer_misses++;
             mainTimer = AP_HAL::millis(); // catch up
-            if ( host_comms.main_loop_timer_misses % 25 == 0 ) {
+            if ( host_link.main_loop_timer_misses % 25 == 0 ) {
                 console->printf("WARNING: main loop is not completing on time!\n");
             }
         } else {
@@ -165,21 +168,21 @@ void loop() {
 
         // 4. Send state to host computer
         if ( true) {
-            host_comms.output_counter += host_comms.write_pilot_in_bin();
-            host_comms.output_counter += host_comms.write_gps_bin();
-            host_comms.output_counter += host_comms.write_airdata_bin();
-            host_comms.output_counter += host_comms.write_power_bin();
+            host_link.output_counter += host_link.write_pilot_in();
+            host_link.output_counter += host_link.write_gps();
+            host_link.output_counter += host_link.write_airdata();
+            host_link.output_counter += host_link.write_power();
             // do a little extra dance with the return value because
-            // write_status_info_bin() can reset host_comms.output_counter (but
+            // write_status_info() can reset host_link.output_counter (but
             // that gets ignored if we do the math in one step)
-            uint8_t result = host_comms.write_status_info_bin();
-            host_comms.output_counter += result;
+            uint8_t result = host_link.write_status_info();
+            host_link.output_counter += result;
             if ( config_nav_node.getString("select") != "none" ) {
-                host_comms.output_counter += host_comms.write_nav_bin();
+                host_link.output_counter += host_link.write_nav();
             }
             // write imu message last: used as an implicit end of data
             // frame marker.
-            host_comms.output_counter += host_comms.write_imu_bin();
+            host_link.output_counter += host_link.write_imu();
             hal.scheduler->delay(1);
         }
 
@@ -188,13 +191,13 @@ void loop() {
             debugTimer = AP_HAL::millis();
             if ( imu_mgr.gyros_calibrated == 2 ) {
                 menu.update();
-                if ( menu.display_pilot ) { host_comms.write_pilot_in_ascii(); }
-                if ( menu.display_gps ) { host_comms.write_gps_ascii(); }
-                if ( menu.display_airdata ) { host_comms.write_airdata_ascii(); }
-                if ( menu.display_imu ) { host_comms.write_imu_ascii(); }
-                if ( menu.display_nav ) { host_comms.write_nav_ascii(); }
-                if ( menu.display_nav_stats ) { host_comms.write_nav_stats_ascii(); }
-                if ( menu.display_act ) { host_comms.write_actuator_out_ascii(); }
+                if ( menu.display_pilot ) { info.write_pilot_in_ascii(); }
+                if ( menu.display_gps ) { info.write_gps_ascii(); }
+                if ( menu.display_airdata ) { info.write_airdata_ascii(); }
+                if ( menu.display_imu ) { info.write_imu_ascii(); }
+                if ( menu.display_nav ) { info.write_nav_ascii(); }
+                if ( menu.display_nav_stats ) { info.write_nav_stats_ascii(); }
+                if ( menu.display_act ) { info.write_actuator_out_ascii(); }
             }
         }
 
@@ -202,8 +205,8 @@ void loop() {
         if ( AP_HAL::millis() - hbTimer >= 10000 ) {
             hbTimer = AP_HAL::millis();
             if ( imu_mgr.gyros_calibrated == 2 ) {
-                host_comms.write_status_info_ascii();
-                host_comms.write_power_ascii();
+                info.write_status_info_ascii();
+                info.write_power_ascii();
                 float elapsed_sec = (AP_HAL::millis() - tempTimer) / 1000.0;
                 console->printf("Available mem: %d bytes\n",
                                 (unsigned int)hal.util->available_memory());
@@ -247,7 +250,7 @@ void loop() {
         }
 
         // read in any host commmands (config, inceptors, etc.)
-        host_comms.read_commands();
+        host_link.read_commands();
 
         if ( pilot.changed ) {
             pilot.write();
