@@ -3,7 +3,7 @@
 #include "props2.h"
 #include "serial_link.h"
 
-class comms_t {
+class host_comms_t {
 public:
     // Serial = usb, Serial1 connects to /dev/ttyO4 on beaglebone in
     // aura-v2 and marmot-v1 hardware
@@ -43,5 +43,3 @@ private:
     PropertyNode power_node;
     unsigned long int gps_last_millis = 0;
 };
-
-extern comms_t comms;

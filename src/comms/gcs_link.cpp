@@ -16,11 +16,11 @@
 #include "serial_link.h"
 #include "rcfmu_messages.h"
 
-#include "host_comms.h"
+#include "gcs_link.h"
 
 #include <AP_HAL/AP_HAL.h>
 
-void host_comms_t::init() {
+void gcs_link_t::init() {
     config_node = PropertyNode("/config");
     effector_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");
@@ -30,12 +30,12 @@ void host_comms_t::init() {
     power_node = PropertyNode("/sensors/power");
     pilot_node = PropertyNode("/pilot");
     
-    // serial.open(HOST_BAUD, hal.serial(0)); // usb/console
-    serial.open(HOST_BAUD, hal.serial(1)); // telemetry 1
-    // serial.open(HOST_BAUD, hal.serial(2)); // telemetry 2
+    // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
+    // serial.open(DEFAULT_BAUD, hal.serial(1)); // telemetry 1
+    serial.open(TELEMETRY_BAUD, hal.serial(2)); // telemetry 2
 }
 
-bool host_comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_size )
+bool gcs_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
 {
     bool result = false;
 
@@ -57,18 +57,18 @@ bool host_comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_
     //         console->printf("Swift barometer on I2C: 0x%X\n",
     //                         config.airdata_cfg.swift_baro_addr);
     //         config.write_storage();
-    //         write_ack_bin( id, 0 );
+    //         write_ack( id, 0 );
     //         result = true;
     //     }
     } else if ( id == rcfmu_message::command_zero_gyros_id && message_size == 1 ) {
         console->printf("received zero gyros command\n");
         imu_mgr.gyros_calibrated = 0;   // start state
-        write_ack_bin( id, 0 );
+        write_ack( id, 0 );
         result = true;
     } else if ( id == rcfmu_message::command_reset_ekf_id && message_size == 1 ) {
         console->printf("received reset ekf command\n");
         nav_mgr.reinit();
-        write_ack_bin( id, 0 );
+        write_ack( id, 0 );
         result = true;
     } else {
         console->printf("unknown message id: %d len: %d\n", id, message_size);
@@ -78,7 +78,7 @@ bool host_comms_t::parse_message_bin( uint8_t id, uint8_t *buf, uint8_t message_
 
 
 // output an acknowledgement of a message received
-int host_comms_t::write_ack_bin( uint8_t command_id, uint8_t subcommand_id )
+int gcs_link_t::write_ack( uint8_t command_id, uint8_t subcommand_id )
 {
     static rcfmu_message::command_ack_t ack;
     ack.command_id = command_id;
@@ -89,7 +89,7 @@ int host_comms_t::write_ack_bin( uint8_t command_id, uint8_t subcommand_id )
 
 
 // output a binary representation of the pilot manual (rc receiver) data
-int host_comms_t::write_pilot_in_bin()
+int gcs_link_t::write_pilot_in()
 {
     static rcfmu_message::pilot_t pilot1;
 
@@ -105,44 +105,12 @@ int host_comms_t::write_pilot_in_bin()
     return serial.write_packet( pilot1.id, pilot1.payload, pilot1.len);
 }
 
-void host_comms_t::write_pilot_in_ascii()
-{
-    // pilot (receiver) input data
-    if ( pilot_node.getBool("failsafe") ) {
-        console->printf("FAILSAFE! ");
-    }
-    if ( pilot_node.getBool("ap_enabled") ) {
-        console->printf("(Auto) ");
-    } else {
-        console->printf("(Manual) ");
-    }
-    if ( pilot_node.getBool("throttle_safety") ) {
-        console->printf("(Throttle safety) ");
-    } else {
-        console->printf("(Throttle enable) ");
-    }
-    for ( int i = 0; i < 8; i++ ) {
-        console->printf("%.3f ", pilot_node.getDouble("manual", i));
-    }
-    console->printf("\n");
-}
-
-void host_comms_t::write_actuator_out_ascii()
-{
-    // actuator output
-    console->printf("RCOUT:");
-    for ( int i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
-        console->printf("%.2f ", effector_node.getDouble("channel", i));
-    }
-    console->printf("\n");
-}
-
 static inline int32_t intround(float f) {
     return (int32_t)(f >= 0.0 ? (f + 0.5) : (f - 0.5));
 }
 
 // output a binary representation of the IMU data (note: scaled to 16bit values)
-int host_comms_t::write_imu_bin()
+int gcs_link_t::write_imu()
 {
     static rcfmu_message::imu_t imu1;
     imu1.props2msg(imu_node);
@@ -151,23 +119,8 @@ int host_comms_t::write_imu_bin()
     return result;
 }
 
-void host_comms_t::write_imu_ascii()
-{
-    // output imu data
-    console->printf("IMU: ");
-    console->printf("%.3f ", imu_node.getDouble("timestamp"));
-    console->printf("%.2f ", imu_node.getDouble("p_rps"));
-    console->printf("%.2f ", imu_node.getDouble("q_rps"));
-    console->printf("%.2f ", imu_node.getDouble("r_rps"));
-    console->printf("%.2f ", imu_node.getDouble("ax_mps2"));
-    console->printf("%.2f ", imu_node.getDouble("ay_mps2"));
-    console->printf("%.2f ", imu_node.getDouble("az_mps2"));
-    console->printf("%.2f ", imu_node.getDouble("temp_C"));
-    console->printf("\n");
-}
-
 // output a binary representation of the GPS data
-int host_comms_t::write_gps_bin()
+int gcs_link_t::write_gps()
 {
     static rcfmu_message::gps_t gps_msg;
     if ( gps_node.getUInt("millis") != gps_last_millis ) {
@@ -197,30 +150,8 @@ int host_comms_t::write_gps_bin()
     }
 }
 
-void host_comms_t::write_gps_ascii() {
-    console->printf("GPS:");
-    console->printf(" Lat: %.7f", gps_node.getDouble("latitude_deg"));
-    console->printf(" Lon: %.7f", gps_node.getDouble("longitude_deg"));
-    console->printf(" Alt: %.1f", gps_node.getDouble("altitude_m"));
-    console->printf(" Vel: %.1f %.1f %.1f",
-                    gps_node.getDouble("vn_mps"),
-                    gps_node.getDouble("ve_mps"),
-                    gps_node.getDouble("vd_mps"));
-    console->printf(" Sat: %d", gps_node.getInt("satellites"));
-    console->printf(" Fix: %d", gps_node.getInt("status"));
-    console->printf(" Time: %02d:%02d:%02d ",
-                    gps_node.getInt("hour"),
-                    gps_node.getInt("min"),
-                    gps_node.getInt("sec"));
-    console->printf(" Date: %02d/%02d/%04d",
-                    gps_node.getInt("month"),
-                    gps_node.getInt("day"),
-                    gps_node.getInt("year"));
-    console->printf("\n");
-}
-
 // output a binary representation of the Nav data
-int host_comms_t::write_nav_bin()
+int gcs_link_t::write_nav()
 {
     static rcfmu_message::ekf_t nav_msg;
     nav_msg.millis = imu_node.getUInt("millis"); // fixme?
@@ -259,52 +190,8 @@ int host_comms_t::write_nav_bin()
     return serial.write_packet( nav_msg.id, nav_msg.payload, nav_msg.len );
 }
 
-void host_comms_t::write_nav_ascii() {
-    // values
-    console->printf("Pos: %.7f, %.7f, %.2f",
-                    nav_node.getDouble("latitude_rad")*R2D,
-                    nav_node.getDouble("longitude_rad")*R2D,
-                    nav_node.getDouble("altitude_m"));
-    console->printf(" Vel: %.2f, %.2f, %.2f",
-                    nav_node.getDouble("vn_mps"),
-                    nav_node.getDouble("ve_mps"),
-                    nav_node.getDouble("vd_mps"));
-    console->printf(" Att: %.2f, %.2f, %.2f\n",
-                    nav_node.getDouble("phi_rad")*R2D,
-                    nav_node.getDouble("the_rad")*R2D,
-                    nav_node.getDouble("psi_rad")*R2D);
-}
-
-void host_comms_t::write_nav_stats_ascii() {
-    // covariances
-    console->printf("gxb: %.2f %.2f %.2f",
-                    nav_node.getDouble("p_bias"),
-                    nav_node.getDouble("q_bias"),
-                    nav_node.getDouble("r_bias"));
-    console->printf(" axb: %.2f %.2f %.2f",
-                    nav_node.getDouble("ax_bias"),
-                    nav_node.getDouble("ay_bias"),
-                    nav_node.getDouble("az_bias"));
-    float num = 3.0;            // how many standard deviations
-    console->printf(" cov pos: %.2f %.2f %.2f",
-                    num * nav_node.getDouble("Pp0"),
-                    num * nav_node.getDouble("Pp1"),
-                    num * nav_node.getDouble("Pp2"));
-    console->printf(" vel: %.2f %.2f %.2f",
-                    num * nav_node.getDouble("Pv0"),
-                    num * nav_node.getDouble("Pv1"),
-                    num * nav_node.getDouble("Pv2"));
-    console->printf(" att: %.2f %.2f %.2f\n",
-                    num * nav_node.getDouble("Pa0")*R2D,
-                    num * nav_node.getDouble("Pa1")*R2D,
-                    num * nav_node.getDouble("Pa2")*R2D);
-    if ( false ) {
-        nav_node.pretty_print();
-    }
-}
-
 // output a binary representation of the barometer data
-int host_comms_t::write_airdata_bin()
+int gcs_link_t::write_airdata()
 {
     static rcfmu_message::airdata_t airdata1;
     // FIXME: proprty names
@@ -319,19 +206,8 @@ int host_comms_t::write_airdata_bin()
     return serial.write_packet( airdata1.id, airdata1.payload, airdata1.len );
 }
 
-void host_comms_t::write_airdata_ascii()
-{
-    console->printf("Baro: %.2f pa %.1f C ",
-                    airdata_node.getDouble("baro_press_pa"),
-                    airdata_node.getDouble("baro_tempC"));
-    console->printf("Pitot: %.4f mps %.1f C %d errors\n",
-                    airdata_node.getDouble("airspeed_mps"),
-                    airdata_node.getDouble("temp_C"),
-                    airdata_node.getUInt("error_count"));
-}
-
 // output a binary representation of various volt/amp sensors
-int host_comms_t::write_power_bin()
+int gcs_link_t::write_power()
 {
     static rcfmu_message::power_t power1;
     power1.avionics_v = power_node.getDouble("avionics_v");
@@ -341,16 +217,8 @@ int host_comms_t::write_power_bin()
     return serial.write_packet( power1.id, power1.payload, power1.len );
 }
 
-void host_comms_t::write_power_ascii()
-{
-    printf("Avionics v: %.2f  Batt v: %.2f  Batt amp: %.2f\n",
-           power_node.getDouble("avionics_v"),
-           power_node.getDouble("battery_volts"),
-           power_node.getDouble("battery_amps"));
-}
-
 // output a binary representation of various status and config information
-int host_comms_t::write_status_info_bin()
+int gcs_link_t::write_status_info()
 {
     static uint32_t write_millis = AP_HAL::millis();
     static rcfmu_message::status_t status;
@@ -368,7 +236,7 @@ int host_comms_t::write_status_info_bin()
     status.serial_number = config_node.getInt("serial_number");
     status.firmware_rev = FIRMWARE_REV;
     status.master_hz = MASTER_HZ;
-    status.baud = HOST_BAUD;
+    status.baud = TELEMETRY_BAUD;
 
     // estimate sensor output byte rate
     unsigned long current_time = AP_HAL::millis();
@@ -383,19 +251,8 @@ int host_comms_t::write_status_info_bin()
     return serial.write_packet( status.id, status.payload, status.len );
 }
 
-void host_comms_t::write_status_info_ascii()
-{
-    // This info is static so we don't need to send it at a high rate ... once every 10 seconds (?)
-    // with an immediate message at the start.
-    printf("Uptime: %d(sec)", (unsigned int)(AP_HAL::millis() / 1000));
-    printf(" SN: %d", config_node.getInt("serial_number"));
-    printf(" Firmware: %d", FIRMWARE_REV);
-    printf(" Main loop hz: %d", MASTER_HZ);
-    printf(" Baud: %d\n", HOST_BAUD);
-}
-
-void host_comms_t::read_commands() {
+void gcs_link_t::read_commands() {
     while ( serial.update() ) {
-        parse_message_bin( serial.pkt_id, serial.payload, serial.pkt_len );
+        parse_message( serial.pkt_id, serial.payload, serial.pkt_len );
     }
 }

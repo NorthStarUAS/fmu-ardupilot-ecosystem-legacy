@@ -45,5 +45,6 @@ const int DT_MILLIS = (1000 / MASTER_HZ);
 
 // Please read the important notes in the source tree about Teensy
 // baud rates vs. host baud rates.
-const int DEFAULT_BAUD = 500000;
+const int HOST_BAUD = 500000;
+const int TELEMETRY_BAUD = 57600;
 

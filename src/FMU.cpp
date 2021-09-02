@@ -57,6 +57,7 @@ static PropertyNode pilot_node;
 static config_t config;
 static airdata_t airdata;
 static gps_mgr_t gps_mgr;
+static host_comms_t host_comms;
 static led_t led;
 static menu_t menu;
 static power_t power;
@@ -75,7 +76,7 @@ void setup() {
     
     console->printf("\nRice Creek UAS FMU: Rev %d\n", FIRMWARE_REV);
     console->printf("You are seeing this message on the console interface.\n");
-    console->printf("Sensor/config communication is on Serial1 @ %d baud (N81) no flow control.\n", DEFAULT_BAUD);
+    console->printf("Host communication is on Serial1 @ %d baud (N81) no flow control.\n", HOST_BAUD);
 
     // load config from sd card
     config.init();
@@ -120,7 +121,7 @@ void setup() {
     // ekf init (just prints availability status)
     nav_mgr.init();
 
-    comms.init();              // do this after gps initialization
+    host_comms.init();              // do this after gps initialization
 
     menu.init();
     
@@ -141,9 +142,9 @@ void loop() {
     // printf("%d - %d >= %d\n", AP_HAL::millis(), mainTimer, DT_MILLIS);
     if ( AP_HAL::millis() - mainTimer >= DT_MILLIS ) {
         if ( AP_HAL::millis() - mainTimer > DT_MILLIS ) {
-            comms.main_loop_timer_misses++;
+            host_comms.main_loop_timer_misses++;
             mainTimer = AP_HAL::millis(); // catch up
-            if ( comms.main_loop_timer_misses % 25 == 0 ) {
+            if ( host_comms.main_loop_timer_misses % 25 == 0 ) {
                 console->printf("WARNING: main loop is not completing on time!\n");
             }
         } else {
@@ -164,21 +165,21 @@ void loop() {
 
         // 4. Send state to host computer
         if ( true) {
-            comms.output_counter += comms.write_pilot_in_bin();
-            comms.output_counter += comms.write_gps_bin();
-            comms.output_counter += comms.write_airdata_bin();
-            comms.output_counter += comms.write_power_bin();
+            host_comms.output_counter += host_comms.write_pilot_in_bin();
+            host_comms.output_counter += host_comms.write_gps_bin();
+            host_comms.output_counter += host_comms.write_airdata_bin();
+            host_comms.output_counter += host_comms.write_power_bin();
             // do a little extra dance with the return value because
-            // write_status_info_bin() can reset comms.output_counter (but
+            // write_status_info_bin() can reset host_comms.output_counter (but
             // that gets ignored if we do the math in one step)
-            uint8_t result = comms.write_status_info_bin();
-            comms.output_counter += result;
+            uint8_t result = host_comms.write_status_info_bin();
+            host_comms.output_counter += result;
             if ( config_nav_node.getString("select") != "none" ) {
-                comms.output_counter += comms.write_nav_bin();
+                host_comms.output_counter += host_comms.write_nav_bin();
             }
             // write imu message last: used as an implicit end of data
             // frame marker.
-            comms.output_counter += comms.write_imu_bin();
+            host_comms.output_counter += host_comms.write_imu_bin();
             hal.scheduler->delay(1);
         }
 
@@ -187,13 +188,13 @@ void loop() {
             debugTimer = AP_HAL::millis();
             if ( imu_mgr.gyros_calibrated == 2 ) {
                 menu.update();
-                if ( menu.display_pilot ) { comms.write_pilot_in_ascii(); }
-                if ( menu.display_gps ) { comms.write_gps_ascii(); }
-                if ( menu.display_airdata ) { comms.write_airdata_ascii(); }
-                if ( menu.display_imu ) { comms.write_imu_ascii(); }
-                if ( menu.display_nav ) { comms.write_nav_ascii(); }
-                if ( menu.display_nav_stats ) { comms.write_nav_stats_ascii(); }
-                if ( menu.display_act ) { comms.write_actuator_out_ascii(); }
+                if ( menu.display_pilot ) { host_comms.write_pilot_in_ascii(); }
+                if ( menu.display_gps ) { host_comms.write_gps_ascii(); }
+                if ( menu.display_airdata ) { host_comms.write_airdata_ascii(); }
+                if ( menu.display_imu ) { host_comms.write_imu_ascii(); }
+                if ( menu.display_nav ) { host_comms.write_nav_ascii(); }
+                if ( menu.display_nav_stats ) { host_comms.write_nav_stats_ascii(); }
+                if ( menu.display_act ) { host_comms.write_actuator_out_ascii(); }
             }
         }
 
@@ -201,8 +202,8 @@ void loop() {
         if ( AP_HAL::millis() - hbTimer >= 10000 ) {
             hbTimer = AP_HAL::millis();
             if ( imu_mgr.gyros_calibrated == 2 ) {
-                comms.write_status_info_ascii();
-                comms.write_power_ascii();
+                host_comms.write_status_info_ascii();
+                host_comms.write_power_ascii();
                 float elapsed_sec = (AP_HAL::millis() - tempTimer) / 1000.0;
                 console->printf("Available mem: %d bytes\n",
                                 (unsigned int)hal.util->available_memory());
@@ -246,7 +247,7 @@ void loop() {
         }
 
         // read in any host commmands (config, inceptors, etc.)
-        comms.read_commands();
+        host_comms.read_commands();
 
         if ( pilot.changed ) {
             pilot.write();
