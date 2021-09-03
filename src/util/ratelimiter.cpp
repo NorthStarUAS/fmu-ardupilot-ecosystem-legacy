@@ -1,5 +1,9 @@
 #include "ratelimiter.h"
 
+RateLimiter::RateLimiter() {
+    dt_millis = 1000;
+}
+
 RateLimiter::RateLimiter( float hz ) {
     dt_millis = 1000 / hz;
 }

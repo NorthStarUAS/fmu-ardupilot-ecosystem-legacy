@@ -14,7 +14,7 @@
 #include "pilot.h"              // update_ap()
 #include "nav/nav_constants.h"
 #include "serial_link.h"
-#include "rcfmu_messages.h"
+#include "rcfmu_messages.h"     // fixme: work towards deprecating
 
 #include "host_link.h"
 

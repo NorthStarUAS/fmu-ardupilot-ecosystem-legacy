@@ -82,14 +82,14 @@ void gps_mgr_t::update() {
         gps_node.setDouble("vn_mps", vel.x);
         gps_node.setDouble("ve_mps", vel.y);
         gps_node.setDouble("vd_mps", vel.z);
-        gps_node.setInt("satellites", gps.num_sats());
+        gps_node.setInt("num_sats", gps.num_sats());
         gps_node.setInt("status", gps.status());
         float hacc = 0.0;
         float vacc = 0.0;
         gps.horizontal_accuracy(hacc);
         gps.vertical_accuracy(vacc);
-        gps_node.setDouble("horiz_accuracy_m", hacc);
-        gps_node.setDouble("vertical_accuracy_m", vacc);
+        gps_node.setDouble("hAcc_m", hacc);
+        gps_node.setDouble("vAcc_m", vacc);
         gps_node.setDouble("hdop", gps.get_hdop() / 100.0);
         gps_node.setDouble("vdop", gps.get_vdop() / 100.0);
         gps_node.setInt("year", tm->tm_year + 1900);

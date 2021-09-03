@@ -14,11 +14,15 @@
 #include "pilot.h"              // update_ap()
 #include "nav/nav_constants.h"
 #include "serial_link.h"
-#include "rcfmu_messages.h"
+#include "rc_messages.h"
+#include "rcfmu_messages.h"     // fixme: work towards deprecating
 
 #include "gcs_link.h"
 
 #include <AP_HAL/AP_HAL.h>
+
+gcs_link_t::gcs_link_t() {}
+gcs_link_t::~gcs_link_t() {}
 
 void gcs_link_t::init() {
     config_node = PropertyNode("/config");
@@ -33,6 +37,29 @@ void gcs_link_t::init() {
     // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
     // serial.open(DEFAULT_BAUD, hal.serial(1)); // telemetry 1
     serial.open(TELEMETRY_BAUD, hal.serial(2)); // telemetry 2
+
+    gps_limiter = RateLimiter(2.5);
+    imu_limiter = RateLimiter(4);
+}
+
+void gcs_link_t::update() {
+    //output_counter += write_pilot_in();
+    if ( gps_limiter.update() ) {
+        output_counter += write_gps();
+    }
+    //output_counter += write_airdata();
+    //output_counter += write_power();
+    // do a little extra dance with the return value because
+    // write_status_info() can reset output_counter (but
+    // that gets ignored if we do the math in one step)
+    //uint8_t result = write_status_info();
+    //output_counter += result;
+    //output_counter += write_nav();
+    // write imu message last: used as an implicit end of data
+    // frame marker.
+    if ( imu_limiter.update() ) {
+        output_counter += write_imu();
+    }
 }
 
 bool gcs_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
@@ -108,37 +135,19 @@ int gcs_link_t::write_pilot_in()
 // output a binary representation of the IMU data (note: scaled to 16bit values)
 int gcs_link_t::write_imu()
 {
-    static rcfmu_message::imu_t imu1;
-    imu1.props2msg(imu_node);
-    imu1.pack();
-    int result = serial.write_packet( imu1.id, imu1.payload, imu1.len );
-    return result;
+    static rc_message::imu_v6_t imu_msg;
+    imu_msg.props2msg(imu_node);
+    imu_msg.pack();
+    return serial.write_packet( imu_msg.id, imu_msg.payload, imu_msg.len );
 }
 
 // output a binary representation of the GPS data
 int gcs_link_t::write_gps()
 {
-    static rcfmu_message::gps_t gps_msg;
+    static rc_message::gps_v5_t gps_msg;
     if ( gps_node.getUInt("millis") != gps_last_millis ) {
         gps_last_millis = gps_node.getUInt("millis");
-        gps_msg.millis = gps_node.getUInt("millis");
-        gps_msg.unix_usec = gps_node.getUInt64("unix_usec");
-        // for ( int i = 0; i < 8; i++ ) {
-        //     printf("%02X ", *(uint8_t *)(&(gps_msg.unix_usec) + i));
-        // }
-        // printf("%ld\n", gps_msg.unix_usec);
-        gps_msg.num_sats = gps_node.getInt("satellites");
-        gps_msg.status = gps_node.getInt("status");
-        gps_msg.latitude_raw = gps_node.getInt("latitude_raw");
-        gps_msg.longitude_raw = gps_node.getInt("longitude_raw");
-        gps_msg.altitude_m = gps_node.getDouble("altitude_m");
-        gps_msg.vn_mps = gps_node.getDouble("vn_mps");
-        gps_msg.ve_mps = gps_node.getDouble("ve_mps");
-        gps_msg.vd_mps = gps_node.getDouble("vd_mps");
-        gps_msg.hAcc = gps_node.getDouble("hAcc");
-        gps_msg.vAcc = gps_node.getDouble("vAcc");
-        gps_msg.hdop = gps_node.getDouble("hdop");
-        gps_msg.vdop = gps_node.getDouble("vdop");
+        gps_msg.props2msg(gps_node);
         gps_msg.pack();
         return serial.write_packet( gps_msg.id, gps_msg.payload, gps_msg.len );
     } else {

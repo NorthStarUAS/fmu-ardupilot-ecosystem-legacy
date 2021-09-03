@@ -7,6 +7,7 @@
 #include "setup_board.h"
 
 #include "airdata.h"
+#include "comms/gcs_link.h"
 #include "comms/host_link.h"
 #include "comms/info.h"
 #include "config.h"
@@ -58,6 +59,7 @@ static PropertyNode pilot_node;
 static config_t config;
 static airdata_t airdata;
 static gps_mgr_t gps_mgr;
+static gcs_link_t gcs_link;
 static host_link_t host_link;
 static info_t info;
 static led_t led;
@@ -123,8 +125,9 @@ void setup() {
     // ekf init (just prints availability status)
     nav_mgr.init();
 
-    host_link.init();              // do this after gps initialization
-    info.init();                   // do this after gps initialization
+    gcs_link.init();            // do this after gps initialization
+    host_link.init();           // do this after gps initialization
+    info.init();                // do this after gps initialization
 
     menu.init();
     
@@ -242,6 +245,8 @@ void loop() {
         // blink the led
         led.do_policy(imu_mgr.gyros_calibrated);
         led.update();
+        
+        gcs_link.update();
     }
 }
 
