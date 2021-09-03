@@ -116,7 +116,7 @@ void mixer_t::sas_update() {
     float tune = 1.0;
     float max_tune = 2.0;
     if ( stab_tune_node.getBool("enable") ) {
-        tune = max_tune * pilot_node.getDouble("manual", 7);
+        tune = max_tune * pilot_node.getDouble("channel", 7);
         if ( tune < 0.0 ) {
             tune = 0.0;
         } else if ( tune > max_tune ) {

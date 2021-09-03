@@ -34,7 +34,7 @@ private:
     unsigned long int gps_last_millis = 0;
     
     int write_ack( uint8_t command_id, uint8_t subcommand_id );
-    int write_pilot_in();
+    int write_pilot();
     int write_imu();
     int write_gps();
     int write_nav();

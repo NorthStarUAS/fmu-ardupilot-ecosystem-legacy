@@ -45,7 +45,7 @@ void info_t::write_pilot_in_ascii()
         console->printf("(Throttle enable) ");
     }
     for ( int i = 0; i < 8; i++ ) {
-        console->printf("%.3f ", pilot_node.getDouble("manual", i));
+        console->printf("%.3f ", pilot_node.getDouble("channel", i));
     }
     console->printf("\n");
 }

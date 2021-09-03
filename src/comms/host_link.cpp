@@ -112,7 +112,7 @@ int host_link_t::write_pilot_in()
 
     // receiver data
     for ( int i = 0; i < rcfmu_message::sbus_channels; i++ ) {
-        pilot1.channel[i] = pilot_node.getDouble("manual", i);
+        pilot1.channel[i] = pilot_node.getDouble("channel", i);
     }
 
     // flags

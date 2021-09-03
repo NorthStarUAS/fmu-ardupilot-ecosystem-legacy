@@ -80,11 +80,12 @@ bool pilot_t::read() {
         new_input = true;
         changed = true;
         last_input = AP_HAL::millis();
+        pilot_node.setUInt("millis", last_input);
         nchannels = hal.rcin->read(pwm_inputs, MAX_RCIN_CHANNELS);
         for ( uint8_t i = 0; i < nchannels; i++ ) {
             rcin_node.setUInt("channel", pwm_inputs[i], i);
             manual_inputs[i] = rcin2norm(pwm_inputs[i], i);
-            pilot_node.setDouble("manual", manual_inputs[i], i);
+            pilot_node.setDouble("channel", manual_inputs[i], i);
         }
         
         // logical values

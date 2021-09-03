@@ -40,10 +40,13 @@ void gcs_link_t::init() {
 
     gps_limiter = RateLimiter(2.5);
     imu_limiter = RateLimiter(4);
+    pilot_limiter = RateLimiter(4);
 }
 
 void gcs_link_t::update() {
-    //output_counter += write_pilot_in();
+    if ( pilot_limiter.update() ) {
+        output_counter += write_pilot();
+    }
     if ( gps_limiter.update() ) {
         output_counter += write_gps();
     }
@@ -116,20 +119,13 @@ int gcs_link_t::write_ack( uint8_t command_id, uint8_t subcommand_id )
 
 
 // output a binary representation of the pilot manual (rc receiver) data
-int gcs_link_t::write_pilot_in()
+int gcs_link_t::write_pilot()
 {
-    static rcfmu_message::pilot_t pilot1;
-
-    // receiver data
-    for ( int i = 0; i < rcfmu_message::sbus_channels; i++ ) {
-        pilot1.channel[i] = pilot_node.getDouble("manual", i);
-    }
-
-    // flags
-    pilot1.flags = pilot_node.getBool("failsafe");
-    
-    pilot1.pack();
-    return serial.write_packet( pilot1.id, pilot1.payload, pilot1.len);
+    static rc_message::pilot_v4_t pilot_msg;
+    pilot_msg.props2msg(pilot_node);
+    pilot_msg.flags = pilot_node.getBool("failsafe"); // handle flags
+    pilot_msg.pack();
+    return serial.write_packet( pilot_msg.id, pilot_msg.payload, pilot_msg.len);
 }
 
 // output a binary representation of the IMU data (note: scaled to 16bit values)

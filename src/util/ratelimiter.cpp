@@ -1,3 +1,4 @@
+#include <AP_Math/AP_Math.h>
 #include "ratelimiter.h"
 
 RateLimiter::RateLimiter() {
@@ -10,7 +11,7 @@ RateLimiter::RateLimiter( float hz ) {
 
 bool RateLimiter::update() {
     if ( timer == 0 ) {
-        timer = AP_HAL::millis();
+        timer = AP_HAL::millis() + (get_random16() % dt_millis);
     }
     if ( AP_HAL::millis() - timer >= DT_MILLIS ) {
         timer += dt_millis;
