@@ -167,24 +167,7 @@ void loop() {
         }
 
         // 4. Send state to host computer
-        if ( true) {
-            host_link.output_counter += host_link.write_pilot_in();
-            host_link.output_counter += host_link.write_gps();
-            host_link.output_counter += host_link.write_airdata();
-            host_link.output_counter += host_link.write_power();
-            // do a little extra dance with the return value because
-            // write_status_info() can reset host_link.output_counter (but
-            // that gets ignored if we do the math in one step)
-            uint8_t result = host_link.write_status_info();
-            host_link.output_counter += result;
-            if ( config_nav_node.getString("select") != "none" ) {
-                host_link.output_counter += host_link.write_nav();
-            }
-            // write imu message last: used as an implicit end of data
-            // frame marker.
-            host_link.output_counter += host_link.write_imu();
-            hal.scheduler->delay(1);
-        }
+        host_link.update();
 
         // 10hz human console output, (begins when gyros finish calibrating)
         if ( AP_HAL::millis() - debugTimer >= 100 ) {

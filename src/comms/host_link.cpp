@@ -20,6 +20,7 @@
 
 void host_link_t::init() {
     config_node = PropertyNode("/config");
+    config_nav_node = PropertyNode("/config/nav"); // after config.init()
     effector_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");
     airdata_node = PropertyNode("/sensors/airdata");
@@ -31,6 +32,24 @@ void host_link_t::init() {
     // serial.open(HOST_BAUD, hal.serial(0)); // usb/console
     serial.open(HOST_BAUD, hal.serial(1)); // telemetry 1
     // serial.open(HOST_BAUD, hal.serial(2)); // telemetry 2
+}
+
+void host_link_t::update() {
+    output_counter += write_pilot_in();
+    output_counter += write_gps();
+    output_counter += write_airdata();
+    output_counter += write_power();
+    // do a little extra dance with the return value because
+    // write_status_info() can reset output_counter (but
+    // that gets ignored if we do the math in one step)
+    uint8_t result = write_status_info();
+    output_counter += result;
+    if ( config_nav_node.getString("select") != "none" ) {
+        output_counter += write_nav();
+    }
+    // write imu message last: used as an implicit end of data
+    // frame marker.
+    output_counter += write_imu();
 }
 
 bool host_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
