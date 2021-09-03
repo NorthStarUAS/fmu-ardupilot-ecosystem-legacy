@@ -123,7 +123,6 @@ int gcs_link_t::write_pilot()
 {
     static rc_message::pilot_v4_t pilot_msg;
     pilot_msg.props2msg(pilot_node);
-    pilot_msg.flags = pilot_node.getBool("failsafe"); // handle flags
     pilot_msg.pack();
     return serial.write_packet( pilot_msg.id, pilot_msg.payload, pilot_msg.len);
 }
