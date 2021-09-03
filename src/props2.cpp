@@ -60,7 +60,7 @@ PropertyNode::PropertyNode() {
 
 Value *PropertyNode::find_node_from_path(Value *start_node, string path, bool create) {
     Value *node = start_node;
-    printf("PropertyNode(%s)\n", path.c_str());
+    // printf("PropertyNode(%s)\n", path.c_str());
     if ( !node->IsObject() ) {
         node->SetObject();
         if ( !node->IsObject() ) {
@@ -170,6 +170,18 @@ bool PropertyNode::isValue(const char *name) {
         if ( val->HasMember(name) ) {
             Value &v = (*val)[name];
             return !v.IsObject() and !v.IsArray();
+        }
+    }
+    return false;
+}
+
+bool PropertyNode::isValue(const char *name, unsigned int index) {
+    if ( val->IsObject() ) {
+        if ( val->HasMember(name) ) {
+            Value &v = (*val)[name];
+            if ( v.IsArray() and index < v.Size() ) {
+                return !v[index].IsObject() and !v[index].IsArray();
+            }
         }
     }
     return false;
@@ -930,8 +942,11 @@ bool PropertyNode::save( const char *file_path ) {
 void PropertyNode::pretty_print() {
     StringBuffer buffer;
     PrettyWriter<StringBuffer> writer(buffer);
-    val->Accept(writer);
+    //PrettyWriter<StringBuffer, UTF8<>, UTF8<>, CrtAllocator, kWriteNanAndInfFlag> writer(buffer);
+    //Writer<StringBuffer, UTF8<>, UTF8<>, CrtAllocator, kWriteNanAndInfFlag> writer(buffer);
+    bool error = val->Accept(writer);
     // work around size limitations
+    // printf("buffer length: %d\n", buffer.GetSize());
     const char *ptr = buffer.GetString();
     for ( unsigned int i = 0; i < buffer.GetSize(); i++ ) {
         printf("%c", ptr[i]);
@@ -943,6 +958,23 @@ void PropertyNode::pretty_print() {
 #endif
     }
     printf("\n");
+    if ( error ) {
+        printf("json formating errro (nan or inf?)\n");
+    }
+}
+
+string PropertyNode::write_as_string() {
+    StringBuffer buffer;
+    PrettyWriter<StringBuffer> writer(buffer);
+    val->Accept(writer);
+    // string result = "";
+    // const char *ptr = buffer.GetString();
+    // // printf("buffer length: %d\n", buffer.GetSize());
+    // for ( unsigned int i = 0; i < buffer.GetSize(); i++ ) {
+    //     result += ptr[i];
+    // }
+    // return result;
+    return buffer.GetString();
 }
 
 Document *PropertyNode::doc = nullptr;
