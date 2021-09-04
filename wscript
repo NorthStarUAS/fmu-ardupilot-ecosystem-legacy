@@ -9,7 +9,7 @@ def build(bld):
         use=[vehicle + '_libs', 'ap'],
         source = bld.path.ant_glob(
             ['src/*.cpp', 'src/calibration/*.cpp', 'src/comms/*.cpp',
-             'src/nav/*.cpp', 'src/util/*.cpp']
+             'src/nav/*.cpp', 'src/sensors/*cpp', 'src/util/*.cpp']
         ),
         includes = 'src',
         defines=['ALLOW_DOUBLE_MATH_FUNCTIONS'],

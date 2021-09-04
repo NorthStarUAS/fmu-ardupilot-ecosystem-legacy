@@ -164,6 +164,9 @@ void nav_mgr_t::update() {
         nav_node.setDouble("phi_rad", data.phi);
         nav_node.setDouble("the_rad", data.the);
         nav_node.setDouble("psi_rad", data.psi);
+        nav_node.setDouble("roll_deg", data.phi * R2D);
+        nav_node.setDouble("pitch_deg", data.the * R2D);
+        nav_node.setDouble("yaw_deg", data.psi * R2D);
         nav_node.setDouble("p_bias", data.gbx);
         nav_node.setDouble("q_bias", data.gby);
         nav_node.setDouble("r_bias", data.gbz);
