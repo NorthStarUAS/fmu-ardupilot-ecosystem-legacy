@@ -7,13 +7,8 @@
  */
 
 #include "setup_board.h"
-
-#include "airdata.h"
-#include "imu_mgr.h"            // reset gyros
-#include "nav_mgr.h"            // reset ekf
-#include "pilot.h"              // update_ap()
 #include "nav/nav_constants.h"
-#include "rcfmu_messages.h"
+//#include "rcfmu_messages.h"
 
 #include "info.h"
 

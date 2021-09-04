@@ -1,10 +1,8 @@
 #include "setup_board.h"
 
-//#include "airdata.h"
 #include "config.h"
-#include "imu_mgr.h"
-#include "pilot.h"              // reset defaults
-//#include "rcfmu_messages.h"     // fixme: would like to remove this dependency
+#include "sensors/imu_mgr.h"
+#include "sensors/pilot.h"              // reset defaults
 
 // starting point for writing big eeprom struct
 static const int CONFIG_OFFSET = 2;

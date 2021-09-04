@@ -6,19 +6,19 @@
 
 #include "setup_board.h"
 
-#include "airdata.h"
 #include "comms/gcs_link.h"
 #include "comms/host_link.h"
 #include "comms/info.h"
 #include "config.h"
-#include "gps_mgr.h"
-#include "imu_mgr.h"
 #include "led.h"
 #include "menu.h"
 #include "nav_mgr.h"
-#include "pilot.h"
-#include "power.h"
 #include "props2.h"
+#include "sensors/airdata.h"
+#include "sensors/gps_mgr.h"
+#include "sensors/imu_mgr.h"
+#include "sensors/pilot.h"
+#include "sensors/power.h"
 
 const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 static AP_BoardConfig BoardConfig;
