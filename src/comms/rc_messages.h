@@ -39,9 +39,10 @@ const uint8_t imu_v6_id = 50;
 const uint8_t airdata_v5_id = 18;
 const uint8_t airdata_v6_id = 40;
 const uint8_t airdata_v7_id = 43;
-const uint8_t filter_v3_id = 31;
 const uint8_t filter_v4_id = 36;
 const uint8_t filter_v5_id = 47;
+const uint8_t nav_v6_id = 52;
+const uint8_t nav_metrics_v6_id = 53;
 const uint8_t actuator_v2_id = 21;
 const uint8_t actuator_v3_id = 37;
 const uint8_t pilot_v2_id = 20;
@@ -1476,179 +1477,6 @@ public:
     }
 };
 
-// Message: filter_v3 (id: 31)
-class filter_v3_t {
-public:
-
-    uint8_t index;
-    double timestamp_sec;
-    double latitude_deg;
-    double longitude_deg;
-    float altitude_m;
-    float vn_ms;
-    float ve_ms;
-    float vd_ms;
-    float roll_deg;
-    float pitch_deg;
-    float yaw_deg;
-    float p_bias;
-    float q_bias;
-    float r_bias;
-    float ax_bias;
-    float ay_bias;
-    float az_bias;
-    uint8_t sequence_num;
-    uint8_t status;
-
-    // internal structure for packing
-    #pragma pack(push, 1)
-    struct _compact_t {
-        uint8_t index;
-        double timestamp_sec;
-        double latitude_deg;
-        double longitude_deg;
-        float altitude_m;
-        int16_t vn_ms;
-        int16_t ve_ms;
-        int16_t vd_ms;
-        int16_t roll_deg;
-        int16_t pitch_deg;
-        int16_t yaw_deg;
-        int16_t p_bias;
-        int16_t q_bias;
-        int16_t r_bias;
-        int16_t ax_bias;
-        int16_t ay_bias;
-        int16_t az_bias;
-        uint8_t sequence_num;
-        uint8_t status;
-    };
-    #pragma pack(pop)
-
-    // id, ptr to payload and len
-    static const uint8_t id = 31;
-    uint8_t *payload = nullptr;
-    int len = 0;
-
-    ~filter_v3_t() {
-        free(payload);
-    }
-
-    bool pack() {
-        len = sizeof(_compact_t);
-        // compute dynamic packet size (if neede)
-        int size = len;
-        payload = (uint8_t *)REALLOC(payload, size);
-        // copy values
-        _compact_t *_buf = (_compact_t *)payload;
-        _buf->index = index;
-        _buf->timestamp_sec = timestamp_sec;
-        _buf->latitude_deg = latitude_deg;
-        _buf->longitude_deg = longitude_deg;
-        _buf->altitude_m = altitude_m;
-        _buf->vn_ms = intround(vn_ms * 100.0);
-        _buf->ve_ms = intround(ve_ms * 100.0);
-        _buf->vd_ms = intround(vd_ms * 100.0);
-        _buf->roll_deg = intround(roll_deg * 10.0);
-        _buf->pitch_deg = intround(pitch_deg * 10.0);
-        _buf->yaw_deg = intround(yaw_deg * 10.0);
-        _buf->p_bias = intround(p_bias * 10000.0);
-        _buf->q_bias = intround(q_bias * 10000.0);
-        _buf->r_bias = intround(r_bias * 10000.0);
-        _buf->ax_bias = intround(ax_bias * 1000.0);
-        _buf->ay_bias = intround(ay_bias * 1000.0);
-        _buf->az_bias = intround(az_bias * 1000.0);
-        _buf->sequence_num = sequence_num;
-        _buf->status = status;
-        return true;
-    }
-
-    bool unpack(uint8_t *external_message, int message_size) {
-        _compact_t *_buf = (_compact_t *)external_message;
-        len = sizeof(_compact_t);
-        index = _buf->index;
-        timestamp_sec = _buf->timestamp_sec;
-        latitude_deg = _buf->latitude_deg;
-        longitude_deg = _buf->longitude_deg;
-        altitude_m = _buf->altitude_m;
-        vn_ms = _buf->vn_ms / (float)100.0;
-        ve_ms = _buf->ve_ms / (float)100.0;
-        vd_ms = _buf->vd_ms / (float)100.0;
-        roll_deg = _buf->roll_deg / (float)10.0;
-        pitch_deg = _buf->pitch_deg / (float)10.0;
-        yaw_deg = _buf->yaw_deg / (float)10.0;
-        p_bias = _buf->p_bias / (float)10000.0;
-        q_bias = _buf->q_bias / (float)10000.0;
-        r_bias = _buf->r_bias / (float)10000.0;
-        ax_bias = _buf->ax_bias / (float)1000.0;
-        ay_bias = _buf->ay_bias / (float)1000.0;
-        az_bias = _buf->az_bias / (float)1000.0;
-        sequence_num = _buf->sequence_num;
-        status = _buf->status;
-        return true;
-    }
-
-    void msg2props(string _path, int _index = -1) {
-        if ( _index >= 0 ) {
-            _path += "/" + std::to_string(_index);
-        }
-        PropertyNode node(_path.c_str());
-        msg2props(node);
-    }
-
-    void msg2props(PropertyNode node) {
-        node.setUInt("index", index);
-        node.setDouble("timestamp_sec", timestamp_sec);
-        node.setDouble("latitude_deg", latitude_deg);
-        node.setDouble("longitude_deg", longitude_deg);
-        node.setDouble("altitude_m", altitude_m);
-        node.setDouble("vn_ms", vn_ms);
-        node.setDouble("ve_ms", ve_ms);
-        node.setDouble("vd_ms", vd_ms);
-        node.setDouble("roll_deg", roll_deg);
-        node.setDouble("pitch_deg", pitch_deg);
-        node.setDouble("yaw_deg", yaw_deg);
-        node.setDouble("p_bias", p_bias);
-        node.setDouble("q_bias", q_bias);
-        node.setDouble("r_bias", r_bias);
-        node.setDouble("ax_bias", ax_bias);
-        node.setDouble("ay_bias", ay_bias);
-        node.setDouble("az_bias", az_bias);
-        node.setUInt("sequence_num", sequence_num);
-        node.setUInt("status", status);
-    }
-
-    void props2msg(string _path, int _index = -1) {
-        if ( _index >= 0 ) {
-            _path += "/" + std::to_string(_index);
-        }
-        PropertyNode node(_path.c_str());
-        props2msg(node);
-    }
-
-    void props2msg(PropertyNode node) {
-        index = node.getUInt("index");
-        timestamp_sec = node.getDouble("timestamp_sec");
-        latitude_deg = node.getDouble("latitude_deg");
-        longitude_deg = node.getDouble("longitude_deg");
-        altitude_m = node.getDouble("altitude_m");
-        vn_ms = node.getDouble("vn_ms");
-        ve_ms = node.getDouble("ve_ms");
-        vd_ms = node.getDouble("vd_ms");
-        roll_deg = node.getDouble("roll_deg");
-        pitch_deg = node.getDouble("pitch_deg");
-        yaw_deg = node.getDouble("yaw_deg");
-        p_bias = node.getDouble("p_bias");
-        q_bias = node.getDouble("q_bias");
-        r_bias = node.getDouble("r_bias");
-        ax_bias = node.getDouble("ax_bias");
-        ay_bias = node.getDouble("ay_bias");
-        az_bias = node.getDouble("az_bias");
-        sequence_num = node.getUInt("sequence_num");
-        status = node.getUInt("status");
-    }
-};
-
 // Message: filter_v4 (id: 36)
 class filter_v4_t {
 public:
@@ -2010,6 +1838,304 @@ public:
         max_att_cov = node.getDouble("max_att_cov");
         sequence_num = node.getUInt("sequence_num");
         status = node.getUInt("status");
+    }
+};
+
+// Message: nav_v6 (id: 52)
+class nav_v6_t {
+public:
+
+    uint8_t index;
+    uint32_t millis;
+    int32_t latitude_raw;
+    int32_t longitude_raw;
+    float altitude_m;
+    float vn_mps;
+    float ve_mps;
+    float vd_mps;
+    float roll_deg;
+    float pitch_deg;
+    float yaw_deg;
+    uint8_t sequence_num;
+    uint8_t status;
+
+    // internal structure for packing
+    #pragma pack(push, 1)
+    struct _compact_t {
+        uint8_t index;
+        uint32_t millis;
+        int32_t latitude_raw;
+        int32_t longitude_raw;
+        float altitude_m;
+        int16_t vn_mps;
+        int16_t ve_mps;
+        int16_t vd_mps;
+        int16_t roll_deg;
+        int16_t pitch_deg;
+        int16_t yaw_deg;
+        uint8_t sequence_num;
+        uint8_t status;
+    };
+    #pragma pack(pop)
+
+    // id, ptr to payload and len
+    static const uint8_t id = 52;
+    uint8_t *payload = nullptr;
+    int len = 0;
+
+    ~nav_v6_t() {
+        free(payload);
+    }
+
+    bool pack() {
+        len = sizeof(_compact_t);
+        // compute dynamic packet size (if neede)
+        int size = len;
+        payload = (uint8_t *)REALLOC(payload, size);
+        // copy values
+        _compact_t *_buf = (_compact_t *)payload;
+        _buf->index = index;
+        _buf->millis = millis;
+        _buf->latitude_raw = latitude_raw;
+        _buf->longitude_raw = longitude_raw;
+        _buf->altitude_m = altitude_m;
+        _buf->vn_mps = intround(vn_mps * 100.0);
+        _buf->ve_mps = intround(ve_mps * 100.0);
+        _buf->vd_mps = intround(vd_mps * 100.0);
+        _buf->roll_deg = intround(roll_deg * 50.0);
+        _buf->pitch_deg = intround(pitch_deg * 50.0);
+        _buf->yaw_deg = intround(yaw_deg * 50.0);
+        _buf->sequence_num = sequence_num;
+        _buf->status = status;
+        return true;
+    }
+
+    bool unpack(uint8_t *external_message, int message_size) {
+        _compact_t *_buf = (_compact_t *)external_message;
+        len = sizeof(_compact_t);
+        index = _buf->index;
+        millis = _buf->millis;
+        latitude_raw = _buf->latitude_raw;
+        longitude_raw = _buf->longitude_raw;
+        altitude_m = _buf->altitude_m;
+        vn_mps = _buf->vn_mps / (float)100.0;
+        ve_mps = _buf->ve_mps / (float)100.0;
+        vd_mps = _buf->vd_mps / (float)100.0;
+        roll_deg = _buf->roll_deg / (float)50.0;
+        pitch_deg = _buf->pitch_deg / (float)50.0;
+        yaw_deg = _buf->yaw_deg / (float)50.0;
+        sequence_num = _buf->sequence_num;
+        status = _buf->status;
+        return true;
+    }
+
+    void msg2props(string _path, int _index = -1) {
+        if ( _index >= 0 ) {
+            _path += "/" + std::to_string(_index);
+        }
+        PropertyNode node(_path.c_str());
+        msg2props(node);
+    }
+
+    void msg2props(PropertyNode node) {
+        node.setUInt("index", index);
+        node.setUInt("millis", millis);
+        node.setInt("latitude_raw", latitude_raw);
+        node.setInt("longitude_raw", longitude_raw);
+        node.setDouble("altitude_m", altitude_m);
+        node.setDouble("vn_mps", vn_mps);
+        node.setDouble("ve_mps", ve_mps);
+        node.setDouble("vd_mps", vd_mps);
+        node.setDouble("roll_deg", roll_deg);
+        node.setDouble("pitch_deg", pitch_deg);
+        node.setDouble("yaw_deg", yaw_deg);
+        node.setUInt("sequence_num", sequence_num);
+        node.setUInt("status", status);
+    }
+
+    void props2msg(string _path, int _index = -1) {
+        if ( _index >= 0 ) {
+            _path += "/" + std::to_string(_index);
+        }
+        PropertyNode node(_path.c_str());
+        props2msg(node);
+    }
+
+    void props2msg(PropertyNode node) {
+        index = node.getUInt("index");
+        millis = node.getUInt("millis");
+        latitude_raw = node.getInt("latitude_raw");
+        longitude_raw = node.getInt("longitude_raw");
+        altitude_m = node.getDouble("altitude_m");
+        vn_mps = node.getDouble("vn_mps");
+        ve_mps = node.getDouble("ve_mps");
+        vd_mps = node.getDouble("vd_mps");
+        roll_deg = node.getDouble("roll_deg");
+        pitch_deg = node.getDouble("pitch_deg");
+        yaw_deg = node.getDouble("yaw_deg");
+        sequence_num = node.getUInt("sequence_num");
+        status = node.getUInt("status");
+    }
+};
+
+// Message: nav_metrics_v6 (id: 53)
+class nav_metrics_v6_t {
+public:
+
+    uint8_t index;
+    uint32_t metrics_millis;
+    float p_bias;
+    float q_bias;
+    float r_bias;
+    float ax_bias;
+    float ay_bias;
+    float az_bias;
+    float Pp0;
+    float Pp1;
+    float Pp2;
+    float Pv0;
+    float Pv1;
+    float Pv2;
+    float Pa0;
+    float Pa1;
+    float Pa2;
+
+    // internal structure for packing
+    #pragma pack(push, 1)
+    struct _compact_t {
+        uint8_t index;
+        uint32_t metrics_millis;
+        int16_t p_bias;
+        int16_t q_bias;
+        int16_t r_bias;
+        int16_t ax_bias;
+        int16_t ay_bias;
+        int16_t az_bias;
+        uint16_t Pp0;
+        uint16_t Pp1;
+        uint16_t Pp2;
+        uint16_t Pv0;
+        uint16_t Pv1;
+        uint16_t Pv2;
+        uint16_t Pa0;
+        uint16_t Pa1;
+        uint16_t Pa2;
+    };
+    #pragma pack(pop)
+
+    // id, ptr to payload and len
+    static const uint8_t id = 53;
+    uint8_t *payload = nullptr;
+    int len = 0;
+
+    ~nav_metrics_v6_t() {
+        free(payload);
+    }
+
+    bool pack() {
+        len = sizeof(_compact_t);
+        // compute dynamic packet size (if neede)
+        int size = len;
+        payload = (uint8_t *)REALLOC(payload, size);
+        // copy values
+        _compact_t *_buf = (_compact_t *)payload;
+        _buf->index = index;
+        _buf->metrics_millis = metrics_millis;
+        _buf->p_bias = intround(p_bias * 10000.0);
+        _buf->q_bias = intround(q_bias * 10000.0);
+        _buf->r_bias = intround(r_bias * 10000.0);
+        _buf->ax_bias = intround(ax_bias * 1000.0);
+        _buf->ay_bias = intround(ay_bias * 1000.0);
+        _buf->az_bias = intround(az_bias * 1000.0);
+        _buf->Pp0 = uintround(Pp0 * 100.0);
+        _buf->Pp1 = uintround(Pp1 * 100.0);
+        _buf->Pp2 = uintround(Pp2 * 100.0);
+        _buf->Pv0 = uintround(Pv0 * 1000.0);
+        _buf->Pv1 = uintround(Pv1 * 1000.0);
+        _buf->Pv2 = uintround(Pv2 * 1000.0);
+        _buf->Pa0 = uintround(Pa0 * 10000.0);
+        _buf->Pa1 = uintround(Pa1 * 10000.0);
+        _buf->Pa2 = uintround(Pa2 * 10000.0);
+        return true;
+    }
+
+    bool unpack(uint8_t *external_message, int message_size) {
+        _compact_t *_buf = (_compact_t *)external_message;
+        len = sizeof(_compact_t);
+        index = _buf->index;
+        metrics_millis = _buf->metrics_millis;
+        p_bias = _buf->p_bias / (float)10000.0;
+        q_bias = _buf->q_bias / (float)10000.0;
+        r_bias = _buf->r_bias / (float)10000.0;
+        ax_bias = _buf->ax_bias / (float)1000.0;
+        ay_bias = _buf->ay_bias / (float)1000.0;
+        az_bias = _buf->az_bias / (float)1000.0;
+        Pp0 = _buf->Pp0 / (float)100.0;
+        Pp1 = _buf->Pp1 / (float)100.0;
+        Pp2 = _buf->Pp2 / (float)100.0;
+        Pv0 = _buf->Pv0 / (float)1000.0;
+        Pv1 = _buf->Pv1 / (float)1000.0;
+        Pv2 = _buf->Pv2 / (float)1000.0;
+        Pa0 = _buf->Pa0 / (float)10000.0;
+        Pa1 = _buf->Pa1 / (float)10000.0;
+        Pa2 = _buf->Pa2 / (float)10000.0;
+        return true;
+    }
+
+    void msg2props(string _path, int _index = -1) {
+        if ( _index >= 0 ) {
+            _path += "/" + std::to_string(_index);
+        }
+        PropertyNode node(_path.c_str());
+        msg2props(node);
+    }
+
+    void msg2props(PropertyNode node) {
+        node.setUInt("index", index);
+        node.setUInt("metrics_millis", metrics_millis);
+        node.setDouble("p_bias", p_bias);
+        node.setDouble("q_bias", q_bias);
+        node.setDouble("r_bias", r_bias);
+        node.setDouble("ax_bias", ax_bias);
+        node.setDouble("ay_bias", ay_bias);
+        node.setDouble("az_bias", az_bias);
+        node.setDouble("Pp0", Pp0);
+        node.setDouble("Pp1", Pp1);
+        node.setDouble("Pp2", Pp2);
+        node.setDouble("Pv0", Pv0);
+        node.setDouble("Pv1", Pv1);
+        node.setDouble("Pv2", Pv2);
+        node.setDouble("Pa0", Pa0);
+        node.setDouble("Pa1", Pa1);
+        node.setDouble("Pa2", Pa2);
+    }
+
+    void props2msg(string _path, int _index = -1) {
+        if ( _index >= 0 ) {
+            _path += "/" + std::to_string(_index);
+        }
+        PropertyNode node(_path.c_str());
+        props2msg(node);
+    }
+
+    void props2msg(PropertyNode node) {
+        index = node.getUInt("index");
+        metrics_millis = node.getUInt("metrics_millis");
+        p_bias = node.getDouble("p_bias");
+        q_bias = node.getDouble("q_bias");
+        r_bias = node.getDouble("r_bias");
+        ax_bias = node.getDouble("ax_bias");
+        ay_bias = node.getDouble("ay_bias");
+        az_bias = node.getDouble("az_bias");
+        Pp0 = node.getDouble("Pp0");
+        Pp1 = node.getDouble("Pp1");
+        Pp2 = node.getDouble("Pp2");
+        Pv0 = node.getDouble("Pv0");
+        Pv1 = node.getDouble("Pv1");
+        Pv2 = node.getDouble("Pv2");
+        Pa0 = node.getDouble("Pa0");
+        Pa1 = node.getDouble("Pa1");
+        Pa2 = node.getDouble("Pa2");
     }
 };
 

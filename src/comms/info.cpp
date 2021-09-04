@@ -84,7 +84,7 @@ void info_t::write_gps_ascii() {
                     gps_node.getDouble("vn_mps"),
                     gps_node.getDouble("ve_mps"),
                     gps_node.getDouble("vd_mps"));
-    console->printf(" Sat: %d", gps_node.getInt("satellites"));
+    console->printf(" Sat: %d", gps_node.getInt("num_sats"));
     console->printf(" Fix: %d", gps_node.getInt("status"));
     console->printf(" Time: %02d:%02d:%02d ",
                     gps_node.getInt("hour"),

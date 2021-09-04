@@ -40,6 +40,8 @@ void gcs_link_t::init() {
 
     gps_limiter = RateLimiter(2.5);
     imu_limiter = RateLimiter(4);
+    nav_limiter = RateLimiter(10);
+    nav_metrics_limiter = RateLimiter(0.5);
     pilot_limiter = RateLimiter(4);
 }
 
@@ -57,7 +59,12 @@ void gcs_link_t::update() {
     // that gets ignored if we do the math in one step)
     //uint8_t result = write_status_info();
     //output_counter += result;
-    //output_counter += write_nav();
+    if ( nav_limiter.update() ) {
+        output_counter += write_nav();
+    } else if ( nav_metrics_limiter.update() ) {
+        output_counter += write_nav_metrics();
+    }
+        
     // write imu message last: used as an implicit end of data
     // frame marker.
     if ( imu_limiter.update() ) {
@@ -153,41 +160,20 @@ int gcs_link_t::write_gps()
 // output a binary representation of the Nav data
 int gcs_link_t::write_nav()
 {
-    static rcfmu_message::ekf_t nav_msg;
-    nav_msg.millis = imu_node.getUInt("millis"); // fixme?
-    nav_msg.lat_rad = nav_node.getDouble("latitude_rad");
-    nav_msg.lon_rad = nav_node.getDouble("longitude_rad");
-    nav_msg.altitude_m = nav_node.getDouble("altitude_m");
-    nav_msg.vn_ms = nav_node.getDouble("vn_mps");
-    nav_msg.ve_ms = nav_node.getDouble("ve_mps");
-    nav_msg.vd_ms = nav_node.getDouble("vd_mps");
-    nav_msg.phi_rad = nav_node.getDouble("phi_rad");
-    nav_msg.the_rad = nav_node.getDouble("the_rad");
-    nav_msg.psi_rad = nav_node.getDouble("psi_rad");
-    nav_msg.p_bias = nav_node.getDouble("p_bias");
-    nav_msg.q_bias = nav_node.getDouble("q_bias");
-    nav_msg.r_bias = nav_node.getDouble("r_bias");
-    nav_msg.ax_bias = nav_node.getDouble("ax_bias");
-    nav_msg.ay_bias = nav_node.getDouble("ay_bias");
-    nav_msg.az_bias = nav_node.getDouble("az_bias");
-    float max_pos_cov = nav_node.getDouble("Pp0");
-    if ( nav_node.getDouble("Pp1") > max_pos_cov ) { max_pos_cov = nav_node.getDouble("Pp1"); }
-    if ( nav_node.getDouble("Pp2") > max_pos_cov ) { max_pos_cov = nav_node.getDouble("Pp2"); }
-    if ( max_pos_cov > 655.0 ) { max_pos_cov = 655.0; }
-    nav_msg.max_pos_cov = max_pos_cov;
-    float max_vel_cov = nav_node.getDouble("Pv0");
-    if ( nav_node.getDouble("Pv1") > max_vel_cov ) { max_vel_cov = nav_node.getDouble("Pv1"); }
-    if ( nav_node.getDouble("Pv2") > max_vel_cov ) { max_vel_cov = nav_node.getDouble("Pv2"); }
-    if ( max_vel_cov > 65.5 ) { max_vel_cov = 65.5; }
-    nav_msg.max_vel_cov = max_vel_cov;
-    float max_att_cov = nav_node.getDouble("Pa0");
-    if ( nav_node.getDouble("Pa1") > max_att_cov ) { max_att_cov = nav_node.getDouble("Pa1"); }
-    if ( nav_node.getDouble("Pa2") > max_att_cov ) { max_att_cov = nav_node.getDouble("Pa2"); }
-    if ( max_att_cov > 6.55 ) { max_vel_cov = 6.55; }
-    nav_msg.max_att_cov = max_att_cov;
-    nav_msg.status = nav_node.getInt("status");
+    static rc_message::nav_v6_t nav_msg;
+    nav_msg.props2msg(nav_node);
     nav_msg.pack();
     return serial.write_packet( nav_msg.id, nav_msg.payload, nav_msg.len );
+}
+
+// output a binary representation of the Nav data
+int gcs_link_t::write_nav_metrics()
+{
+    static rc_message::nav_metrics_v6_t metrics_msg;
+    metrics_msg.props2msg(nav_node);
+    metrics_msg.metrics_millis = nav_node.getUInt("millis");
+    metrics_msg.pack();
+    return serial.write_packet( metrics_msg.id, metrics_msg.payload, metrics_msg.len );
 }
 
 // output a binary representation of the barometer data

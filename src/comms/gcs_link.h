@@ -38,6 +38,7 @@ private:
     int write_imu();
     int write_gps();
     int write_nav();
+    int write_nav_metrics();
     int write_airdata();
     int write_power();
     int write_status_info();
@@ -50,5 +51,6 @@ private:
     RateLimiter health_limiter;
     RateLimiter imu_limiter;
     RateLimiter nav_limiter;
+    RateLimiter nav_metrics_limiter;
     RateLimiter pilot_limiter;
 };

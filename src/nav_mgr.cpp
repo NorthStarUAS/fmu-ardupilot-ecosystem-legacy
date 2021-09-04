@@ -1,6 +1,7 @@
 #include <math.h>
 
 #include "nav_mgr.h"
+#include "nav/nav_constants.h"  // R2D
 
 void nav_mgr_t::init() {
     config_nav_node = PropertyNode("/config/nav");
@@ -77,6 +78,10 @@ void nav_mgr_t::configure() {
     }
 }
 
+static inline int32_t intround(float f) {
+    return (int32_t)(f >= 0.0 ? (f + 0.5) : (f - 0.5));
+}
+
 void nav_mgr_t::update() {
 #if defined(AURA_ONBOARD_EKF)
     IMUdata imu1;
@@ -147,8 +152,11 @@ void nav_mgr_t::update() {
         }
         
         // publish
-        nav_node.setDouble("latitude_rad", data.lat);
-        nav_node.setDouble("longitude_rad", data.lon);
+        nav_node.setUInt("millis", imu_node.getUInt("millis"));
+        nav_node.setDouble("latitude_deg", data.lat * R2D);
+        nav_node.setDouble("longitude_deg", data.lon * R2D);
+        nav_node.setInt("latitude_raw", intround(data.lat * R2D * 10000000));
+        nav_node.setInt("longitude_raw", intround(data.lon * R2D * 10000000));
         nav_node.setDouble("altitude_m", data.alt);
         nav_node.setDouble("vn_mps", data.vn);
         nav_node.setDouble("ve_mps", data.ve);

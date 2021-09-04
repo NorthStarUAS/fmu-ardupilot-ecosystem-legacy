@@ -6,14 +6,14 @@ RateLimiter::RateLimiter() {
 }
 
 RateLimiter::RateLimiter( float hz ) {
-    dt_millis = 1000 / hz;
+    dt_millis = 1000.0 / hz;
 }
 
 bool RateLimiter::update() {
     if ( timer == 0 ) {
         timer = AP_HAL::millis() + (get_random16() % dt_millis);
     }
-    if ( AP_HAL::millis() - timer >= DT_MILLIS ) {
+    if ( AP_HAL::millis() >= timer + dt_millis ) {
         timer += dt_millis;
         return true;
     } else {
