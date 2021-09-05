@@ -25,15 +25,16 @@ void power_t::init() {
 }
 
 void power_t::update() {
+    power_node.setUInt("millis", AP_HAL::millis());
     // avionics voltage
     avionics_v = hal.analogin->board_voltage();
-    power_node.setDouble("avionics_v", avionics_v);
+    power_node.setDouble("avionics_vcc", avionics_v);
     
     // battery volts / amps
     battery_volts = _volt_pin_analog_source->voltage_average()
         * batt_volt_divider;
     battery_amps = (_curr_pin_analog_source->voltage_average() - amps_offset)
         * AP_BATT_CURR_AMP_PERVOLT_DEFAULT;
-    power_node.setDouble("battery_volts", battery_volts);
-    power_node.setDouble("battery_amps", battery_amps);
+    power_node.setDouble("main_vcc", battery_volts);
+    power_node.setDouble("main_amps", battery_amps);
 }

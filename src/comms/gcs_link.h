@@ -48,9 +48,9 @@ private:
     RateLimiter ap_limiter;
     RateLimiter eff_limiter;
     RateLimiter gps_limiter;
-    RateLimiter health_limiter;
     RateLimiter imu_limiter;
     RateLimiter nav_limiter;
     RateLimiter nav_metrics_limiter;
     RateLimiter pilot_limiter;
+    RateLimiter power_limiter;
 };

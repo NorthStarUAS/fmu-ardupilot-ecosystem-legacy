@@ -32,7 +32,6 @@ static inline uint32_t uintround(float f) {
 const uint8_t gps_v3_id = 26;
 const uint8_t gps_v4_id = 34;
 const uint8_t gps_v5_id = 49;
-const uint8_t gps_raw_v1_id = 48;
 const uint8_t imu_v4_id = 35;
 const uint8_t imu_v5_id = 45;
 const uint8_t imu_v6_id = 50;
@@ -48,6 +47,7 @@ const uint8_t actuator_v3_id = 37;
 const uint8_t pilot_v2_id = 20;
 const uint8_t pilot_v3_id = 38;
 const uint8_t pilot_v4_id = 51;
+const uint8_t power_v1_id = 55;
 const uint8_t ap_status_v4_id = 30;
 const uint8_t ap_status_v5_id = 32;
 const uint8_t ap_status_v6_id = 33;
@@ -55,15 +55,12 @@ const uint8_t ap_status_v7_id = 39;
 const uint8_t system_health_v4_id = 19;
 const uint8_t system_health_v5_id = 41;
 const uint8_t system_health_v6_id = 46;
-const uint8_t payload_v2_id = 23;
-const uint8_t payload_v3_id = 42;
 const uint8_t event_v1_id = 27;
 const uint8_t event_v2_id = 44;
 const uint8_t command_v1_id = 28;
 
 // Constants
 static const uint8_t sbus_channels = 16;  // number of sbus channels
-static const uint8_t max_raw_sats = 12;  // maximum array size to store satellite raw data
 
 // Message: gps_v3 (id: 26)
 class gps_v3_t {
@@ -497,107 +494,6 @@ public:
         vAcc_m = node.getDouble("vAcc_m");
         hdop = node.getDouble("hdop");
         vdop = node.getDouble("vdop");
-    }
-};
-
-// Message: gps_raw_v1 (id: 48)
-class gps_raw_v1_t {
-public:
-
-    uint8_t index;
-    float timestamp_sec;
-    double receiver_tow;
-    uint8_t num_sats;
-    uint8_t svid[max_raw_sats];
-    double pseudorange[max_raw_sats];
-    double doppler[max_raw_sats];
-
-    // internal structure for packing
-    #pragma pack(push, 1)
-    struct _compact_t {
-        uint8_t index;
-        float timestamp_sec;
-        double receiver_tow;
-        uint8_t num_sats;
-        uint8_t svid[max_raw_sats];
-        double pseudorange[max_raw_sats];
-        double doppler[max_raw_sats];
-    };
-    #pragma pack(pop)
-
-    // id, ptr to payload and len
-    static const uint8_t id = 48;
-    uint8_t *payload = nullptr;
-    int len = 0;
-
-    ~gps_raw_v1_t() {
-        free(payload);
-    }
-
-    bool pack() {
-        len = sizeof(_compact_t);
-        // compute dynamic packet size (if neede)
-        int size = len;
-        payload = (uint8_t *)REALLOC(payload, size);
-        // copy values
-        _compact_t *_buf = (_compact_t *)payload;
-        _buf->index = index;
-        _buf->timestamp_sec = timestamp_sec;
-        _buf->receiver_tow = receiver_tow;
-        _buf->num_sats = num_sats;
-        for (int _i=0; _i<max_raw_sats; _i++) _buf->svid[_i] = svid[_i];
-        for (int _i=0; _i<max_raw_sats; _i++) _buf->pseudorange[_i] = pseudorange[_i];
-        for (int _i=0; _i<max_raw_sats; _i++) _buf->doppler[_i] = doppler[_i];
-        return true;
-    }
-
-    bool unpack(uint8_t *external_message, int message_size) {
-        _compact_t *_buf = (_compact_t *)external_message;
-        len = sizeof(_compact_t);
-        index = _buf->index;
-        timestamp_sec = _buf->timestamp_sec;
-        receiver_tow = _buf->receiver_tow;
-        num_sats = _buf->num_sats;
-        for (int _i=0; _i<max_raw_sats; _i++) svid[_i] = _buf->svid[_i];
-        for (int _i=0; _i<max_raw_sats; _i++) pseudorange[_i] = _buf->pseudorange[_i];
-        for (int _i=0; _i<max_raw_sats; _i++) doppler[_i] = _buf->doppler[_i];
-        return true;
-    }
-
-    void msg2props(string _path, int _index = -1) {
-        if ( _index >= 0 ) {
-            _path += "/" + std::to_string(_index);
-        }
-        PropertyNode node(_path.c_str());
-        msg2props(node);
-    }
-
-    void msg2props(PropertyNode node) {
-        node.setUInt("index", index);
-        node.setDouble("timestamp_sec", timestamp_sec);
-        node.setDouble("receiver_tow", receiver_tow);
-        node.setUInt("num_sats", num_sats);
-        for (int _i=0; _i<max_raw_sats; _i++) node.setUInt("svid", svid[_i], _i);
-        for (int _i=0; _i<max_raw_sats; _i++) node.setDouble("pseudorange", pseudorange[_i], _i);
-        for (int _i=0; _i<max_raw_sats; _i++) node.setDouble("doppler", doppler[_i], _i);
-    }
-
-    void props2msg(string _path, int _index = -1) {
-        if ( _index >= 0 ) {
-            _path += "/" + std::to_string(_index);
-        }
-        PropertyNode node(_path.c_str());
-        props2msg(node);
-    }
-
-    void props2msg(PropertyNode node) {
-        index = node.getUInt("index");
-        timestamp_sec = node.getDouble("timestamp_sec");
-        receiver_tow = node.getDouble("receiver_tow");
-        num_sats = node.getUInt("num_sats");
-        for (int _i=0; _i<max_raw_sats; _i++) svid[_i] = node.getUInt("svid", _i);
-        for (int _i=0; _i<max_raw_sats; _i++) pseudorange[_i] = node.getDouble("pseudorange", _i);
-        for (int _i=0; _i<max_raw_sats; _i++) doppler[_i] = node.getDouble("doppler", _i);
     }
 };
 
@@ -2638,6 +2534,107 @@ public:
     }
 };
 
+// Message: power_v1 (id: 55)
+class power_v1_t {
+public:
+
+    uint8_t index;
+    uint32_t millis;
+    float avionics_vcc;
+    float main_vcc;
+    float cell_vcc;
+    float main_amps;
+    float total_mah;
+
+    // internal structure for packing
+    #pragma pack(push, 1)
+    struct _compact_t {
+        uint8_t index;
+        uint32_t millis;
+        uint16_t avionics_vcc;
+        uint16_t main_vcc;
+        uint16_t cell_vcc;
+        uint16_t main_amps;
+        uint16_t total_mah;
+    };
+    #pragma pack(pop)
+
+    // id, ptr to payload and len
+    static const uint8_t id = 55;
+    uint8_t *payload = nullptr;
+    int len = 0;
+
+    ~power_v1_t() {
+        free(payload);
+    }
+
+    bool pack() {
+        len = sizeof(_compact_t);
+        // compute dynamic packet size (if neede)
+        int size = len;
+        payload = (uint8_t *)REALLOC(payload, size);
+        // copy values
+        _compact_t *_buf = (_compact_t *)payload;
+        _buf->index = index;
+        _buf->millis = millis;
+        _buf->avionics_vcc = uintround(avionics_vcc * 1000.0);
+        _buf->main_vcc = uintround(main_vcc * 1000.0);
+        _buf->cell_vcc = uintround(cell_vcc * 1000.0);
+        _buf->main_amps = uintround(main_amps * 1000.0);
+        _buf->total_mah = uintround(total_mah * 0.5);
+        return true;
+    }
+
+    bool unpack(uint8_t *external_message, int message_size) {
+        _compact_t *_buf = (_compact_t *)external_message;
+        len = sizeof(_compact_t);
+        index = _buf->index;
+        millis = _buf->millis;
+        avionics_vcc = _buf->avionics_vcc / (float)1000.0;
+        main_vcc = _buf->main_vcc / (float)1000.0;
+        cell_vcc = _buf->cell_vcc / (float)1000.0;
+        main_amps = _buf->main_amps / (float)1000.0;
+        total_mah = _buf->total_mah / (float)0.5;
+        return true;
+    }
+
+    void msg2props(string _path, int _index = -1) {
+        if ( _index >= 0 ) {
+            _path += "/" + std::to_string(_index);
+        }
+        PropertyNode node(_path.c_str());
+        msg2props(node);
+    }
+
+    void msg2props(PropertyNode node) {
+        node.setUInt("index", index);
+        node.setUInt("millis", millis);
+        node.setDouble("avionics_vcc", avionics_vcc);
+        node.setDouble("main_vcc", main_vcc);
+        node.setDouble("cell_vcc", cell_vcc);
+        node.setDouble("main_amps", main_amps);
+        node.setDouble("total_mah", total_mah);
+    }
+
+    void props2msg(string _path, int _index = -1) {
+        if ( _index >= 0 ) {
+            _path += "/" + std::to_string(_index);
+        }
+        PropertyNode node(_path.c_str());
+        props2msg(node);
+    }
+
+    void props2msg(PropertyNode node) {
+        index = node.getUInt("index");
+        millis = node.getUInt("millis");
+        avionics_vcc = node.getDouble("avionics_vcc");
+        main_vcc = node.getDouble("main_vcc");
+        cell_vcc = node.getDouble("cell_vcc");
+        main_amps = node.getDouble("main_amps");
+        total_mah = node.getDouble("total_mah");
+    }
+};
+
 // Message: ap_status_v4 (id: 30)
 class ap_status_v4_t {
 public:
@@ -3600,160 +3597,6 @@ public:
         cell_vcc = node.getDouble("cell_vcc");
         main_amps = node.getDouble("main_amps");
         total_mah = node.getDouble("total_mah");
-    }
-};
-
-// Message: payload_v2 (id: 23)
-class payload_v2_t {
-public:
-
-    uint8_t index;
-    double timestamp_sec;
-    uint16_t trigger_num;
-
-    // internal structure for packing
-    #pragma pack(push, 1)
-    struct _compact_t {
-        uint8_t index;
-        double timestamp_sec;
-        uint16_t trigger_num;
-    };
-    #pragma pack(pop)
-
-    // id, ptr to payload and len
-    static const uint8_t id = 23;
-    uint8_t *payload = nullptr;
-    int len = 0;
-
-    ~payload_v2_t() {
-        free(payload);
-    }
-
-    bool pack() {
-        len = sizeof(_compact_t);
-        // compute dynamic packet size (if neede)
-        int size = len;
-        payload = (uint8_t *)REALLOC(payload, size);
-        // copy values
-        _compact_t *_buf = (_compact_t *)payload;
-        _buf->index = index;
-        _buf->timestamp_sec = timestamp_sec;
-        _buf->trigger_num = trigger_num;
-        return true;
-    }
-
-    bool unpack(uint8_t *external_message, int message_size) {
-        _compact_t *_buf = (_compact_t *)external_message;
-        len = sizeof(_compact_t);
-        index = _buf->index;
-        timestamp_sec = _buf->timestamp_sec;
-        trigger_num = _buf->trigger_num;
-        return true;
-    }
-
-    void msg2props(string _path, int _index = -1) {
-        if ( _index >= 0 ) {
-            _path += "/" + std::to_string(_index);
-        }
-        PropertyNode node(_path.c_str());
-        msg2props(node);
-    }
-
-    void msg2props(PropertyNode node) {
-        node.setUInt("index", index);
-        node.setDouble("timestamp_sec", timestamp_sec);
-        node.setUInt("trigger_num", trigger_num);
-    }
-
-    void props2msg(string _path, int _index = -1) {
-        if ( _index >= 0 ) {
-            _path += "/" + std::to_string(_index);
-        }
-        PropertyNode node(_path.c_str());
-        props2msg(node);
-    }
-
-    void props2msg(PropertyNode node) {
-        index = node.getUInt("index");
-        timestamp_sec = node.getDouble("timestamp_sec");
-        trigger_num = node.getUInt("trigger_num");
-    }
-};
-
-// Message: payload_v3 (id: 42)
-class payload_v3_t {
-public:
-
-    uint8_t index;
-    float timestamp_sec;
-    uint16_t trigger_num;
-
-    // internal structure for packing
-    #pragma pack(push, 1)
-    struct _compact_t {
-        uint8_t index;
-        float timestamp_sec;
-        uint16_t trigger_num;
-    };
-    #pragma pack(pop)
-
-    // id, ptr to payload and len
-    static const uint8_t id = 42;
-    uint8_t *payload = nullptr;
-    int len = 0;
-
-    ~payload_v3_t() {
-        free(payload);
-    }
-
-    bool pack() {
-        len = sizeof(_compact_t);
-        // compute dynamic packet size (if neede)
-        int size = len;
-        payload = (uint8_t *)REALLOC(payload, size);
-        // copy values
-        _compact_t *_buf = (_compact_t *)payload;
-        _buf->index = index;
-        _buf->timestamp_sec = timestamp_sec;
-        _buf->trigger_num = trigger_num;
-        return true;
-    }
-
-    bool unpack(uint8_t *external_message, int message_size) {
-        _compact_t *_buf = (_compact_t *)external_message;
-        len = sizeof(_compact_t);
-        index = _buf->index;
-        timestamp_sec = _buf->timestamp_sec;
-        trigger_num = _buf->trigger_num;
-        return true;
-    }
-
-    void msg2props(string _path, int _index = -1) {
-        if ( _index >= 0 ) {
-            _path += "/" + std::to_string(_index);
-        }
-        PropertyNode node(_path.c_str());
-        msg2props(node);
-    }
-
-    void msg2props(PropertyNode node) {
-        node.setUInt("index", index);
-        node.setDouble("timestamp_sec", timestamp_sec);
-        node.setUInt("trigger_num", trigger_num);
-    }
-
-    void props2msg(string _path, int _index = -1) {
-        if ( _index >= 0 ) {
-            _path += "/" + std::to_string(_index);
-        }
-        PropertyNode node(_path.c_str());
-        props2msg(node);
-    }
-
-    void props2msg(PropertyNode node) {
-        index = node.getUInt("index");
-        timestamp_sec = node.getDouble("timestamp_sec");
-        trigger_num = node.getUInt("trigger_num");
     }
 };
 

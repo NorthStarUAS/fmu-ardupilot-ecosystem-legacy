@@ -43,32 +43,35 @@ void gcs_link_t::init() {
     nav_limiter = RateLimiter(10);
     nav_metrics_limiter = RateLimiter(0.5);
     pilot_limiter = RateLimiter(4);
+    power_limiter = RateLimiter(1);
 }
 
 void gcs_link_t::update() {
-    if ( pilot_limiter.update() ) {
-        output_counter += write_pilot();
+    if ( airdata_limiter.update() ) {
+        output_counter += write_airdata();
     }
     if ( gps_limiter.update() ) {
         output_counter += write_gps();
     }
-    if ( airdata_limiter.update() ) {
-        output_counter += write_airdata();
+    if ( imu_limiter.update() ) {
+        output_counter += write_imu();
     }
-    //output_counter += write_power();
-    // do a little extra dance with the return value because
-    // write_status_info() can reset output_counter (but
-    // that gets ignored if we do the math in one step)
-    //uint8_t result = write_status_info();
-    //output_counter += result;
     if ( nav_limiter.update() ) {
         output_counter += write_nav();
     } else if ( nav_metrics_limiter.update() ) {
         output_counter += write_nav_metrics();
     }
-    if ( imu_limiter.update() ) {
-        output_counter += write_imu();
+    if ( pilot_limiter.update() ) {
+        output_counter += write_pilot();
     }
+    if ( power_limiter.update() ) {
+        output_counter += write_power();
+    }
+    // do a little extra dance with the return value because
+    // write_status_info() can reset output_counter (but
+    // that gets ignored if we do the math in one step)
+    //uint8_t result = write_status_info();
+    //output_counter += result;
 }
 
 bool gcs_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
@@ -187,12 +190,10 @@ int gcs_link_t::write_airdata()
 // output a binary representation of various volt/amp sensors
 int gcs_link_t::write_power()
 {
-    static rcfmu_message::power_t power1;
-    power1.avionics_v = power_node.getDouble("avionics_v");
-    power1.int_main_v = power_node.getDouble("battery_volts");
-    power1.ext_main_amp = power_node.getDouble("battery_amps");
-    power1.pack();
-    return serial.write_packet( power1.id, power1.payload, power1.len );
+    static rc_message::power_v1_t power_msg;
+    power_msg.props2msg(power_node);
+    power_msg.pack();
+    return serial.write_packet( power_msg.id, power_msg.payload, power_msg.len );
 }
 
 // output a binary representation of various status and config information

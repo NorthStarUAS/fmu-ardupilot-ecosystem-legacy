@@ -150,9 +150,9 @@ void info_t::write_airdata_ascii()
 void info_t::write_power_ascii()
 {
     printf("Avionics v: %.2f  Batt v: %.2f  Batt amp: %.2f\n",
-           power_node.getDouble("avionics_v"),
-           power_node.getDouble("battery_volts"),
-           power_node.getDouble("battery_amps"));
+           power_node.getDouble("avionics_vcc"),
+           power_node.getDouble("main_vcc"),
+           power_node.getDouble("main_amps"));
 }
 
 void info_t::write_status_info_ascii()
