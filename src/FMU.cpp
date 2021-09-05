@@ -19,6 +19,7 @@
 #include "sensors/imu_mgr.h"
 #include "sensors/pilot.h"
 #include "sensors/power.h"
+#include "util/ratelimiter.h"
 
 const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 static AP_BoardConfig BoardConfig;
@@ -55,6 +56,7 @@ SITL::SITL sitl;
 
 static PropertyNode config_nav_node;
 static PropertyNode pilot_node;
+static PropertyNode status_node;
 
 static config_t config;
 static airdata_t airdata;
@@ -65,6 +67,10 @@ static info_t info;
 static led_t led;
 static menu_t menu;
 static power_t power;
+
+static RateLimiter maintimer(100);
+static RateLimiter heartbeat(0.1);
+static RateLimiter debugging(10);
 
 // -Wmissing-declarations requires these
 void setup();
@@ -99,6 +105,7 @@ void setup() {
 
     config_nav_node = PropertyNode("/config/nav"); // after config.init()
     pilot_node = PropertyNode("/pilot");
+    status_node = PropertyNode("/status");
     
     // airdata
     airdata.init();
@@ -137,26 +144,10 @@ void setup() {
 
 // main loop
 void loop() {
-    static uint32_t mainTimer = AP_HAL::millis();
-    static uint32_t hbTimer = AP_HAL::millis();
-    static uint32_t debugTimer = AP_HAL::millis();
-
-    static uint32_t tempTimer = AP_HAL::millis();
-    static uint32_t counter = 0;
-
-    // this is the heartbeat of the system here (DT_MILLIS)
-    // printf("%d - %d >= %d\n", AP_HAL::millis(), mainTimer, DT_MILLIS);
-    if ( AP_HAL::millis() - mainTimer >= DT_MILLIS ) {
-        if ( AP_HAL::millis() - mainTimer > DT_MILLIS ) {
-            host_link.main_loop_timer_misses++;
-            mainTimer = AP_HAL::millis(); // catch up
-            if ( host_link.main_loop_timer_misses % 25 == 0 ) {
-                console->printf("WARNING: main loop is not completing on time!\n");
-            }
-        } else {
-            mainTimer += DT_MILLIS;
-        }
-        counter++;
+    if ( maintimer.update() ) {
+        static uint32_t tempTimer = AP_HAL::millis();
+        static uint32_t counter = 0;
+        status_node.setUInt("main_loop_timer_misses", maintimer.misses);
         
         // 1. Sense motion
         imu_mgr.update();
@@ -173,8 +164,7 @@ void loop() {
         host_link.update();
 
         // 10hz human console output, (begins when gyros finish calibrating)
-        if ( AP_HAL::millis() - debugTimer >= 100 ) {
-            debugTimer = AP_HAL::millis();
+        if ( debugging.update() ) {
             if ( imu_mgr.gyros_calibrated == 2 ) {
                 menu.update();
                 if ( menu.display_pilot ) { info.write_pilot_in_ascii(); }
@@ -188,8 +178,7 @@ void loop() {
         }
 
         // 10 second heartbeat console output
-        if ( AP_HAL::millis() - hbTimer >= 10000 ) {
-            hbTimer = AP_HAL::millis();
+        if ( heartbeat.update() ) {
             if ( imu_mgr.gyros_calibrated == 2 ) {
                 info.write_status_info_ascii();
                 info.write_power_ascii();
@@ -247,6 +236,8 @@ void loop() {
         led.update();
         
         gcs_link.update();
+
+        counter++;
     }
 }
 

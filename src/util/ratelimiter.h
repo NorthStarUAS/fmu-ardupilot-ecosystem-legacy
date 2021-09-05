@@ -12,6 +12,7 @@ class RateLimiter {
 public:
 
     uint32_t timer = 0;
+    uint32_t misses = 0;
     uint32_t dt_millis = 1000;  // 1 hz
     
     RateLimiter();

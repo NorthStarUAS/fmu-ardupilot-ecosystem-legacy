@@ -11,7 +11,6 @@ public:
     // aura-v2 and marmot-v1 hardware
     SerialLink serial;
     unsigned long output_counter = 0;
-    int main_loop_timer_misses = 0; // performance sanity check
 
     void init();
     void update();
@@ -28,6 +27,7 @@ private:
     PropertyNode imu_node;
     PropertyNode pilot_node;
     PropertyNode power_node;
+    PropertyNode status_node;
     unsigned long int gps_last_millis = 0;
     
     int write_ack( uint8_t command_id, uint8_t subcommand_id );

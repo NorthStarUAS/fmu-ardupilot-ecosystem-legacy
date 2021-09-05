@@ -55,6 +55,7 @@ const uint8_t ap_status_v7_id = 39;
 const uint8_t system_health_v4_id = 19;
 const uint8_t system_health_v5_id = 41;
 const uint8_t system_health_v6_id = 46;
+const uint8_t status_v7_id = 56;
 const uint8_t event_v1_id = 27;
 const uint8_t event_v2_id = 44;
 const uint8_t command_v1_id = 28;
@@ -3597,6 +3598,101 @@ public:
         cell_vcc = node.getDouble("cell_vcc");
         main_amps = node.getDouble("main_amps");
         total_mah = node.getDouble("total_mah");
+    }
+};
+
+// Message: status_v7 (id: 56)
+class status_v7_t {
+public:
+
+    uint16_t serial_number;
+    uint16_t firmware_rev;
+    uint8_t master_hz;
+    uint32_t baud;
+    uint16_t byte_rate;
+    uint16_t main_loop_timer_misses;
+
+    // internal structure for packing
+    #pragma pack(push, 1)
+    struct _compact_t {
+        uint16_t serial_number;
+        uint16_t firmware_rev;
+        uint8_t master_hz;
+        uint32_t baud;
+        uint16_t byte_rate;
+        uint16_t main_loop_timer_misses;
+    };
+    #pragma pack(pop)
+
+    // id, ptr to payload and len
+    static const uint8_t id = 56;
+    uint8_t *payload = nullptr;
+    int len = 0;
+
+    ~status_v7_t() {
+        free(payload);
+    }
+
+    bool pack() {
+        len = sizeof(_compact_t);
+        // compute dynamic packet size (if neede)
+        int size = len;
+        payload = (uint8_t *)REALLOC(payload, size);
+        // copy values
+        _compact_t *_buf = (_compact_t *)payload;
+        _buf->serial_number = serial_number;
+        _buf->firmware_rev = firmware_rev;
+        _buf->master_hz = master_hz;
+        _buf->baud = baud;
+        _buf->byte_rate = byte_rate;
+        _buf->main_loop_timer_misses = main_loop_timer_misses;
+        return true;
+    }
+
+    bool unpack(uint8_t *external_message, int message_size) {
+        _compact_t *_buf = (_compact_t *)external_message;
+        len = sizeof(_compact_t);
+        serial_number = _buf->serial_number;
+        firmware_rev = _buf->firmware_rev;
+        master_hz = _buf->master_hz;
+        baud = _buf->baud;
+        byte_rate = _buf->byte_rate;
+        main_loop_timer_misses = _buf->main_loop_timer_misses;
+        return true;
+    }
+
+    void msg2props(string _path, int _index = -1) {
+        if ( _index >= 0 ) {
+            _path += "/" + std::to_string(_index);
+        }
+        PropertyNode node(_path.c_str());
+        msg2props(node);
+    }
+
+    void msg2props(PropertyNode node) {
+        node.setUInt("serial_number", serial_number);
+        node.setUInt("firmware_rev", firmware_rev);
+        node.setUInt("master_hz", master_hz);
+        node.setUInt("baud", baud);
+        node.setUInt("byte_rate", byte_rate);
+        node.setUInt("main_loop_timer_misses", main_loop_timer_misses);
+    }
+
+    void props2msg(string _path, int _index = -1) {
+        if ( _index >= 0 ) {
+            _path += "/" + std::to_string(_index);
+        }
+        PropertyNode node(_path.c_str());
+        props2msg(node);
+    }
+
+    void props2msg(PropertyNode node) {
+        serial_number = node.getUInt("serial_number");
+        firmware_rev = node.getUInt("firmware_rev");
+        master_hz = node.getUInt("master_hz");
+        baud = node.getUInt("baud");
+        byte_rate = node.getUInt("byte_rate");
+        main_loop_timer_misses = node.getUInt("main_loop_timer_misses");
     }
 };
 

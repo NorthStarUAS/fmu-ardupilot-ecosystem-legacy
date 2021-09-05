@@ -28,6 +28,7 @@ void host_link_t::init() {
     imu_node = PropertyNode("/sensors/imu");
     power_node = PropertyNode("/sensors/power");
     pilot_node = PropertyNode("/pilot");
+    status_node = PropertyNode("/status");
     
     // serial.open(HOST_BAUD, hal.serial(0)); // usb/console
     serial.open(HOST_BAUD, hal.serial(1)); // telemetry 1
@@ -258,7 +259,7 @@ int host_link_t::write_status_info()
     write_millis = current_time;
     output_counter = 0;
     status.byte_rate = byte_rate;
-    status.timer_misses = main_loop_timer_misses;
+    status.timer_misses = status_node.getUInt("main_loop_timer_misses");
 
     status.pack();
     return serial.write_packet( status.id, status.payload, status.len );

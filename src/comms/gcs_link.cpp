@@ -32,6 +32,7 @@ void gcs_link_t::init() {
     imu_node = PropertyNode("/sensors/imu");
     power_node = PropertyNode("/sensors/power");
     pilot_node = PropertyNode("/pilot");
+    status_node = PropertyNode("/status");
     
     // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
     // serial.open(DEFAULT_BAUD, hal.serial(1)); // telemetry 1
@@ -44,6 +45,7 @@ void gcs_link_t::init() {
     nav_metrics_limiter = RateLimiter(0.5);
     pilot_limiter = RateLimiter(4);
     power_limiter = RateLimiter(1);
+    status_limiter = RateLimiter(0.1);
 }
 
 void gcs_link_t::update() {
@@ -67,10 +69,13 @@ void gcs_link_t::update() {
     if ( power_limiter.update() ) {
         output_counter += write_power();
     }
+    if ( status_limiter.update() ) {
+        output_counter += write_status();
+    }
     // do a little extra dance with the return value because
     // write_status_info() can reset output_counter (but
     // that gets ignored if we do the math in one step)
-    //uint8_t result = write_status_info();
+    //uint8_t result = write_status();
     //output_counter += result;
 }
 
@@ -197,7 +202,7 @@ int gcs_link_t::write_power()
 }
 
 // output a binary representation of various status and config information
-int gcs_link_t::write_status_info()
+int gcs_link_t::write_status()
 {
     static uint32_t write_millis = AP_HAL::millis();
     static rcfmu_message::status_t status;
@@ -224,7 +229,7 @@ int gcs_link_t::write_status_info()
     write_millis = current_time;
     output_counter = 0;
     status.byte_rate = byte_rate;
-    status.timer_misses = main_loop_timer_misses;
+    status.timer_misses = status_node.getUInt("main_loop_timer_misses");
 
     status.pack();
     return serial.write_packet( status.id, status.payload, status.len );
