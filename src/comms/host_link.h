@@ -2,6 +2,7 @@
 
 #include "props2.h"
 #include "serial_link.h"
+#include "util/ratelimiter.h"
 
 class host_link_t {
     
@@ -29,15 +30,19 @@ private:
     PropertyNode power_node;
     PropertyNode status_node;
     unsigned long int gps_last_millis = 0;
-    
+    uint32_t bytes_last_millis = 0;
+
     int write_ack( uint8_t command_id, uint8_t subcommand_id );
     int write_pilot();
     int write_imu();
     int write_gps();
     int write_nav();
+    int write_nav_metrics();
     int write_airdata();
     int write_power();
-    int write_status_info();
+    int write_status();
     bool parse_message( uint8_t id, uint8_t *buf, uint8_t message_size );
+    
+    RateLimiter status_limiter;
 
 };

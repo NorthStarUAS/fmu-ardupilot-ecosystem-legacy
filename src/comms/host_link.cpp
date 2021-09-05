@@ -34,6 +34,8 @@ void host_link_t::init() {
     // serial.open(HOST_BAUD, hal.serial(0)); // usb/console
     serial.open(HOST_BAUD, hal.serial(1)); // telemetry 1
     // serial.open(HOST_BAUD, hal.serial(2)); // telemetry 2
+    
+    status_limiter = RateLimiter(0.5);
 }
 
 void host_link_t::update() {
@@ -41,13 +43,13 @@ void host_link_t::update() {
     output_counter += write_gps();
     output_counter += write_airdata();
     output_counter += write_power();
-    // do a little extra dance with the return value because
-    // write_status_info() can reset output_counter (but
-    // that gets ignored if we do the math in one step)
-    uint8_t result = write_status_info();
-    output_counter += result;
+    if ( status_limiter.update() ) {
+        int len = write_status();
+        output_counter = len;   // start over counting bytes
+    }
     if ( config_nav_node.getString("select") != "none" ) {
         output_counter += write_nav();
+        output_counter += write_nav_metrics();
     }
     // write imu message last: used as an implicit end of data
     // frame marker.
@@ -140,105 +142,57 @@ int host_link_t::write_gps()
     }
 }
 
-// output a binary representation of the Nav data
+// output a binary representation of the Nav data (and metrics)
 int host_link_t::write_nav()
 {
-    static rcfmu_message::ekf_t nav_msg;
-    nav_msg.millis = imu_node.getUInt("millis"); // fixme?
-    nav_msg.lat_rad = nav_node.getDouble("latitude_rad");
-    nav_msg.lon_rad = nav_node.getDouble("longitude_rad");
-    nav_msg.altitude_m = nav_node.getDouble("altitude_m");
-    nav_msg.vn_ms = nav_node.getDouble("vn_mps");
-    nav_msg.ve_ms = nav_node.getDouble("ve_mps");
-    nav_msg.vd_ms = nav_node.getDouble("vd_mps");
-    nav_msg.phi_rad = nav_node.getDouble("phi_rad");
-    nav_msg.the_rad = nav_node.getDouble("the_rad");
-    nav_msg.psi_rad = nav_node.getDouble("psi_rad");
-    nav_msg.p_bias = nav_node.getDouble("p_bias");
-    nav_msg.q_bias = nav_node.getDouble("q_bias");
-    nav_msg.r_bias = nav_node.getDouble("r_bias");
-    nav_msg.ax_bias = nav_node.getDouble("ax_bias");
-    nav_msg.ay_bias = nav_node.getDouble("ay_bias");
-    nav_msg.az_bias = nav_node.getDouble("az_bias");
-    float max_pos_cov = nav_node.getDouble("Pp0");
-    if ( nav_node.getDouble("Pp1") > max_pos_cov ) { max_pos_cov = nav_node.getDouble("Pp1"); }
-    if ( nav_node.getDouble("Pp2") > max_pos_cov ) { max_pos_cov = nav_node.getDouble("Pp2"); }
-    if ( max_pos_cov > 655.0 ) { max_pos_cov = 655.0; }
-    nav_msg.max_pos_cov = max_pos_cov;
-    float max_vel_cov = nav_node.getDouble("Pv0");
-    if ( nav_node.getDouble("Pv1") > max_vel_cov ) { max_vel_cov = nav_node.getDouble("Pv1"); }
-    if ( nav_node.getDouble("Pv2") > max_vel_cov ) { max_vel_cov = nav_node.getDouble("Pv2"); }
-    if ( max_vel_cov > 65.5 ) { max_vel_cov = 65.5; }
-    nav_msg.max_vel_cov = max_vel_cov;
-    float max_att_cov = nav_node.getDouble("Pa0");
-    if ( nav_node.getDouble("Pa1") > max_att_cov ) { max_att_cov = nav_node.getDouble("Pa1"); }
-    if ( nav_node.getDouble("Pa2") > max_att_cov ) { max_att_cov = nav_node.getDouble("Pa2"); }
-    if ( max_att_cov > 6.55 ) { max_vel_cov = 6.55; }
-    nav_msg.max_att_cov = max_att_cov;
-    nav_msg.status = nav_node.getInt("status");
+    static rc_message::nav_v6_t nav_msg;
+    nav_msg.props2msg(nav_node);
     nav_msg.pack();
     return serial.write_packet( nav_msg.id, nav_msg.payload, nav_msg.len );
+}
+
+int host_link_t::write_nav_metrics()
+{
+    static rc_message::nav_metrics_v6_t metrics_msg;
+    metrics_msg.props2msg(nav_node);
+    metrics_msg.pack();
+    return serial.write_packet( metrics_msg.id, metrics_msg.payload, metrics_msg.len );
 }
 
 // output a binary representation of the barometer data
 int host_link_t::write_airdata()
 {
-    static rcfmu_message::airdata_t airdata1;
-    // FIXME: proprty names
-    airdata1.baro_press_pa = airdata_node.getDouble("baro_press_pa");
-    airdata1.baro_temp_C = airdata_node.getDouble("baro_temp_C");
-    airdata1.baro_hum = 0.0;
-    airdata1.ext_diff_press_pa = airdata_node.getDouble("diff_press_pa");
-    airdata1.ext_static_press_pa = airdata_node.getDouble("static_press_pa"); // fixme!
-    airdata1.ext_temp_C = airdata_node.getDouble("air_temp_C");
-    airdata1.error_count = airdata_node.getDouble("error_count");
-    airdata1.pack();
-    return serial.write_packet( airdata1.id, airdata1.payload, airdata1.len );
+    static rc_message::airdata_v8_t air_msg;
+    air_msg.props2msg(airdata_node);
+    air_msg.pack();
+    return serial.write_packet( air_msg.id, air_msg.payload, air_msg.len );
 }
 
 // output a binary representation of various volt/amp sensors
 int host_link_t::write_power()
 {
-    static rcfmu_message::power_t power1;
-    power1.avionics_v = power_node.getDouble("avionics_v");
-    power1.int_main_v = power_node.getDouble("battery_volts");
-    power1.ext_main_amp = power_node.getDouble("battery_amps");
-    power1.pack();
-    return serial.write_packet( power1.id, power1.payload, power1.len );
+    static rc_message::power_v1_t power_msg;
+    power_msg.props2msg(power_node);
+    power_msg.pack();
+    return serial.write_packet( power_msg.id, power_msg.payload, power_msg.len );
 }
 
 // output a binary representation of various status and config information
-int host_link_t::write_status_info()
+int host_link_t::write_status()
 {
-    static uint32_t write_millis = AP_HAL::millis();
-    static rcfmu_message::status_t status;
-
-    // This info is static or slow changing so we don't need to send
-    // it at a high rate.
-    static int counter = 0;
-    if ( counter > 0 ) {
-        counter--;
-        return 0;
-    } else {
-        counter = MASTER_HZ * 1 - 1; // a message every 1 seconds (-1 so we aren't off by one frame) 
-    }
-
-    status.serial_number = config_node.getInt("serial_number");
-    status.firmware_rev = FIRMWARE_REV;
-    status.master_hz = MASTER_HZ;
-    status.baud = HOST_BAUD;
-
-    // estimate sensor output byte rate
-    unsigned long current_time = AP_HAL::millis();
-    unsigned long elapsed_millis = current_time - write_millis;
-    unsigned long byte_rate = output_counter * 1000 / elapsed_millis;
-    write_millis = current_time;
-    output_counter = 0;
-    status.byte_rate = byte_rate;
-    status.timer_misses = status_node.getUInt("main_loop_timer_misses");
-
-    status.pack();
-    return serial.write_packet( status.id, status.payload, status.len );
+    static rc_message::status_v7_t status_msg;
+    
+    // estimate output byte rate
+    uint32_t current_time = AP_HAL::millis();
+    uint32_t elapsed_millis = current_time - bytes_last_millis;
+    bytes_last_millis = current_time;
+    uint32_t byte_rate = output_counter * 1000 / elapsed_millis;
+    status_node.setUInt("byte_rate", byte_rate);
+    
+    status_msg.props2msg(status_node);
+    status_msg.millis = current_time;
+    status_msg.pack();
+    return serial.write_packet( status_msg.id, status_msg.payload, status_msg.len );
 }
 
 void host_link_t::read_commands() {
