@@ -41,7 +41,6 @@ const uint8_t MAX_RCOUT_CHANNELS = 8;
 
 // this is the master loop update rate.
 const int MASTER_HZ = 100;
-const int DT_MILLIS = (1000 / MASTER_HZ);
 
 // Please read the important notes in the source tree about Teensy
 // baud rates vs. host baud rates.

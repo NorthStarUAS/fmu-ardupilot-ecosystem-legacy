@@ -52,7 +52,6 @@ const uint8_t ap_status_v4_id = 30;
 const uint8_t ap_status_v5_id = 32;
 const uint8_t ap_status_v6_id = 33;
 const uint8_t ap_status_v7_id = 39;
-const uint8_t system_health_v4_id = 19;
 const uint8_t system_health_v5_id = 41;
 const uint8_t system_health_v6_id = 46;
 const uint8_t status_v7_id = 56;
@@ -3274,113 +3273,6 @@ public:
     }
 };
 
-// Message: system_health_v4 (id: 19)
-class system_health_v4_t {
-public:
-
-    uint8_t index;
-    double timestamp_sec;
-    float system_load_avg;
-    float avionics_vcc;
-    float main_vcc;
-    float cell_vcc;
-    float main_amps;
-    float total_mah;
-
-    // internal structure for packing
-    #pragma pack(push, 1)
-    struct _compact_t {
-        uint8_t index;
-        double timestamp_sec;
-        uint16_t system_load_avg;
-        uint16_t avionics_vcc;
-        uint16_t main_vcc;
-        uint16_t cell_vcc;
-        uint16_t main_amps;
-        uint16_t total_mah;
-    };
-    #pragma pack(pop)
-
-    // id, ptr to payload and len
-    static const uint8_t id = 19;
-    uint8_t *payload = nullptr;
-    int len = 0;
-
-    ~system_health_v4_t() {
-        free(payload);
-    }
-
-    bool pack() {
-        len = sizeof(_compact_t);
-        // compute dynamic packet size (if neede)
-        int size = len;
-        payload = (uint8_t *)REALLOC(payload, size);
-        // copy values
-        _compact_t *_buf = (_compact_t *)payload;
-        _buf->index = index;
-        _buf->timestamp_sec = timestamp_sec;
-        _buf->system_load_avg = uintround(system_load_avg * 100.0);
-        _buf->avionics_vcc = uintround(avionics_vcc * 1000.0);
-        _buf->main_vcc = uintround(main_vcc * 1000.0);
-        _buf->cell_vcc = uintround(cell_vcc * 1000.0);
-        _buf->main_amps = uintround(main_amps * 1000.0);
-        _buf->total_mah = uintround(total_mah * 10.0);
-        return true;
-    }
-
-    bool unpack(uint8_t *external_message, int message_size) {
-        _compact_t *_buf = (_compact_t *)external_message;
-        len = sizeof(_compact_t);
-        index = _buf->index;
-        timestamp_sec = _buf->timestamp_sec;
-        system_load_avg = _buf->system_load_avg / (float)100.0;
-        avionics_vcc = _buf->avionics_vcc / (float)1000.0;
-        main_vcc = _buf->main_vcc / (float)1000.0;
-        cell_vcc = _buf->cell_vcc / (float)1000.0;
-        main_amps = _buf->main_amps / (float)1000.0;
-        total_mah = _buf->total_mah / (float)10.0;
-        return true;
-    }
-
-    void msg2props(string _path, int _index = -1) {
-        if ( _index >= 0 ) {
-            _path += "/" + std::to_string(_index);
-        }
-        PropertyNode node(_path.c_str());
-        msg2props(node);
-    }
-
-    void msg2props(PropertyNode node) {
-        node.setUInt("index", index);
-        node.setDouble("timestamp_sec", timestamp_sec);
-        node.setDouble("system_load_avg", system_load_avg);
-        node.setDouble("avionics_vcc", avionics_vcc);
-        node.setDouble("main_vcc", main_vcc);
-        node.setDouble("cell_vcc", cell_vcc);
-        node.setDouble("main_amps", main_amps);
-        node.setDouble("total_mah", total_mah);
-    }
-
-    void props2msg(string _path, int _index = -1) {
-        if ( _index >= 0 ) {
-            _path += "/" + std::to_string(_index);
-        }
-        PropertyNode node(_path.c_str());
-        props2msg(node);
-    }
-
-    void props2msg(PropertyNode node) {
-        index = node.getUInt("index");
-        timestamp_sec = node.getDouble("timestamp_sec");
-        system_load_avg = node.getDouble("system_load_avg");
-        avionics_vcc = node.getDouble("avionics_vcc");
-        main_vcc = node.getDouble("main_vcc");
-        cell_vcc = node.getDouble("cell_vcc");
-        main_amps = node.getDouble("main_amps");
-        total_mah = node.getDouble("total_mah");
-    }
-};
-
 // Message: system_health_v5 (id: 41)
 class system_health_v5_t {
 public:
@@ -3605,20 +3497,26 @@ public:
 class status_v7_t {
 public:
 
+    uint8_t index;
+    uint32_t millis;
     uint16_t serial_number;
     uint16_t firmware_rev;
     uint8_t master_hz;
     uint32_t baud;
+    uint32_t available_memory;
     uint16_t byte_rate;
     uint16_t main_loop_timer_misses;
 
     // internal structure for packing
     #pragma pack(push, 1)
     struct _compact_t {
+        uint8_t index;
+        uint32_t millis;
         uint16_t serial_number;
         uint16_t firmware_rev;
         uint8_t master_hz;
         uint32_t baud;
+        uint32_t available_memory;
         uint16_t byte_rate;
         uint16_t main_loop_timer_misses;
     };
@@ -3640,10 +3538,13 @@ public:
         payload = (uint8_t *)REALLOC(payload, size);
         // copy values
         _compact_t *_buf = (_compact_t *)payload;
+        _buf->index = index;
+        _buf->millis = millis;
         _buf->serial_number = serial_number;
         _buf->firmware_rev = firmware_rev;
         _buf->master_hz = master_hz;
         _buf->baud = baud;
+        _buf->available_memory = available_memory;
         _buf->byte_rate = byte_rate;
         _buf->main_loop_timer_misses = main_loop_timer_misses;
         return true;
@@ -3652,10 +3553,13 @@ public:
     bool unpack(uint8_t *external_message, int message_size) {
         _compact_t *_buf = (_compact_t *)external_message;
         len = sizeof(_compact_t);
+        index = _buf->index;
+        millis = _buf->millis;
         serial_number = _buf->serial_number;
         firmware_rev = _buf->firmware_rev;
         master_hz = _buf->master_hz;
         baud = _buf->baud;
+        available_memory = _buf->available_memory;
         byte_rate = _buf->byte_rate;
         main_loop_timer_misses = _buf->main_loop_timer_misses;
         return true;
@@ -3670,10 +3574,13 @@ public:
     }
 
     void msg2props(PropertyNode node) {
+        node.setUInt("index", index);
+        node.setUInt("millis", millis);
         node.setUInt("serial_number", serial_number);
         node.setUInt("firmware_rev", firmware_rev);
         node.setUInt("master_hz", master_hz);
         node.setUInt("baud", baud);
+        node.setUInt("available_memory", available_memory);
         node.setUInt("byte_rate", byte_rate);
         node.setUInt("main_loop_timer_misses", main_loop_timer_misses);
     }
@@ -3687,10 +3594,13 @@ public:
     }
 
     void props2msg(PropertyNode node) {
+        index = node.getUInt("index");
+        millis = node.getUInt("millis");
         serial_number = node.getUInt("serial_number");
         firmware_rev = node.getUInt("firmware_rev");
         master_hz = node.getUInt("master_hz");
         baud = node.getUInt("baud");
+        available_memory = node.getUInt("available_memory");
         byte_rate = node.getUInt("byte_rate");
         main_loop_timer_misses = node.getUInt("main_loop_timer_misses");
     }

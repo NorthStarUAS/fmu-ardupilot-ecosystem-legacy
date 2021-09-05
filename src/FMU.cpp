@@ -54,6 +54,7 @@ const AP_Param::GroupInfo GCS_MAVLINK_Parameters::var_info[] = {
 SITL::SITL sitl;
 #endif
 
+static PropertyNode config_node;
 static PropertyNode config_nav_node;
 static PropertyNode pilot_node;
 static PropertyNode status_node;
@@ -68,7 +69,7 @@ static led_t led;
 static menu_t menu;
 static power_t power;
 
-static RateLimiter maintimer(100);
+static RateLimiter maintimer(MASTER_HZ);
 static RateLimiter heartbeat(0.1);
 static RateLimiter debugging(10);
 
@@ -102,10 +103,17 @@ void setup() {
     config.read_serial_number();
     console->printf("Serial Number: %d\n", config.read_serial_number());
     hal.scheduler->delay(100);
-
-    config_nav_node = PropertyNode("/config/nav"); // after config.init()
+    
+    // after config.init()
+    config_node = PropertyNode("/config");
+    config_nav_node = PropertyNode("/config/nav");
     pilot_node = PropertyNode("/pilot");
     status_node = PropertyNode("/status");
+    
+    status_node.setUInt("firmware_rev", FIRMWARE_REV);
+    status_node.setUInt("master_hz", MASTER_HZ);
+    status_node.setUInt("baud", TELEMETRY_BAUD);
+    status_node.setUInt("serial_number", config_node.getUInt("serial_number"));
     
     // airdata
     airdata.init();

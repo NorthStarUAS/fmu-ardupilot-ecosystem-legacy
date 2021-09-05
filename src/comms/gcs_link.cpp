@@ -70,13 +70,9 @@ void gcs_link_t::update() {
         output_counter += write_power();
     }
     if ( status_limiter.update() ) {
-        output_counter += write_status();
+        int len = write_status();
+        output_counter = len;   // start over counting bytes
     }
-    // do a little extra dance with the return value because
-    // write_status_info() can reset output_counter (but
-    // that gets ignored if we do the math in one step)
-    //uint8_t result = write_status();
-    //output_counter += result;
 }
 
 bool gcs_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
@@ -204,35 +200,19 @@ int gcs_link_t::write_power()
 // output a binary representation of various status and config information
 int gcs_link_t::write_status()
 {
-    static uint32_t write_millis = AP_HAL::millis();
-    static rcfmu_message::status_t status;
-
-    // This info is static or slow changing so we don't need to send
-    // it at a high rate.
-    static int counter = 0;
-    if ( counter > 0 ) {
-        counter--;
-        return 0;
-    } else {
-        counter = MASTER_HZ * 1 - 1; // a message every 1 seconds (-1 so we aren't off by one frame) 
-    }
-
-    status.serial_number = config_node.getInt("serial_number");
-    status.firmware_rev = FIRMWARE_REV;
-    status.master_hz = MASTER_HZ;
-    status.baud = TELEMETRY_BAUD;
-
-    // estimate sensor output byte rate
-    unsigned long current_time = AP_HAL::millis();
-    unsigned long elapsed_millis = current_time - write_millis;
-    unsigned long byte_rate = output_counter * 1000 / elapsed_millis;
-    write_millis = current_time;
-    output_counter = 0;
-    status.byte_rate = byte_rate;
-    status.timer_misses = status_node.getUInt("main_loop_timer_misses");
-
-    status.pack();
-    return serial.write_packet( status.id, status.payload, status.len );
+    static rc_message::status_v7_t status_msg;
+    
+    // estimate output byte rate
+    uint32_t current_time = AP_HAL::millis();
+    uint32_t elapsed_millis = current_time - bytes_last_millis;
+    bytes_last_millis = current_time;
+    uint32_t byte_rate = output_counter * 1000 / elapsed_millis;
+    status_node.setUInt("byte_rate", byte_rate);
+    
+    status_msg.props2msg(status_node);
+    status_msg.millis = current_time;
+    status_msg.pack();
+    return serial.write_packet( status_msg.id, status_msg.payload, status_msg.len );
 }
 
 void gcs_link_t::read_commands() {

@@ -31,7 +31,8 @@ private:
     PropertyNode pilot_node;
     PropertyNode power_node;
     PropertyNode status_node;
-    unsigned long int gps_last_millis = 0;
+    uint32_t gps_last_millis = 0;
+    uint32_t bytes_last_millis = 0;
     
     int write_ack( uint8_t command_id, uint8_t subcommand_id );
     int write_pilot();
