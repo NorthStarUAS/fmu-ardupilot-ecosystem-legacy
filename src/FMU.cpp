@@ -192,7 +192,7 @@ void loop() {
                 info.write_power_ascii();
                 float elapsed_sec = (AP_HAL::millis() - tempTimer) / 1000.0;
                 console->printf("Available mem: %d bytes\n",
-                                (unsigned int)hal.util->available_memory());
+                                status_node.getUInt("available_memory"));
                 console->printf("Performance = %.1f hz\n", counter/elapsed_sec);
                 //PropertyNode("/").pretty_print();
                 console->printf("\n");
@@ -242,6 +242,9 @@ void loop() {
         // blink the led
         led.do_policy(imu_mgr.gyros_calibrated);
         led.update();
+
+        // status
+        status_node.setUInt("available_memory", hal.util->available_memory());
         
         gcs_link.update();
 
