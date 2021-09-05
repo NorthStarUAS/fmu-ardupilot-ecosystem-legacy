@@ -37,6 +37,7 @@ void gcs_link_t::init() {
     // serial.open(DEFAULT_BAUD, hal.serial(1)); // telemetry 1
     serial.open(TELEMETRY_BAUD, hal.serial(2)); // telemetry 2
 
+    airdata_limiter = RateLimiter(2);
     gps_limiter = RateLimiter(2.5);
     imu_limiter = RateLimiter(4);
     nav_limiter = RateLimiter(10);
@@ -51,7 +52,9 @@ void gcs_link_t::update() {
     if ( gps_limiter.update() ) {
         output_counter += write_gps();
     }
-    //output_counter += write_airdata();
+    if ( airdata_limiter.update() ) {
+        output_counter += write_airdata();
+    }
     //output_counter += write_power();
     // do a little extra dance with the return value because
     // write_status_info() can reset output_counter (but
@@ -63,9 +66,6 @@ void gcs_link_t::update() {
     } else if ( nav_metrics_limiter.update() ) {
         output_counter += write_nav_metrics();
     }
-        
-    // write imu message last: used as an implicit end of data
-    // frame marker.
     if ( imu_limiter.update() ) {
         output_counter += write_imu();
     }
@@ -178,17 +178,10 @@ int gcs_link_t::write_nav_metrics()
 // output a binary representation of the barometer data
 int gcs_link_t::write_airdata()
 {
-    static rcfmu_message::airdata_t airdata1;
-    // FIXME: proprty names
-    airdata1.baro_press_pa = airdata_node.getDouble("baro_press_pa");
-    airdata1.baro_temp_C = airdata_node.getDouble("baro_tempC");
-    airdata1.baro_hum = 0.0;
-    airdata1.ext_diff_press_pa = airdata_node.getDouble("diffPress_pa");
-    airdata1.ext_static_press_pa = airdata_node.getDouble("static_press_pa"); // fixme!
-    airdata1.ext_temp_C = airdata_node.getDouble("temp_C");
-    airdata1.error_count = airdata_node.getDouble("error_count");
-    airdata1.pack();
-    return serial.write_packet( airdata1.id, airdata1.payload, airdata1.len );
+    static rc_message::airdata_v8_t air_msg;
+    air_msg.props2msg(airdata_node);
+    air_msg.pack();
+    return serial.write_packet( air_msg.id, air_msg.payload, air_msg.len );
 }
 
 // output a binary representation of various volt/amp sensors

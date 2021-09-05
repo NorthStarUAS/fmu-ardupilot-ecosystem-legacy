@@ -24,10 +24,10 @@ void airdata_t::update() {
     airspeed.update(false);
     if ( airspeed.healthy() ) {
         airdata_node.setDouble("airspeed_mps", airspeed.get_airspeed());
-        airdata_node.setDouble("diffPress_pa", airspeed.get_differential_pressure());
+        airdata_node.setDouble("diff_press_pa", airspeed.get_differential_pressure());
         float temperature;
         airspeed.get_temperature(temperature);
-        airdata_node.setDouble("temp_C", temperature);
+        airdata_node.setDouble("air_temp_C", temperature);
     }
     
     // collect readings @ 20hz
@@ -38,7 +38,7 @@ void airdata_t::update() {
 
         if ( barometer.healthy() ) {
             airdata_node.setDouble("baro_press_pa", barometer.get_pressure());
-            airdata_node.setDouble("baro_tempC", barometer.get_temperature());
+            airdata_node.setDouble("baro_temp_C", barometer.get_temperature());
         }
     }
     if ( !airspeed.healthy() or !barometer.healthy() ) {
@@ -48,6 +48,7 @@ void airdata_t::update() {
         }
     } else {
         ready = true;
+        airdata_node.setUInt("millis", AP_HAL::millis());
     }
 }
 

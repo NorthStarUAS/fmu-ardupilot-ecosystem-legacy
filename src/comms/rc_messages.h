@@ -36,9 +36,9 @@ const uint8_t gps_raw_v1_id = 48;
 const uint8_t imu_v4_id = 35;
 const uint8_t imu_v5_id = 45;
 const uint8_t imu_v6_id = 50;
-const uint8_t airdata_v5_id = 18;
 const uint8_t airdata_v6_id = 40;
 const uint8_t airdata_v7_id = 43;
+const uint8_t airdata_v8_id = 54;
 const uint8_t filter_v4_id = 36;
 const uint8_t filter_v5_id = 47;
 const uint8_t nav_v6_id = 52;
@@ -1078,137 +1078,6 @@ public:
     }
 };
 
-// Message: airdata_v5 (id: 18)
-class airdata_v5_t {
-public:
-
-    uint8_t index;
-    double timestamp_sec;
-    float pressure_mbar;
-    float temp_C;
-    float airspeed_smoothed_kt;
-    float altitude_smoothed_m;
-    float altitude_true_m;
-    float pressure_vertical_speed_fps;
-    float wind_dir_deg;
-    float wind_speed_kt;
-    float pitot_scale_factor;
-    uint8_t status;
-
-    // internal structure for packing
-    #pragma pack(push, 1)
-    struct _compact_t {
-        uint8_t index;
-        double timestamp_sec;
-        uint16_t pressure_mbar;
-        int16_t temp_C;
-        int16_t airspeed_smoothed_kt;
-        float altitude_smoothed_m;
-        float altitude_true_m;
-        int16_t pressure_vertical_speed_fps;
-        uint16_t wind_dir_deg;
-        uint8_t wind_speed_kt;
-        uint8_t pitot_scale_factor;
-        uint8_t status;
-    };
-    #pragma pack(pop)
-
-    // id, ptr to payload and len
-    static const uint8_t id = 18;
-    uint8_t *payload = nullptr;
-    int len = 0;
-
-    ~airdata_v5_t() {
-        free(payload);
-    }
-
-    bool pack() {
-        len = sizeof(_compact_t);
-        // compute dynamic packet size (if neede)
-        int size = len;
-        payload = (uint8_t *)REALLOC(payload, size);
-        // copy values
-        _compact_t *_buf = (_compact_t *)payload;
-        _buf->index = index;
-        _buf->timestamp_sec = timestamp_sec;
-        _buf->pressure_mbar = uintround(pressure_mbar * 10.0);
-        _buf->temp_C = intround(temp_C * 100.0);
-        _buf->airspeed_smoothed_kt = intround(airspeed_smoothed_kt * 100.0);
-        _buf->altitude_smoothed_m = altitude_smoothed_m;
-        _buf->altitude_true_m = altitude_true_m;
-        _buf->pressure_vertical_speed_fps = intround(pressure_vertical_speed_fps * 600.0);
-        _buf->wind_dir_deg = uintround(wind_dir_deg * 100.0);
-        _buf->wind_speed_kt = uintround(wind_speed_kt * 4.0);
-        _buf->pitot_scale_factor = uintround(pitot_scale_factor * 100.0);
-        _buf->status = status;
-        return true;
-    }
-
-    bool unpack(uint8_t *external_message, int message_size) {
-        _compact_t *_buf = (_compact_t *)external_message;
-        len = sizeof(_compact_t);
-        index = _buf->index;
-        timestamp_sec = _buf->timestamp_sec;
-        pressure_mbar = _buf->pressure_mbar / (float)10.0;
-        temp_C = _buf->temp_C / (float)100.0;
-        airspeed_smoothed_kt = _buf->airspeed_smoothed_kt / (float)100.0;
-        altitude_smoothed_m = _buf->altitude_smoothed_m;
-        altitude_true_m = _buf->altitude_true_m;
-        pressure_vertical_speed_fps = _buf->pressure_vertical_speed_fps / (float)600.0;
-        wind_dir_deg = _buf->wind_dir_deg / (float)100.0;
-        wind_speed_kt = _buf->wind_speed_kt / (float)4.0;
-        pitot_scale_factor = _buf->pitot_scale_factor / (float)100.0;
-        status = _buf->status;
-        return true;
-    }
-
-    void msg2props(string _path, int _index = -1) {
-        if ( _index >= 0 ) {
-            _path += "/" + std::to_string(_index);
-        }
-        PropertyNode node(_path.c_str());
-        msg2props(node);
-    }
-
-    void msg2props(PropertyNode node) {
-        node.setUInt("index", index);
-        node.setDouble("timestamp_sec", timestamp_sec);
-        node.setDouble("pressure_mbar", pressure_mbar);
-        node.setDouble("temp_C", temp_C);
-        node.setDouble("airspeed_smoothed_kt", airspeed_smoothed_kt);
-        node.setDouble("altitude_smoothed_m", altitude_smoothed_m);
-        node.setDouble("altitude_true_m", altitude_true_m);
-        node.setDouble("pressure_vertical_speed_fps", pressure_vertical_speed_fps);
-        node.setDouble("wind_dir_deg", wind_dir_deg);
-        node.setDouble("wind_speed_kt", wind_speed_kt);
-        node.setDouble("pitot_scale_factor", pitot_scale_factor);
-        node.setUInt("status", status);
-    }
-
-    void props2msg(string _path, int _index = -1) {
-        if ( _index >= 0 ) {
-            _path += "/" + std::to_string(_index);
-        }
-        PropertyNode node(_path.c_str());
-        props2msg(node);
-    }
-
-    void props2msg(PropertyNode node) {
-        index = node.getUInt("index");
-        timestamp_sec = node.getDouble("timestamp_sec");
-        pressure_mbar = node.getDouble("pressure_mbar");
-        temp_C = node.getDouble("temp_C");
-        airspeed_smoothed_kt = node.getDouble("airspeed_smoothed_kt");
-        altitude_smoothed_m = node.getDouble("altitude_smoothed_m");
-        altitude_true_m = node.getDouble("altitude_true_m");
-        pressure_vertical_speed_fps = node.getDouble("pressure_vertical_speed_fps");
-        wind_dir_deg = node.getDouble("wind_dir_deg");
-        wind_speed_kt = node.getDouble("wind_speed_kt");
-        pitot_scale_factor = node.getDouble("pitot_scale_factor");
-        status = node.getUInt("status");
-    }
-};
-
 // Message: airdata_v6 (id: 40)
 class airdata_v6_t {
 public:
@@ -1474,6 +1343,137 @@ public:
         pitot_scale_factor = node.getDouble("pitot_scale_factor");
         error_count = node.getUInt("error_count");
         status = node.getUInt("status");
+    }
+};
+
+// Message: airdata_v8 (id: 54)
+class airdata_v8_t {
+public:
+
+    uint8_t index;
+    uint32_t millis;
+    float baro_press_pa;
+    float diff_press_pa;
+    float air_temp_C;
+    float airspeed_smoothed_kt;
+    float altitude_smoothed_m;
+    float altitude_true_m;
+    float wind_dir_deg;
+    float wind_speed_kt;
+    float pitot_scale_factor;
+    uint16_t error_count;
+
+    // internal structure for packing
+    #pragma pack(push, 1)
+    struct _compact_t {
+        uint8_t index;
+        uint32_t millis;
+        uint16_t baro_press_pa;
+        uint16_t diff_press_pa;
+        int16_t air_temp_C;
+        int16_t airspeed_smoothed_kt;
+        float altitude_smoothed_m;
+        float altitude_true_m;
+        uint16_t wind_dir_deg;
+        uint8_t wind_speed_kt;
+        uint8_t pitot_scale_factor;
+        uint16_t error_count;
+    };
+    #pragma pack(pop)
+
+    // id, ptr to payload and len
+    static const uint8_t id = 54;
+    uint8_t *payload = nullptr;
+    int len = 0;
+
+    ~airdata_v8_t() {
+        free(payload);
+    }
+
+    bool pack() {
+        len = sizeof(_compact_t);
+        // compute dynamic packet size (if neede)
+        int size = len;
+        payload = (uint8_t *)REALLOC(payload, size);
+        // copy values
+        _compact_t *_buf = (_compact_t *)payload;
+        _buf->index = index;
+        _buf->millis = millis;
+        _buf->baro_press_pa = uintround(baro_press_pa * 0.5);
+        _buf->diff_press_pa = uintround(diff_press_pa * 10.0);
+        _buf->air_temp_C = intround(air_temp_C * 250.0);
+        _buf->airspeed_smoothed_kt = intround(airspeed_smoothed_kt * 100.0);
+        _buf->altitude_smoothed_m = altitude_smoothed_m;
+        _buf->altitude_true_m = altitude_true_m;
+        _buf->wind_dir_deg = uintround(wind_dir_deg * 100.0);
+        _buf->wind_speed_kt = uintround(wind_speed_kt * 5.0);
+        _buf->pitot_scale_factor = uintround(pitot_scale_factor * 100.0);
+        _buf->error_count = error_count;
+        return true;
+    }
+
+    bool unpack(uint8_t *external_message, int message_size) {
+        _compact_t *_buf = (_compact_t *)external_message;
+        len = sizeof(_compact_t);
+        index = _buf->index;
+        millis = _buf->millis;
+        baro_press_pa = _buf->baro_press_pa / (float)0.5;
+        diff_press_pa = _buf->diff_press_pa / (float)10.0;
+        air_temp_C = _buf->air_temp_C / (float)250.0;
+        airspeed_smoothed_kt = _buf->airspeed_smoothed_kt / (float)100.0;
+        altitude_smoothed_m = _buf->altitude_smoothed_m;
+        altitude_true_m = _buf->altitude_true_m;
+        wind_dir_deg = _buf->wind_dir_deg / (float)100.0;
+        wind_speed_kt = _buf->wind_speed_kt / (float)5.0;
+        pitot_scale_factor = _buf->pitot_scale_factor / (float)100.0;
+        error_count = _buf->error_count;
+        return true;
+    }
+
+    void msg2props(string _path, int _index = -1) {
+        if ( _index >= 0 ) {
+            _path += "/" + std::to_string(_index);
+        }
+        PropertyNode node(_path.c_str());
+        msg2props(node);
+    }
+
+    void msg2props(PropertyNode node) {
+        node.setUInt("index", index);
+        node.setUInt("millis", millis);
+        node.setDouble("baro_press_pa", baro_press_pa);
+        node.setDouble("diff_press_pa", diff_press_pa);
+        node.setDouble("air_temp_C", air_temp_C);
+        node.setDouble("airspeed_smoothed_kt", airspeed_smoothed_kt);
+        node.setDouble("altitude_smoothed_m", altitude_smoothed_m);
+        node.setDouble("altitude_true_m", altitude_true_m);
+        node.setDouble("wind_dir_deg", wind_dir_deg);
+        node.setDouble("wind_speed_kt", wind_speed_kt);
+        node.setDouble("pitot_scale_factor", pitot_scale_factor);
+        node.setUInt("error_count", error_count);
+    }
+
+    void props2msg(string _path, int _index = -1) {
+        if ( _index >= 0 ) {
+            _path += "/" + std::to_string(_index);
+        }
+        PropertyNode node(_path.c_str());
+        props2msg(node);
+    }
+
+    void props2msg(PropertyNode node) {
+        index = node.getUInt("index");
+        millis = node.getUInt("millis");
+        baro_press_pa = node.getDouble("baro_press_pa");
+        diff_press_pa = node.getDouble("diff_press_pa");
+        air_temp_C = node.getDouble("air_temp_C");
+        airspeed_smoothed_kt = node.getDouble("airspeed_smoothed_kt");
+        altitude_smoothed_m = node.getDouble("altitude_smoothed_m");
+        altitude_true_m = node.getDouble("altitude_true_m");
+        wind_dir_deg = node.getDouble("wind_dir_deg");
+        wind_speed_kt = node.getDouble("wind_speed_kt");
+        pitot_scale_factor = node.getDouble("pitot_scale_factor");
+        error_count = node.getUInt("error_count");
     }
 };
 

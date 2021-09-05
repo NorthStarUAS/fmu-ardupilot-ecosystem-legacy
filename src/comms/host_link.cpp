@@ -209,11 +209,11 @@ int host_link_t::write_airdata()
     static rcfmu_message::airdata_t airdata1;
     // FIXME: proprty names
     airdata1.baro_press_pa = airdata_node.getDouble("baro_press_pa");
-    airdata1.baro_temp_C = airdata_node.getDouble("baro_tempC");
+    airdata1.baro_temp_C = airdata_node.getDouble("baro_temp_C");
     airdata1.baro_hum = 0.0;
-    airdata1.ext_diff_press_pa = airdata_node.getDouble("diffPress_pa");
+    airdata1.ext_diff_press_pa = airdata_node.getDouble("diff_press_pa");
     airdata1.ext_static_press_pa = airdata_node.getDouble("static_press_pa"); // fixme!
-    airdata1.ext_temp_C = airdata_node.getDouble("temp_C");
+    airdata1.ext_temp_C = airdata_node.getDouble("air_temp_C");
     airdata1.error_count = airdata_node.getDouble("error_count");
     airdata1.pack();
     return serial.write_packet( airdata1.id, airdata1.payload, airdata1.len );
