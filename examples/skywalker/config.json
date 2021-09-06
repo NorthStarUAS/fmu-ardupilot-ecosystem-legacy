@@ -1,4 +1,20 @@
 {
+    "identity": {
+        "call_sign": "Skywalker", 
+        "make": "Hobby King", 
+        "model": "Skywalker 1900", 
+        "serial_number": "01"
+    },
+    "specs": {
+        "vehicle_class": "fixed_wing",
+        "battery_cells": "4", 
+        "battery_mah": "6600",
+        "cruise_kt": "20",
+        "display_units": "kts"
+    },
+    "autopilot": {
+        "include": "autopilot.json"
+    },
     "airdata": {
         "pitot_calibrate_factor": 1.0
     },
