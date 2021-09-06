@@ -35,6 +35,7 @@ void host_link_t::init() {
     serial.open(HOST_BAUD, hal.serial(1)); // telemetry 1
     // serial.open(HOST_BAUD, hal.serial(2)); // telemetry 2
     
+    nav_metrics_limiter = RateLimiter(0.5);
     status_limiter = RateLimiter(0.5);
 }
 
@@ -49,7 +50,9 @@ void host_link_t::update() {
     }
     if ( config_nav_node.getString("select") != "none" ) {
         output_counter += write_nav();
-        output_counter += write_nav_metrics();
+        if ( nav_metrics_limiter.update() ) {
+            output_counter += write_nav_metrics();
+        }
     }
     // write imu message last: used as an implicit end of data
     // frame marker.
@@ -69,27 +72,21 @@ bool host_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size 
             pilot.update_ap(&inceptors);
             result = true;
         }
-    // example of receiving a config message, doing something, and
-    // replying with an ack
-    // } else if ( id == rcfmu_message::config_airdata_id ) {
-    //     config.airdata_cfg.unpack(buf, message_size);
-    //     if ( message_size == config.airdata_cfg.len ) {
-    //         console->printf("received new airdata config\n");
-    //         console->printf("Swift barometer on I2C: 0x%X\n",
-    //                         config.airdata_cfg.swift_baro_addr);
-    //         config.write_storage();
-    //         write_ack( id, 0 );
-    //         result = true;
-    //     }
-    } else if ( id == rcfmu_message::command_zero_gyros_id && message_size == 1 ) {
-        console->printf("received zero gyros command\n");
-        imu_mgr.gyros_calibrated = 0;   // start state
-        write_ack( id, 0 );
-        result = true;
-    } else if ( id == rcfmu_message::command_reset_ekf_id && message_size == 1 ) {
-        console->printf("received reset ekf command\n");
-        nav_mgr.reinit();
-        write_ack( id, 0 );
+    } else if ( id == rc_message::command_v1_id ) {
+        rc_message::command_v1_t msg;
+        msg.unpack(buf, message_size);
+        console->printf("received command: %s\n", msg.message.c_str());
+        uint8_t command_result = 0;
+        if ( msg.message == "zero_gyros" ) {
+            imu_mgr.gyros_calibrated = 0;   // start state
+            command_result = 1;
+        } else if ( msg.message == "reset_ekf" ) {
+            nav_mgr.reinit();
+            command_result = 1;
+        } else {
+            console->printf("unknown message\n");
+        }
+        write_ack( msg.sequence_num, command_result );
         result = true;
     } else {
         console->printf("unknown message id: %d len: %d\n", id, message_size);
@@ -99,11 +96,11 @@ bool host_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size 
 
 
 // output an acknowledgement of a message received
-int host_link_t::write_ack( uint8_t command_id, uint8_t subcommand_id )
+int host_link_t::write_ack( uint16_t sequence_num, uint8_t result )
 {
-    static rcfmu_message::command_ack_t ack;
-    ack.command_id = command_id;
-    ack.subcommand_id = subcommand_id;
+    static rc_message::ack_v1_t ack;
+    ack.sequence_num = sequence_num;
+    ack.result = result;
     ack.pack();
     return serial.write_packet( ack.id, ack.payload, ack.len);
 }

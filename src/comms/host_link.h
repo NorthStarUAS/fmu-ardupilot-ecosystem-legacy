@@ -32,7 +32,7 @@ private:
     unsigned long int gps_last_millis = 0;
     uint32_t bytes_last_millis = 0;
 
-    int write_ack( uint8_t command_id, uint8_t subcommand_id );
+    int write_ack( uint16_t seqence_num, uint8_t result );
     int write_pilot();
     int write_imu();
     int write_gps();
@@ -43,6 +43,7 @@ private:
     int write_status();
     bool parse_message( uint8_t id, uint8_t *buf, uint8_t message_size );
     
+    RateLimiter nav_metrics_limiter;
     RateLimiter status_limiter;
 
 };
