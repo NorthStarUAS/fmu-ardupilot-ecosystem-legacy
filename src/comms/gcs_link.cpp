@@ -8,13 +8,12 @@
 
 #include "setup_board.h"
 
-#include "nav_mgr.h"            // reset ekf
+#include "nav_mgr.h"                    // reset ekf
 #include "nav/nav_constants.h"
 #include "sensors/imu_mgr.h"            // reset gyros
 #include "sensors/pilot.h"              // update_ap()
 #include "serial_link.h"
 #include "rc_messages.h"
-#include "rcfmu_messages.h"     // fixme: work towards deprecating
 
 #include "gcs_link.h"
 
@@ -78,37 +77,41 @@ void gcs_link_t::update() {
 bool gcs_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
 {
     bool result = false;
-
-    // console->print("message id = "); console->print(id); console->print(" len = "); console->println(message_size);
-    
-    if ( id == rcfmu_message::command_inceptors_id ) {
-        static rcfmu_message::command_inceptors_t inceptors;
+    //console->printf("message id: %d  len: %d\n", id, message_size);
+    if ( id == rc_message::inceptors_v4_id ) {
+        static rc_message::inceptors_v4_t inceptors;
         inceptors.unpack(buf, message_size);
         if ( message_size == inceptors.len ) {
             pilot.update_ap(&inceptors);
             result = true;
         }
-    // example of receiving a config message, doing something, and
-    // replying with an ack
-    // } else if ( id == rcfmu_message::config_airdata_id ) {
-    //     config.airdata_cfg.unpack(buf, message_size);
-    //     if ( message_size == config.airdata_cfg.len ) {
-    //         console->printf("received new airdata config\n");
-    //         console->printf("Swift barometer on I2C: 0x%X\n",
-    //                         config.airdata_cfg.swift_baro_addr);
-    //         config.write_storage();
-    //         write_ack( id, 0 );
-    //         result = true;
-    //     }
-    } else if ( id == rcfmu_message::command_zero_gyros_id && message_size == 1 ) {
-        console->printf("received zero gyros command\n");
-        imu_mgr.gyros_calibrated = 0;   // start state
-        write_ack( id, 0 );
-        result = true;
-    } else if ( id == rcfmu_message::command_reset_ekf_id && message_size == 1 ) {
-        console->printf("received reset ekf command\n");
-        nav_mgr.reinit();
-        write_ack( id, 0 );
+    } else if ( id == rc_message::command_v1_id ) {
+        rc_message::command_v1_t msg;
+        msg.unpack(buf, message_size);
+        // console->printf("received command: %s\n", msg.message.c_str());
+        uint8_t command_result = 0;
+        if ( msg.message == "hb" ) {
+            command_result = 1;
+        } else if ( msg.message == "zero_gyros" ) {
+            imu_mgr.gyros_calibrated = 0;   // start state
+            command_result = 1;
+        } else if ( msg.message == "reset_ekf" ) {
+            nav_mgr.reinit();
+            command_result = 1;
+        } else if ( msg.message.substr(0, 4) == "get " ) {
+            string path = msg.message.substr(4);
+            // printf("cmd: get  node: %s\n", path.c_str());
+            PropertyNode node(path);
+            rc_message::command_v1_t reply;
+            reply.sequence_num = 0;
+            reply.message = "set " + path + " " + node.write_as_string();
+            reply.pack();
+            serial.write_packet( reply.id, reply.payload, reply.len);
+            command_result = 1;
+        } else {
+            console->printf("unknown message: %s\n", msg.message.c_str());
+        }
+        write_ack( msg.sequence_num, command_result );
         result = true;
     } else {
         console->printf("unknown message id: %d len: %d\n", id, message_size);
@@ -116,17 +119,15 @@ bool gcs_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
     return result;
 }
 
-
 // output an acknowledgement of a message received
-int gcs_link_t::write_ack( uint8_t command_id, uint8_t subcommand_id )
+int gcs_link_t::write_ack( uint16_t sequence_num, uint8_t result )
 {
-    static rcfmu_message::command_ack_t ack;
-    ack.command_id = command_id;
-    ack.subcommand_id = subcommand_id;
+    static rc_message::ack_v1_t ack;
+    ack.sequence_num = sequence_num;
+    ack.result = result;
     ack.pack();
     return serial.write_packet( ack.id, ack.payload, ack.len);
 }
-
 
 // output a binary representation of the pilot manual (rc receiver) data
 int gcs_link_t::write_pilot()

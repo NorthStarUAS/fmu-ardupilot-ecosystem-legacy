@@ -8,7 +8,6 @@
 
 #include "setup_board.h"
 #include "nav/nav_constants.h"
-//#include "rcfmu_messages.h"
 
 #include "info.h"
 

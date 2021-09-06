@@ -15,7 +15,6 @@
 #include "nav/nav_constants.h"
 #include "serial_link.h"
 #include "rc_messages.h"
-#include "rcfmu_messages.h"     // fixme: work towards deprecating
 
 #include "host_link.h"
 
@@ -65,8 +64,8 @@ bool host_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size 
 
     // console->print("message id = "); console->print(id); console->print(" len = "); console->println(message_size);
     
-    if ( id == rcfmu_message::command_inceptors_id ) {
-        static rcfmu_message::command_inceptors_t inceptors;
+    if ( id == rc_message::inceptors_v4_id ) {
+        static rc_message::inceptors_v4_t inceptors;
         inceptors.unpack(buf, message_size);
         if ( message_size == inceptors.len ) {
             pilot.update_ap(&inceptors);
@@ -94,7 +93,6 @@ bool host_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size 
     return result;
 }
 
-
 // output an acknowledgement of a message received
 int host_link_t::write_ack( uint16_t sequence_num, uint8_t result )
 {
@@ -104,7 +102,6 @@ int host_link_t::write_ack( uint16_t sequence_num, uint8_t result )
     ack.pack();
     return serial.write_packet( ack.id, ack.payload, ack.len);
 }
-
 
 // output a binary representation of the pilot manual (rc receiver) data
 int host_link_t::write_pilot()

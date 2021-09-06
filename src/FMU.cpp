@@ -245,7 +245,8 @@ void loop() {
 
         // status
         status_node.setUInt("available_memory", hal.util->available_memory());
-        
+
+        gcs_link.read_commands();
         gcs_link.update();
 
         counter++;

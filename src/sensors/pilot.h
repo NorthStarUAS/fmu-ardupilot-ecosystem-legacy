@@ -3,7 +3,7 @@
 #include "setup_board.h"
 #include "props2.h"
 
-#include "rcfmu_messages.h"
+#include "comms/rc_messages.h"
 #include "mixer.h"
 #include "switches.h"
 
@@ -91,7 +91,7 @@ public:
     bool read();
     void write();
     
-    void update_ap( rcfmu_message::command_inceptors_t *inceptors );
+    void update_ap( rc_message::inceptors_v4_t *inceptors );
 
 };
 
