@@ -27,17 +27,20 @@ void gcs_link_t::init() {
     effector_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");
     airdata_node = PropertyNode("/sensors/airdata");
+    ap_node = PropertyNode("/autopilot");
     gps_node = PropertyNode("/sensors/gps");
     imu_node = PropertyNode("/sensors/imu");
     power_node = PropertyNode("/sensors/power");
     pilot_node = PropertyNode("/pilot");
     status_node = PropertyNode("/status");
-    
+    targets_node = PropertyNode("/autopilot/targets");
+
     // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
     // serial.open(DEFAULT_BAUD, hal.serial(1)); // telemetry 1
     serial.open(TELEMETRY_BAUD, hal.serial(2)); // telemetry 2
 
     airdata_limiter = RateLimiter(2);
+    ap_limiter = RateLimiter(2);
     gps_limiter = RateLimiter(2.5);
     imu_limiter = RateLimiter(4);
     nav_limiter = RateLimiter(10);
@@ -50,6 +53,9 @@ void gcs_link_t::init() {
 void gcs_link_t::update() {
     if ( airdata_limiter.update() ) {
         output_counter += write_airdata();
+    }
+    if ( ap_limiter.update() ) {
+        output_counter += write_ap();
     }
     if ( gps_limiter.update() ) {
         output_counter += write_gps();
@@ -119,7 +125,7 @@ bool gcs_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
     return result;
 }
 
-// output an acknowledgement of a message received
+// return an ack of a message received
 int gcs_link_t::write_ack( uint16_t sequence_num, uint8_t result )
 {
     static rc_message::ack_v1_t ack;
@@ -129,7 +135,7 @@ int gcs_link_t::write_ack( uint16_t sequence_num, uint8_t result )
     return serial.write_packet( ack.id, ack.payload, ack.len);
 }
 
-// output a binary representation of the pilot manual (rc receiver) data
+// pilot manual (rc receiver) data
 int gcs_link_t::write_pilot()
 {
     static rc_message::pilot_v4_t pilot_msg;
@@ -138,7 +144,6 @@ int gcs_link_t::write_pilot()
     return serial.write_packet( pilot_msg.id, pilot_msg.payload, pilot_msg.len);
 }
 
-// output a binary representation of the IMU data (note: scaled to 16bit values)
 int gcs_link_t::write_imu()
 {
     static rc_message::imu_v6_t imu_msg;
@@ -147,7 +152,6 @@ int gcs_link_t::write_imu()
     return serial.write_packet( imu_msg.id, imu_msg.payload, imu_msg.len );
 }
 
-// output a binary representation of the GPS data
 int gcs_link_t::write_gps()
 {
     static rc_message::gps_v5_t gps_msg;
@@ -161,7 +165,7 @@ int gcs_link_t::write_gps()
     }
 }
 
-// output a binary representation of the Nav data
+// nav (ekf) data
 int gcs_link_t::write_nav()
 {
     static rc_message::nav_v6_t nav_msg;
@@ -170,7 +174,7 @@ int gcs_link_t::write_nav()
     return serial.write_packet( nav_msg.id, nav_msg.payload, nav_msg.len );
 }
 
-// output a binary representation of the Nav data
+// nav (ekf) metrics
 int gcs_link_t::write_nav_metrics()
 {
     static rc_message::nav_metrics_v6_t metrics_msg;
@@ -180,7 +184,6 @@ int gcs_link_t::write_nav_metrics()
     return serial.write_packet( metrics_msg.id, metrics_msg.payload, metrics_msg.len );
 }
 
-// output a binary representation of the barometer data
 int gcs_link_t::write_airdata()
 {
     static rc_message::airdata_v8_t air_msg;
@@ -189,7 +192,23 @@ int gcs_link_t::write_airdata()
     return serial.write_packet( air_msg.id, air_msg.payload, air_msg.len );
 }
 
-// output a binary representation of various volt/amp sensors
+// autopilot targets / status
+int gcs_link_t::write_ap()
+{
+    rc_message::ap_targets_v1_t ap_msg;
+    ap_msg.props2msg(targets_node);
+    ap_msg.millis = imu_node.getUInt("millis");
+    ap_msg.flags = 0;
+    if ( ap_node.getBool("master_switch") ) {
+        ap_msg.flags += 1; // |= (1 << 0)
+    }
+    if ( ap_node.getBool("pilot_pass_through") ) {
+        ap_msg.flags += 2; // |= (1 << 1)
+    }
+    ap_msg.pack();
+    return serial.write_packet( ap_msg.id, ap_msg.payload, ap_msg.len );
+}
+
 int gcs_link_t::write_power()
 {
     static rc_message::power_v1_t power_msg;
@@ -198,7 +217,7 @@ int gcs_link_t::write_power()
     return serial.write_packet( power_msg.id, power_msg.payload, power_msg.len );
 }
 
-// output a binary representation of various status and config information
+// system status
 int gcs_link_t::write_status()
 {
     static rc_message::status_v7_t status_msg;

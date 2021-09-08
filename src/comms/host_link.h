@@ -23,12 +23,20 @@ private:
     PropertyNode config_nav_node;
     PropertyNode effector_node;
     PropertyNode nav_node;
+    PropertyNode active_node;
     PropertyNode airdata_node;
+    PropertyNode ap_node;
+    PropertyNode circle_node;
     PropertyNode gps_node;
+    PropertyNode home_node;
     PropertyNode imu_node;
     PropertyNode pilot_node;
     PropertyNode power_node;
+    PropertyNode route_node;
     PropertyNode status_node;
+    PropertyNode targets_node;
+    PropertyNode task_node;
+
     unsigned long int gps_last_millis = 0;
     uint32_t bytes_last_millis = 0;
 

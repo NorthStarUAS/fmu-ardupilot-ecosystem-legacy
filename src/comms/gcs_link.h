@@ -26,21 +26,25 @@ private:
     PropertyNode effector_node;
     PropertyNode nav_node;
     PropertyNode airdata_node;
+    PropertyNode ap_node;
     PropertyNode gps_node;
     PropertyNode imu_node;
     PropertyNode pilot_node;
     PropertyNode power_node;
     PropertyNode status_node;
+    PropertyNode targets_node;
+    
     uint32_t gps_last_millis = 0;
     uint32_t bytes_last_millis = 0;
     
     int write_ack( uint16_t sequence_num, uint8_t result );
-    int write_pilot();
+    int write_airdata();
+    int write_ap();
     int write_imu();
     int write_gps();
     int write_nav();
     int write_nav_metrics();
-    int write_airdata();
+    int write_pilot();
     int write_power();
     int write_status();
     bool parse_message( uint8_t id, uint8_t *buf, uint8_t message_size );

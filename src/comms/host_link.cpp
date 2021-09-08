@@ -23,12 +23,19 @@ void host_link_t::init() {
     config_nav_node = PropertyNode("/config/nav"); // after config.init()
     effector_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");
+    active_node = PropertyNode("/task/route/active");
     airdata_node = PropertyNode("/sensors/airdata");
+    ap_node = PropertyNode("/autopilot");
+    circle_node = PropertyNode("/task/circle/active");
     gps_node = PropertyNode("/sensors/gps");
+    home_node = PropertyNode("/task/home");
     imu_node = PropertyNode("/sensors/imu");
     power_node = PropertyNode("/sensors/power");
     pilot_node = PropertyNode("/pilot");
+    route_node = PropertyNode("/task/route");
     status_node = PropertyNode("/status");
+    targets_node = PropertyNode("/autopilot/targets");
+    task_node = PropertyNode("/task");
     
     // serial.open(HOST_BAUD, hal.serial(0)); // usb/console
     serial.open(HOST_BAUD, hal.serial(1)); // telemetry 1
@@ -87,6 +94,50 @@ bool host_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size 
         }
         write_ack( msg.sequence_num, command_result );
         result = true;
+    } else if ( id == rc_message::ap_targets_v1_id ) {
+        rc_message::ap_targets_v1_t ap_msg;
+        ap_msg.unpack(buf, message_size);
+        ap_msg.msg2props(targets_node);
+        ap_node.setBool("master_switch", ap_msg.flags & 0x01);
+        ap_node.setBool("pilot_pass_through", ap_msg.flags & 0x02);
+    } else if ( id == rc_message::mission_v1_id ) {
+        // this is the messy message
+        rc_message::mission_v1_t mission;
+        mission.unpack(buf, message_size);
+        if ( message_size == mission.len ) {
+            status_node.setDouble("flight_timer", mission.flight_timer);
+            task_node.setString("current_task", mission.task_name);
+            task_node.setInt("task_attribute", mission.task_attribute);
+            active_node.setInt("route_size", mission.route_size);
+            route_node.setInt("target_waypoint_idx", mission.target_waypoint_idx);
+            double wp_lon = mission.wp_longitude_raw / 10000000.0l;
+            double wp_lat = mission.wp_latitude_raw / 10000000.0l;
+            int wp_index = mission.wp_index;
+            PropertyNode wp_node;
+            if ( mission.route_size != active_node.getInt("route_size") ) {
+                // route size change, zero all the waypoint coordinates
+                for ( int i = 0; i < active_node.getInt("route_size"); i++ ) {
+                    string wp_path = "wpt/" + std::to_string(i);
+                    wp_node = active_node.getChild(wp_path.c_str());
+                    wp_node.setDouble("longitude_deg", 0);
+                    wp_node.setDouble("latitude_deg", 0);
+                }
+            }
+            if ( wp_index < mission.route_size ) {
+                string wp_path = "wpt/" + std::to_string(wp_index);
+                wp_node = active_node.getChild(wp_path.c_str());
+                wp_node.setDouble("longitude_deg", wp_lon);
+                wp_node.setDouble("latitude_deg", wp_lat);
+            } else if ( wp_index == 65534 ) {
+                circle_node.setDouble("longitude_deg", wp_lon);
+                circle_node.setDouble("latitude_deg", wp_lat);
+                circle_node.setDouble("radius_m", mission.task_attribute / 10.0);
+            } else if ( wp_index == 65535 ) {
+                home_node.setDouble("longitude_deg", wp_lon);
+                home_node.setDouble("latitude_deg", wp_lat);
+            }
+            result = true;
+        }
     } else {
         console->printf("unknown message id: %d len: %d\n", id, message_size);
     }
