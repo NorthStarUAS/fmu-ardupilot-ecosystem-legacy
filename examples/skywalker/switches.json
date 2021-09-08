@@ -1,5 +1,5 @@
 {
-    "manual-override": {
+    "master-switch": {
         "rc-channel": 0,
         "states": 2
     },
