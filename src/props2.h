@@ -84,7 +84,8 @@ public:
 
     // void print();
     void pretty_print();
-    string write_as_string();
+    string get_json_string();
+    bool set_json_string(string message);
 
     DocPointerWrapper get_Document() {
         init_Document();

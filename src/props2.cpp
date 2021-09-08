@@ -1012,7 +1012,7 @@ void PropertyNode::pretty_print() {
     }
 }
 
-string PropertyNode::write_as_string() {
+string PropertyNode::get_json_string() {
     realloc_check();
     StringBuffer buffer;
     PrettyWriter<StringBuffer> writer(buffer);
@@ -1025,6 +1025,32 @@ string PropertyNode::write_as_string() {
     // }
     // return result;
     return buffer.GetString();
+}
+
+bool PropertyNode::set_json_string( string message ) {
+    Document tmpdoc(&(doc->GetAllocator()));
+    tmpdoc.Parse<kParseCommentsFlag>(message.c_str(), message.length());
+    if ( tmpdoc.HasParseError() ){
+        printf("json parse err: %d (%s)\n",
+               tmpdoc.GetParseError(),
+               GetParseError_En(tmpdoc.GetParseError()));
+        return false;
+    }
+
+    // merge each new top level member individually
+    for (Value::ConstMemberIterator itr = tmpdoc.MemberBegin(); itr != tmpdoc.MemberEnd(); ++itr) {
+        printf(" merging: %s\n", itr->name.GetString());
+        Value key;
+        key.SetString(itr->name.GetString(), itr->name.GetStringLength(), doc->GetAllocator());
+        Value &newval = tmpdoc[itr->name.GetString()];
+        if ( val->HasMember(key) ) {
+            (*val)[itr->name.GetString()] = newval;
+        } else {
+            val->AddMember(key, newval, doc->GetAllocator());
+        }
+    }
+
+    return true;
 }
 
 Document *PropertyNode::doc = nullptr;
