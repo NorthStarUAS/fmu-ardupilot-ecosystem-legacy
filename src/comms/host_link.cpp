@@ -34,6 +34,7 @@ void host_link_t::init() {
     pilot_node = PropertyNode("/pilot");
     route_node = PropertyNode("/task/route");
     status_node = PropertyNode("/status");
+    switches_node = PropertyNode("/switches");
     targets_node = PropertyNode("/autopilot/targets");
     task_node = PropertyNode("/task");
     
@@ -157,6 +158,8 @@ int host_link_t::write_pilot()
 {
     static rc_message::pilot_v4_t pilot_msg;
     pilot_msg.props2msg(pilot_node);
+    pilot_msg.master_switch = switches_node.getBool("master-switch");
+    pilot_msg.throttle_safety = switches_node.getBool("throttle-safety");
     pilot_msg.pack();
     return serial.write_packet( pilot_msg.id, pilot_msg.payload, pilot_msg.len);
 }

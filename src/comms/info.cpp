@@ -35,9 +35,9 @@ void info_t::write_pilot_in_ascii()
         console->printf("(Manual) ");
     }
     if ( switches_node.getBool("throttle-safety") ) {
-        console->printf("(Throttle safety) ");
-    } else {
         console->printf("(Throttle enable) ");
+    } else {
+        console->printf("(Throttle safe) ");
     }
     for ( int i = 0; i < 8; i++ ) {
         console->printf("%.3f ", pilot_node.getDouble("channel", i));

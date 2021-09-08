@@ -34,6 +34,7 @@ private:
     PropertyNode power_node;
     PropertyNode route_node;
     PropertyNode status_node;
+    PropertyNode switches_node;
     PropertyNode targets_node;
     PropertyNode task_node;
 
