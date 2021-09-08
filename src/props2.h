@@ -30,7 +30,7 @@ public:
     // Constructor.
     PropertyNode();
     PropertyNode(string abs_path, bool create=true);
-    PropertyNode(Value *v);
+    //PropertyNode(Value *v);
 
     bool hasChild(const char *name );
     PropertyNode getChild( const char *name, bool create );
@@ -100,9 +100,12 @@ public:
 private:
     // shared document instance
     static Document *doc;
+    static int shared_realloc_counter;
 
     // pointer to rapidjson Object;
     Value *val = nullptr;
+    string saved_path;
+    int saved_realloc_counter;
 
     inline void init_Document() {
         if ( doc == nullptr ) {
@@ -111,6 +114,7 @@ private:
     }
     bool extend_array(Value *node, int size);
     Value *find_node_from_path(Value *start_node, string path, bool create);
+    void realloc_check();
     bool load_json( const char *file_path, Value *v );
     void recursively_expand_includes(string base_path, Value *v);
 };
