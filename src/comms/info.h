@@ -24,4 +24,5 @@ private:
     PropertyNode imu_node;
     PropertyNode pilot_node;
     PropertyNode power_node;
+    PropertyNode switches_node;
 };

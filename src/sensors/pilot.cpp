@@ -45,6 +45,7 @@ void pilot_t::init() {
     effector_node = PropertyNode("/effectors");
     pilot_node = PropertyNode("/pilot");
     rcin_node = PropertyNode("/sensors/rc-input");
+    switches_node = PropertyNode("/switches");
     
     manual_inputs[0] = ap_inputs[0] = -1.0; // autopilot disabled (manual)
     manual_inputs[1] = ap_inputs[1] = -1.0; // throttle safety enabled
@@ -90,8 +91,8 @@ bool pilot_t::read() {
         
         // logical values
         pilot_node.setBool("failsafe", false); // good
-        pilot_node.setBool("ap_enabled", ap_enabled());
-        pilot_node.setBool("throttle_safety", throttle_safety());
+        // pilot_node.setBool("ap_enabled", ap_enabled());
+        // pilot_node.setBool("throttle_safety", throttle_safety());
         pilot_node.setDouble("aileron", get_aileron());
         pilot_node.setDouble("elevator", get_elevator());
         pilot_node.setDouble("throttle", get_throttle());

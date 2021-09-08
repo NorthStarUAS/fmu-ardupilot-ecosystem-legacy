@@ -24,10 +24,15 @@ private:
     PropertyNode effector_node;
     PropertyNode pilot_node;
     PropertyNode rcin_node;
+    PropertyNode switches_node;
 
     // convenience
-    inline bool ap_enabled() { return manual_inputs[0] >= 0.0; }
-    inline bool throttle_safety() { return manual_inputs[1] <= 0.0; }
+    inline bool ap_enabled() {
+        return switches_node.getBool("master-switch");
+    }
+    inline bool throttle_safety() {
+        return switches_node.getBool("throttle-safety");
+    }
     inline float get_aileron() {
         if ( ap_enabled() ) {
             return ap_inputs[3];

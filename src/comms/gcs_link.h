@@ -32,6 +32,7 @@ private:
     PropertyNode pilot_node;
     PropertyNode power_node;
     PropertyNode status_node;
+    PropertyNode switches_node;
     PropertyNode targets_node;
     
     uint32_t gps_last_millis = 0;

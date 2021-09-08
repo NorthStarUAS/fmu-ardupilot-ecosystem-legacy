@@ -95,6 +95,7 @@ void mixer_t::init() {
     stab_pitch_node = PropertyNode("/config/stability_damper/pitch");
     stab_yaw_node = PropertyNode("/config/stability_damper/yaw");
     stab_tune_node = PropertyNode("/config/stability_damper/pilot_tune");
+    switches_node = PropertyNode("/switches");
     
     M.resize(MAX_RCOUT_CHANNELS, MAX_RCOUT_CHANNELS);
     M.setIdentity();
@@ -143,7 +144,7 @@ void mixer_t::sas_update() {
 void mixer_t::mixing_update() {
     outputs = M * inputs;
     
-    if ( pilot_node.getBool("throttle_safety") ) {
+    if ( switches_node.getBool("throttle-safety") ) {
         outputs[0] = 0.0;
     }
 

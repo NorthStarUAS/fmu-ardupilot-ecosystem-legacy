@@ -98,8 +98,6 @@ bool host_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size 
         rc_message::ap_targets_v1_t ap_msg;
         ap_msg.unpack(buf, message_size);
         ap_msg.msg2props(targets_node);
-        ap_node.setBool("master_switch", ap_msg.flags & 0x01);
-        ap_node.setBool("pilot_pass_through", ap_msg.flags & 0x02);
     } else if ( id == rc_message::mission_v1_id ) {
         // this is the messy message
         rc_message::mission_v1_t mission;

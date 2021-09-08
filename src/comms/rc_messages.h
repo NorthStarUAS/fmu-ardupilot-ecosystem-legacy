@@ -2539,6 +2539,8 @@ public:
     uint32_t millis;
     float channel[sbus_channels];
     uint8_t failsafe;
+    uint8_t master_switch;
+    uint8_t throttle_safety;
 
     // internal structure for packing
     #pragma pack(push, 1)
@@ -2547,6 +2549,8 @@ public:
         uint32_t millis;
         int16_t channel[sbus_channels];
         uint8_t failsafe;
+        uint8_t master_switch;
+        uint8_t throttle_safety;
     };
     #pragma pack(pop)
 
@@ -2570,6 +2574,8 @@ public:
         _buf->millis = millis;
         for (int _i=0; _i<sbus_channels; _i++) _buf->channel[_i] = intround(channel[_i] * 20000.0);
         _buf->failsafe = failsafe;
+        _buf->master_switch = master_switch;
+        _buf->throttle_safety = throttle_safety;
         return true;
     }
 
@@ -2580,6 +2586,8 @@ public:
         millis = _buf->millis;
         for (int _i=0; _i<sbus_channels; _i++) channel[_i] = _buf->channel[_i] / (float)20000.0;
         failsafe = _buf->failsafe;
+        master_switch = _buf->master_switch;
+        throttle_safety = _buf->throttle_safety;
         return true;
     }
 
@@ -2596,6 +2604,8 @@ public:
         node.setUInt("millis", millis);
         for (int _i=0; _i<sbus_channels; _i++) node.setDouble("channel", channel[_i], _i);
         node.setUInt("failsafe", failsafe);
+        node.setUInt("master_switch", master_switch);
+        node.setUInt("throttle_safety", throttle_safety);
     }
 
     void props2msg(string _path, int _index = -1) {
@@ -2611,6 +2621,8 @@ public:
         millis = node.getUInt("millis");
         for (int _i=0; _i<sbus_channels; _i++) channel[_i] = node.getDouble("channel", _i);
         failsafe = node.getUInt("failsafe");
+        master_switch = node.getUInt("master_switch");
+        throttle_safety = node.getUInt("throttle_safety");
     }
 };
 
@@ -3055,7 +3067,6 @@ public:
 
     uint8_t index;
     uint32_t millis;
-    uint8_t flags;
     float groundtrack_deg;
     float altitude_ground_m;
     float airspeed_kt;
@@ -3067,7 +3078,6 @@ public:
     struct _compact_t {
         uint8_t index;
         uint32_t millis;
-        uint8_t flags;
         int16_t groundtrack_deg;
         uint16_t altitude_ground_m;
         int16_t airspeed_kt;
@@ -3094,7 +3104,6 @@ public:
         _compact_t *_buf = (_compact_t *)payload;
         _buf->index = index;
         _buf->millis = millis;
-        _buf->flags = flags;
         _buf->groundtrack_deg = intround(groundtrack_deg * 10.0);
         _buf->altitude_ground_m = uintround(altitude_ground_m * 1.0);
         _buf->airspeed_kt = intround(airspeed_kt * 10.0);
@@ -3108,7 +3117,6 @@ public:
         len = sizeof(_compact_t);
         index = _buf->index;
         millis = _buf->millis;
-        flags = _buf->flags;
         groundtrack_deg = _buf->groundtrack_deg / (float)10.0;
         altitude_ground_m = _buf->altitude_ground_m / (float)1.0;
         airspeed_kt = _buf->airspeed_kt / (float)10.0;
@@ -3128,7 +3136,6 @@ public:
     void msg2props(PropertyNode &node) {
         node.setUInt("index", index);
         node.setUInt("millis", millis);
-        node.setUInt("flags", flags);
         node.setDouble("groundtrack_deg", groundtrack_deg);
         node.setDouble("altitude_ground_m", altitude_ground_m);
         node.setDouble("airspeed_kt", airspeed_kt);
@@ -3147,7 +3154,6 @@ public:
     void props2msg(PropertyNode &node) {
         index = node.getUInt("index");
         millis = node.getUInt("millis");
-        flags = node.getUInt("flags");
         groundtrack_deg = node.getDouble("groundtrack_deg");
         altitude_ground_m = node.getDouble("altitude_ground_m");
         airspeed_kt = node.getDouble("airspeed_kt");

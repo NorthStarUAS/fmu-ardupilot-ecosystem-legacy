@@ -39,9 +39,10 @@ void switches_t::update() {
         int state = 0;
         int test_point = 1000;
         bool valid = false;
-        //printf("[%d] pwm_val: %d ", i, pwm_val);
+        // printf("[%d] pwm_val: %d ", i, pwm_val);
         while ( test_point - test_range < 2000 ) {
-            if ( pwm_val >= test_point - test_range and pwm_val <= test_point + test_range )
+            // printf("[%d] pwm: %d  tp: %d  tr: %d\n", i, pwm_val, test_point, test_range);
+            if ( (pwm_val >= test_point - test_range) and (pwm_val <= test_point + test_range) )
             {
                 valid = true;
                 break;

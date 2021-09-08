@@ -18,8 +18,9 @@ void info_t::init() {
     airdata_node = PropertyNode("/sensors/airdata");
     gps_node = PropertyNode("/sensors/gps");
     imu_node = PropertyNode("/sensors/imu");
-    power_node = PropertyNode("/sensors/power");
     pilot_node = PropertyNode("/pilot");
+    power_node = PropertyNode("/sensors/power");
+    switches_node = PropertyNode("/switches");
 }
 
 void info_t::write_pilot_in_ascii()
@@ -28,12 +29,12 @@ void info_t::write_pilot_in_ascii()
     if ( pilot_node.getBool("failsafe") ) {
         console->printf("FAILSAFE! ");
     }
-    if ( pilot_node.getBool("ap_enabled") ) {
+    if ( switches_node.getBool("master-switch") ) {
         console->printf("(Auto) ");
     } else {
         console->printf("(Manual) ");
     }
-    if ( pilot_node.getBool("throttle_safety") ) {
+    if ( switches_node.getBool("throttle-safety") ) {
         console->printf("(Throttle safety) ");
     } else {
         console->printf("(Throttle enable) ");

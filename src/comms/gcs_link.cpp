@@ -33,6 +33,7 @@ void gcs_link_t::init() {
     power_node = PropertyNode("/sensors/power");
     pilot_node = PropertyNode("/pilot");
     status_node = PropertyNode("/status");
+    switches_node = PropertyNode("/switches");
     targets_node = PropertyNode("/autopilot/targets");
 
     // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
@@ -94,7 +95,8 @@ bool gcs_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
     } else if ( id == rc_message::command_v1_id ) {
         rc_message::command_v1_t msg;
         msg.unpack(buf, message_size);
-        // console->printf("received command: %s\n", msg.message.c_str());
+        console->printf("received command: %s %d\n",
+                        msg.message.c_str(), msg.sequence_num);
         uint8_t command_result = 0;
         if ( msg.message == "hb" ) {
             command_result = 1;
@@ -110,7 +112,7 @@ bool gcs_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
             PropertyNode node(path);
             rc_message::command_v1_t reply;
             reply.sequence_num = 0;
-            reply.message = "set " + path + " " + node.write_as_string();
+            reply.message = "set " + path + " " + node.get_json_string();
             reply.pack();
             serial.write_packet( reply.id, reply.payload, reply.len);
             command_result = 1;
@@ -140,6 +142,8 @@ int gcs_link_t::write_pilot()
 {
     static rc_message::pilot_v4_t pilot_msg;
     pilot_msg.props2msg(pilot_node);
+    pilot_msg.master_switch = switches_node.getBool("master-switch");
+    pilot_msg.throttle_safety = switches_node.getBool("throttle-safety");
     pilot_msg.pack();
     return serial.write_packet( pilot_msg.id, pilot_msg.payload, pilot_msg.len);
 }
@@ -198,13 +202,6 @@ int gcs_link_t::write_ap()
     rc_message::ap_targets_v1_t ap_msg;
     ap_msg.props2msg(targets_node);
     ap_msg.millis = imu_node.getUInt("millis");
-    ap_msg.flags = 0;
-    if ( ap_node.getBool("master_switch") ) {
-        ap_msg.flags += 1; // |= (1 << 0)
-    }
-    if ( ap_node.getBool("pilot_pass_through") ) {
-        ap_msg.flags += 2; // |= (1 << 1)
-    }
     ap_msg.pack();
     return serial.write_packet( ap_msg.id, ap_msg.payload, ap_msg.len );
 }

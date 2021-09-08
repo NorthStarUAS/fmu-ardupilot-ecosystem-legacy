@@ -23,6 +23,7 @@ private:
     PropertyNode stab_pitch_node;
     PropertyNode stab_yaw_node;
     PropertyNode stab_tune_node;
+    PropertyNode switches_node;
     
 public:
 
