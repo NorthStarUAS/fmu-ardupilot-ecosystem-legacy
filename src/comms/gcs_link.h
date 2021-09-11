@@ -55,6 +55,7 @@ private:
     RateLimiter eff_limiter;
     RateLimiter gps_limiter;
     RateLimiter imu_limiter;
+    RateLimiter mission_limiter;
     RateLimiter nav_limiter;
     RateLimiter nav_metrics_limiter;
     RateLimiter pilot_limiter;

@@ -29,12 +29,12 @@ void info_t::write_pilot_in_ascii()
     if ( pilot_node.getBool("failsafe") ) {
         console->printf("FAILSAFE! ");
     }
-    if ( switches_node.getBool("master-switch") ) {
+    if ( switches_node.getBool("master_switch") ) {
         console->printf("(Auto) ");
     } else {
         console->printf("(Manual) ");
     }
-    if ( switches_node.getBool("throttle-safety") ) {
+    if ( switches_node.getBool("throttle_safety") ) {
         console->printf("(Throttle enable) ");
     } else {
         console->printf("(Throttle safe) ");

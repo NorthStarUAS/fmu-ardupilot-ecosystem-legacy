@@ -12,9 +12,10 @@
 #include "nav/nav_constants.h"
 #include "sensors/imu_mgr.h"            // reset gyros
 #include "sensors/pilot.h"              // update_ap()
-#include "serial_link.h"
-#include "rc_messages.h"
 
+#include "comms_relay.h"
+#include "rc_messages.h"
+#include "serial_link.h"
 #include "gcs_link.h"
 
 #include <AP_HAL/AP_HAL.h>
@@ -39,12 +40,14 @@ void gcs_link_t::init() {
     // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
     // serial.open(DEFAULT_BAUD, hal.serial(1)); // telemetry 1
     serial.open(TELEMETRY_BAUD, hal.serial(2)); // telemetry 2
+    comms_relay.set_gcs_link(&serial);
 
     airdata_limiter = RateLimiter(2);
     ap_limiter = RateLimiter(2);
     gps_limiter = RateLimiter(2.5);
     imu_limiter = RateLimiter(4);
-    nav_limiter = RateLimiter(10);
+    imu_limiter = RateLimiter(4);
+    mission_limiter = RateLimiter(2);
     nav_metrics_limiter = RateLimiter(0.5);
     pilot_limiter = RateLimiter(4);
     power_limiter = RateLimiter(1);
@@ -142,8 +145,8 @@ int gcs_link_t::write_pilot()
 {
     static rc_message::pilot_v4_t pilot_msg;
     pilot_msg.props2msg(pilot_node);
-    pilot_msg.master_switch = switches_node.getBool("master-switch");
-    pilot_msg.throttle_safety = switches_node.getBool("throttle-safety");
+    pilot_msg.master_switch = switches_node.getBool("master_switch");
+    pilot_msg.throttle_safety = switches_node.getBool("throttle_safety");
     pilot_msg.pack();
     return serial.write_packet( pilot_msg.id, pilot_msg.payload, pilot_msg.len);
 }
