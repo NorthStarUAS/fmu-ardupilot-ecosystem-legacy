@@ -144,7 +144,7 @@ void mixer_t::sas_update() {
 void mixer_t::mixing_update() {
     outputs = M * inputs;
     
-    if ( switches_node.getBool("throttle-safety") == false ) {
+    if ( switches_node.getBool("throttle_safety") == false ) {
         outputs[0] = 0.0;
     }
 

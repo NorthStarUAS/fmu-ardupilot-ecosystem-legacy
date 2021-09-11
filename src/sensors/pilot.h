@@ -28,10 +28,10 @@ private:
 
     // convenience
     inline bool ap_enabled() {
-        return switches_node.getBool("master-switch");
+        return switches_node.getBool("master_switch");
     }
     inline bool throttle_safety() {
-        return switches_node.getBool("throttle-safety");
+        return switches_node.getBool("throttle_safety");
     }
     inline float get_aileron() {
         if ( ap_enabled() ) {
