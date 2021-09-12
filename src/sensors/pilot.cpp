@@ -71,7 +71,6 @@ void pilot_t::init() {
     hal.util->set_soft_armed(true);
     
     mixer.init();
-    switches.init();
 }
 
 bool pilot_t::read() {
@@ -117,7 +116,6 @@ void pilot_t::write() {
     // available inputs have been parsed/sorted so do the mixing right
     // before outputing the effector commands.
     mixer.update();
-    switches.update();
 
     /*console->printf("safety: %d armed: %d\n",
                     hal.util->safety_switch_state(),

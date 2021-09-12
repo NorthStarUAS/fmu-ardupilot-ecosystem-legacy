@@ -5,7 +5,6 @@
 
 #include "comms/rc_messages.h"
 #include "mixer.h"
-#include "switches.h"
 
 class pilot_t {
     
@@ -90,7 +89,6 @@ public:
     bool changed = false;
 
     mixer_t mixer;
-    switches_t switches;
     
     void init();
     bool read();

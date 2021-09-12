@@ -19,6 +19,7 @@
 #include "sensors/imu_mgr.h"
 #include "sensors/pilot.h"
 #include "sensors/power.h"
+#include "state/state_mgr.h"
 #include "util/ratelimiter.h"
 
 const AP_HAL::HAL& hal = AP_HAL::get_HAL();
@@ -68,6 +69,7 @@ static info_t info;
 static led_t led;
 static menu_t menu;
 static power_t power;
+static state_mgr_t state_mgr;
 
 static RateLimiter maintimer(MASTER_HZ);
 static RateLimiter heartbeat(0.1);
@@ -140,6 +142,9 @@ void setup() {
     // ekf init (just prints availability status)
     nav_mgr.init();
 
+    // additional derived/computed/estimated values
+    state_mgr.init();
+    
     gcs_link.init();            // do this after gps initialization
     host_link.init();           // do this after gps initialization
     info.init();                // do this after gps initialization
@@ -168,6 +173,8 @@ void loop() {
             nav_mgr.update();
         }
 
+        state_mgr.update();
+        
         // 4. Send state to host computer
         host_link.update();
 
