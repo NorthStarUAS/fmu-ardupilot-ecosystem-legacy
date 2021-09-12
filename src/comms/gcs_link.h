@@ -37,6 +37,7 @@ private:
     
     uint32_t gps_last_millis = 0;
     uint32_t bytes_last_millis = 0;
+    uint16_t last_command_seq_num = 0;
     
     int write_ack( uint16_t sequence_num, uint8_t result );
     int write_airdata();
