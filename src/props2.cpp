@@ -149,9 +149,9 @@ bool PropertyNode::hasChild( const char *name ) {
 
 PropertyNode PropertyNode::getChild( const char *name, bool create ) {
     realloc_check();
-    printf("  get child of %s\n", saved_path.c_str());
+    // printf("  get child of %s\n", saved_path.c_str());
     string child_path = saved_path + "/" + name;
-    printf("    new path: %s\n", child_path.c_str());
+    // printf("    new path: %s\n", child_path.c_str());
     if ( val->IsObject() ) {
         // Value *child = find_node_from_path(val, name, create);
         return PropertyNode(child_path);
