@@ -57,7 +57,7 @@ void link_t::init() {
     status_limiter = RateLimiter(0.1);
 }
 
-void gcs_link_t::update() {
+void link_t::update() {
     if ( airdata_limiter.update() ) {
         output_counter += write_airdata();
     }
