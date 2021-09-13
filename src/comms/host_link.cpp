@@ -8,14 +8,12 @@
 
 #include "setup_board.h"
 
-// #include "airdata.h"
-#include "nav_mgr.h"            // reset ekf
+#include "nav_mgr.h"                    // reset ekf
+#include "nav/nav_constants.h"
 #include "sensors/imu_mgr.h"            // reset gyros
 #include "sensors/pilot.h"              // update_ap()
-#include "nav/nav_constants.h"
 
 #include "relay.h"
-#include "serial.h"
 #include "rc_messages.h"
 #include "host_link.h"
 
