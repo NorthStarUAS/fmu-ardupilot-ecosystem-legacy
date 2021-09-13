@@ -15,7 +15,7 @@
 #include "nav/nav_constants.h"
 
 #include "relay.h"
-#include "serial_link.h"
+#include "serial.h"
 #include "rc_messages.h"
 #include "host_link.h"
 

@@ -15,7 +15,6 @@
 
 #include "relay.h"
 #include "rc_messages.h"
-#include "serial_link.h"
 #include "gcs_link.h"
 
 #include <AP_HAL/AP_HAL.h>

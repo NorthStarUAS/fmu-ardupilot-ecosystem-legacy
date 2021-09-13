@@ -1,7 +1,7 @@
 #pragma once
 
 #include "props2.h"
-#include "serial_link.h"
+#include "serial.h"
 #include "util/ratelimiter.h"
 
 class gcs_link_t {
