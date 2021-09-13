@@ -13,7 +13,7 @@
 #include "sensors/imu_mgr.h"            // reset gyros
 #include "sensors/pilot.h"              // update_ap()
 
-#include "comms_relay.h"
+#include "relay.h"
 #include "rc_messages.h"
 #include "serial_link.h"
 #include "gcs_link.h"
@@ -40,7 +40,7 @@ void gcs_link_t::init() {
     // serial.open(DEFAULT_BAUD, hal.serial(0)); // usb/console
     // serial.open(DEFAULT_BAUD, hal.serial(1)); // telemetry 1
     serial.open(TELEMETRY_BAUD, hal.serial(2)); // telemetry 2
-    comms_relay.set_gcs_link(&serial);
+    relay.set_gcs_link(&serial);
 
     airdata_limiter = RateLimiter(2);
     ap_limiter = RateLimiter(2);
@@ -123,8 +123,8 @@ bool gcs_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
                 command_result = 1;
             } else {
                 console->printf("unknown message: %s, relaying to host\n", msg.message.c_str());
-                comms_relay.forward_packet(comms_relay_t::dest_enum::host_dest,
-                                           id, buf, message_size);
+                relay.forward_packet(relay_t::dest_enum::host_dest,
+                                     id, buf, message_size);
                 command_result = 1;
             }
         } else {

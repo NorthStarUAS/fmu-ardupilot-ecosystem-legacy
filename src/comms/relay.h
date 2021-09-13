@@ -2,7 +2,7 @@
 
 #include "serial_link.h"
 
-class comms_relay_t {
+class relay_t {
     
 public:
     
@@ -11,8 +11,8 @@ public:
         gcs_dest,
     };
 
-    comms_relay_t();
-    ~comms_relay_t();
+    relay_t();
+    ~relay_t();
 
     void set_gcs_link( SerialLink *link ) {
         gcs_link = link;
@@ -29,4 +29,4 @@ private:
 
 };
 
-extern comms_relay_t comms_relay;
+extern relay_t relay;

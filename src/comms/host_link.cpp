@@ -14,7 +14,7 @@
 #include "sensors/pilot.h"              // update_ap()
 #include "nav/nav_constants.h"
 
-#include "comms_relay.h"
+#include "relay.h"
 #include "serial_link.h"
 #include "rc_messages.h"
 #include "host_link.h"
@@ -42,7 +42,7 @@ void host_link_t::init() {
     // serial.open(HOST_BAUD, hal.serial(0)); // usb/console
     serial.open(HOST_BAUD, hal.serial(1)); // telemetry 1
     // serial.open(HOST_BAUD, hal.serial(2)); // telemetry 2
-    comms_relay.set_host_link(&serial);
+    relay.set_host_link(&serial);
     
     nav_metrics_limiter = RateLimiter(0.5);
     status_limiter = RateLimiter(0.5);
@@ -103,8 +103,8 @@ bool host_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size 
         ap_msg.msg2props(targets_node);
     } else if ( id == rc_message::mission_v1_id ) {
         // relay directly to gcs
-        comms_relay.forward_packet(comms_relay_t::dest_enum::gcs_dest,
-                                   id, buf, message_size);
+        relay.forward_packet(relay_t::dest_enum::gcs_dest,
+                             id, buf, message_size);
         // this is the messy message
         rc_message::mission_v1_t mission;
         mission.unpack(buf, message_size);
