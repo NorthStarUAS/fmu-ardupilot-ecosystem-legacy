@@ -1,21 +1,23 @@
 #include "props2.h"
 
-class airborne_t {
+class airdata_helper_t {
     
 private:
     
-    PropertyNode status_node;
+    PropertyNode airdata_node;
     PropertyNode pos_node;
     PropertyNode vel_node;
-    
+
+    // is airborne
     float up_kts = 12.0;
     float down_kts = 8.0;
     float up_ft = 25;
     float down_ft = 10;
     bool is_airborne = false;
 
+    // flight timer
     uint32_t last_millis = 0;
-    float flight_secs = 0.0;
+    uint32_t flight_millis = 0;
 
 public:
 

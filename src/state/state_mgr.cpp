@@ -4,11 +4,11 @@
 #include "state_mgr.h"
 
 void state_mgr_t::init() {
-    airborne.init();
+    airdata.init();
     switches.init();
 }
 
 void state_mgr_t::update() {
-    airborne.update();
+    airdata.update();
     switches.update();
 }

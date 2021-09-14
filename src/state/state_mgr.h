@@ -1,11 +1,11 @@
-#include "airborne.h"
+#include "airdata_helper.h"
 #include "switches.h"
 
 class state_mgr_t {
 
 private:
     
-    airborne_t airborne;
+    airdata_helper_t airdata;
     switches_t switches;
 
 public:
@@ -14,4 +14,3 @@ public:
     void update();
 
 };
-
