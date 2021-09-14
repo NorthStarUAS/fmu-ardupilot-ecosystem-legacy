@@ -17,6 +17,6 @@ public:
     
     RateLimiter();
     RateLimiter( float hz );
-    bool update();
+    bool update( bool verbose = false );
 
 };

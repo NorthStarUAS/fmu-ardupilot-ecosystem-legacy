@@ -6,9 +6,8 @@
 
 #include "setup_board.h"
 
-#include "comms/gcs_link.h"
-#include "comms/host_link.h"
 #include "comms/info.h"
+#include "comms/rc_link.h"
 #include "config.h"
 #include "led.h"
 #include "menu.h"
@@ -63,8 +62,8 @@ static PropertyNode status_node;
 static config_t config;
 static airdata_t airdata;
 static gps_mgr_t gps_mgr;
-static gcs_link_t gcs_link;
-static host_link_t host_link;
+static rc_link_t gcs_link;
+static rc_link_t host_link;
 static info_t info;
 static led_t led;
 static menu_t menu;
@@ -144,10 +143,11 @@ void setup() {
 
     // additional derived/computed/estimated values
     state_mgr.init();
-    
-    gcs_link.init();            // do this after gps initialization
-    host_link.init();           // do this after gps initialization
-    info.init();                // do this after gps initialization
+     
+    // do these after gps initialization
+    gcs_link.init(2, 115200);
+    host_link.init(1, 500000);
+    info.init();
 
     menu.init();
     
@@ -255,7 +255,7 @@ void loop() {
 
         gcs_link.read_commands();
         gcs_link.update();
-
+        
         counter++;
     }
 }

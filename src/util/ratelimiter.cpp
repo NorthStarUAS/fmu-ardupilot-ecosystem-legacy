@@ -1,4 +1,5 @@
 #include <AP_Math/AP_Math.h>
+#include <stdio.h>
 #include "ratelimiter.h"
 
 RateLimiter::RateLimiter() {
@@ -6,19 +7,38 @@ RateLimiter::RateLimiter() {
 }
 
 RateLimiter::RateLimiter( float hz ) {
-    dt_millis = 1000.0 / hz;
+    if ( hz > 0.00001 ) {
+        // report true at requested rate
+        dt_millis = 1000.0 / hz;
+    } else if ( hz < -0.00001 ) {
+        // always report false if requested rate < 0
+        dt_millis = 0;
+    } else {
+        // always report true (assuming the clock has advanced a tick)
+        dt_millis = 1;
+    }
 }
 
-bool RateLimiter::update() {
+bool RateLimiter::update( bool verbose ) {
+    uint32_t millis = AP_HAL::millis();
     if ( timer == 0 ) {
-        timer = AP_HAL::millis() + (get_random16() % dt_millis);
-    }
-    if ( AP_HAL::millis() >= timer + dt_millis ) {
-        if ( AP_HAL::millis() > timer + dt_millis ) {
-            misses++;                 // oops
-            timer = AP_HAL::millis(); // catchup
+        if ( dt_millis > 1 ) {
+            timer = millis + (get_random16() % dt_millis);
         } else {
-            timer += dt_millis;       // all good
+            timer = millis;
+        }
+    }
+    if ( verbose ) {
+        printf("millis: %d  timer: %d  dt: %d\n", millis, timer, dt_millis);
+    }
+    if ( (dt_millis > 0) and (millis >= timer + dt_millis) ) {
+        if ( millis > timer + dt_millis ) {
+            if ( dt_millis > 1 ) {
+                misses++;             // oops
+            }
+            timer = millis;           // catchup
+        } else {
+            timer += dt_millis;       // advance timer
         }
         return true;
     } else {

@@ -4,12 +4,12 @@
 #include "serial.h"
 #include "util/ratelimiter.h"
 
-class link_t {
+class gcs_link_t {
 
 public:
 
-    link_t();
-    ~link_t();
+    gcs_link_t();
+    ~gcs_link_t();
     
     // Serial = usb, Serial1 connects to /dev/ttyO4 on beaglebone in
     // aura-v2 and marmot-v1 hardware
@@ -22,25 +22,18 @@ public:
     
 private:
     
-    PropertyNode config_node;
-    PropertyNode config_nav_node;
     PropertyNode effector_node;
     PropertyNode nav_node;
-    PropertyNode active_node;
     PropertyNode airdata_node;
     PropertyNode ap_node;
-    PropertyNode circle_node;
     PropertyNode gps_node;
-    PropertyNode home_node;
     PropertyNode imu_node;
     PropertyNode pilot_node;
     PropertyNode power_node;
-    PropertyNode route_node;
     PropertyNode status_node;
     PropertyNode switches_node;
     PropertyNode targets_node;
-    PropertyNode task_node;
-
+    
     uint32_t gps_last_millis = 0;
     uint32_t bytes_last_millis = 0;
     uint16_t last_command_seq_num = 0;

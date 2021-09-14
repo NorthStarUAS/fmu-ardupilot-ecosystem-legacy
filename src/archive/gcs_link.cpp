@@ -23,7 +23,6 @@ gcs_link_t::gcs_link_t() {}
 gcs_link_t::~gcs_link_t() {}
 
 void gcs_link_t::init() {
-    config_node = PropertyNode("/config");
     effector_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");
     airdata_node = PropertyNode("/sensors/airdata");

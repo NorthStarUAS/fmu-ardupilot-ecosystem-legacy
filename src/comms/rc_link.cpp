@@ -15,10 +15,12 @@
 
 #include "relay.h"
 #include "rc_messages.h"
-#include "host_link.h"
+#include "rc_link.h"
 
-void host_link_t::init() {
-    config_node = PropertyNode("/config");
+rc_link_t::rc_link_t() {}
+rc_link_t::~rc_link_t() {}
+
+void rc_link_t::init(uint8_t port, uint32_t baud) {
     config_nav_node = PropertyNode("/config/nav"); // after config.init()
     effector_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");
@@ -36,42 +38,82 @@ void host_link_t::init() {
     switches_node = PropertyNode("/switches");
     targets_node = PropertyNode("/autopilot/targets");
     task_node = PropertyNode("/task");
-    
-    // serial.open(HOST_BAUD, hal.serial(0)); // usb/console
-    serial.open(HOST_BAUD, hal.serial(1)); // telemetry 1
-    // serial.open(HOST_BAUD, hal.serial(2)); // telemetry 2
-    relay.set_host_link(&serial);
-    
-    nav_metrics_limiter = RateLimiter(0.5);
-    status_limiter = RateLimiter(0.5);
+
+    // port: 0 = usb/console, 1 = telem 1, 2 = telem 2
+    // telemetry baud = 57600 (or 115200), host baud = 500,000
+    serial.open(baud, hal.serial(port));
+    printf("opened rc_link port: %d @ %d baud\n", port, baud);
+    hal.scheduler->delay(100);
+    if ( port == 1 ) {
+        relay.set_host_link(&serial);
+    } else if ( port == 2 ) {
+        relay.set_gcs_link(&serial);
+    }
+
+    // fixme: make externally configurable?
+    if ( baud <= 115200 ) {
+        // setup rates for a slower telemetry connection
+        airdata_limiter = RateLimiter(2);
+        ap_limiter = RateLimiter(2);
+        gps_limiter = RateLimiter(2.5);
+        imu_limiter = RateLimiter(4);
+        mission_limiter = RateLimiter(2);
+        nav_metrics_limiter = RateLimiter(0.5);
+        pilot_limiter = RateLimiter(4);
+        power_limiter = RateLimiter(1);
+        status_limiter = RateLimiter(0.1);
+    } else {
+        // setup rates for a full speed host connection
+        airdata_limiter = RateLimiter(0);
+        ap_limiter = RateLimiter(-1);  // don't send
+        gps_limiter = RateLimiter(0);
+        imu_limiter = RateLimiter(0);
+        mission_limiter = RateLimiter(0);
+        nav_metrics_limiter = RateLimiter(0.5);
+        pilot_limiter = RateLimiter(0);
+        power_limiter = RateLimiter(0);
+        status_limiter = RateLimiter(0.5);
+    }
 }
 
-void host_link_t::update() {
-    output_counter += write_pilot();
-    output_counter += write_gps();
-    output_counter += write_airdata();
-    output_counter += write_power();
+void rc_link_t::update() {
+    if ( airdata_limiter.update() ) {
+        output_counter += write_airdata();
+    }
+    if ( ap_limiter.update() ) {
+        output_counter += write_ap();
+    }
+    if ( gps_limiter.update() ) {
+        output_counter += write_gps();
+    }
+    if ( nav_limiter.update() ) {
+        output_counter += write_nav();
+    }
+    if ( nav_metrics_limiter.update() ) {
+        output_counter += write_nav_metrics();
+    }
+    if ( pilot_limiter.update() ) {
+        output_counter += write_pilot();
+    }
+    if ( power_limiter.update() ) {
+        output_counter += write_power();
+    }
     if ( status_limiter.update() ) {
         int len = write_status();
         output_counter = len;   // start over counting bytes
     }
-    if ( config_nav_node.getString("select") != "none" ) {
-        output_counter += write_nav();
-        if ( nav_metrics_limiter.update() ) {
-            output_counter += write_nav_metrics();
-        }
+    // tradition has us writing the imu packet last so a full rate
+    // receiver could use it as an end of frame marker if it wanted
+    // to.
+    if ( imu_limiter.update() ) {
+        output_counter += write_imu();
     }
-    // write imu message last: used as an implicit end of data
-    // frame marker.
-    output_counter += write_imu();
 }
 
-bool host_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
+bool rc_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
 {
     bool result = false;
-
-    // console->print("message id = "); console->print(id); console->print(" len = "); console->println(message_size);
-    
+    //console->printf("message id: %d  len: %d\n", id, message_size);
     if ( id == rc_message::inceptors_v4_id ) {
         static rc_message::inceptors_v4_t inceptors;
         inceptors.unpack(buf, message_size);
@@ -82,16 +124,38 @@ bool host_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size 
     } else if ( id == rc_message::command_v1_id ) {
         rc_message::command_v1_t msg;
         msg.unpack(buf, message_size);
-        console->printf("received command: %s\n", msg.message.c_str());
+        console->printf("received command: %s %d\n",
+                        msg.message.c_str(), msg.sequence_num);
         uint8_t command_result = 0;
-        if ( msg.message == "zero_gyros" ) {
-            imu_mgr.gyros_calibrated = 0;   // start state
-            command_result = 1;
-        } else if ( msg.message == "reset_ekf" ) {
-            nav_mgr.reinit();
-            command_result = 1;
+        if ( last_command_seq_num != msg.sequence_num ) {
+            last_command_seq_num = msg.sequence_num;
+            if ( msg.message == "hb" ) {
+                command_result = 1;
+            } else if ( msg.message == "zero_gyros" ) {
+                imu_mgr.gyros_calibrated = 0;   // start state
+                command_result = 1;
+            } else if ( msg.message == "reset_ekf" ) {
+                nav_mgr.reinit();
+                command_result = 1;
+            } else if ( msg.message.substr(0, 4) == "get " ) {
+                string path = msg.message.substr(4);
+                // printf("cmd: get  node: %s\n", path.c_str());
+                PropertyNode node(path);
+                rc_message::command_v1_t reply;
+                reply.sequence_num = 0;
+                reply.message = "set " + path + " " + node.get_json_string();
+                reply.pack();
+                serial.write_packet( reply.id, reply.payload, reply.len);
+                command_result = 1;
+            } else {
+                console->printf("unknown message: %s, relaying to host\n", msg.message.c_str());
+                relay.forward_packet(relay_t::dest_enum::host_dest,
+                                     id, buf, message_size);
+                command_result = 1;
+            }
         } else {
-            console->printf("unknown message\n");
+            console->printf("ignoring duplicate command\n");
+            command_result = 1;
         }
         write_ack( msg.sequence_num, command_result );
         result = true;
@@ -139,15 +203,15 @@ bool host_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size 
                 home_node.setDouble("latitude_deg", wp_lat);
             }
             result = true;
-        }
+        }        
     } else {
         console->printf("unknown message id: %d len: %d\n", id, message_size);
     }
     return result;
 }
 
-// output an acknowledgement of a message received
-int host_link_t::write_ack( uint16_t sequence_num, uint8_t result )
+// return an ack of a message received
+int rc_link_t::write_ack( uint16_t sequence_num, uint8_t result )
 {
     static rc_message::ack_v1_t ack;
     ack.sequence_num = sequence_num;
@@ -156,8 +220,8 @@ int host_link_t::write_ack( uint16_t sequence_num, uint8_t result )
     return serial.write_packet( ack.id, ack.payload, ack.len);
 }
 
-// output a binary representation of the pilot manual (rc receiver) data
-int host_link_t::write_pilot()
+// pilot manual (rc receiver) data
+int rc_link_t::write_pilot()
 {
     static rc_message::pilot_v4_t pilot_msg;
     pilot_msg.props2msg(pilot_node);
@@ -167,18 +231,15 @@ int host_link_t::write_pilot()
     return serial.write_packet( pilot_msg.id, pilot_msg.payload, pilot_msg.len);
 }
 
-// output a binary representation of the IMU data (note: scaled to 16bit values)
-int host_link_t::write_imu()
+int rc_link_t::write_imu()
 {
     static rc_message::imu_v6_t imu_msg;
     imu_msg.props2msg(imu_node);
     imu_msg.pack();
-    int result = serial.write_packet( imu_msg.id, imu_msg.payload, imu_msg.len );
-    return result;
+    return serial.write_packet( imu_msg.id, imu_msg.payload, imu_msg.len );
 }
 
-// output a binary representation of the GPS data
-int host_link_t::write_gps()
+int rc_link_t::write_gps()
 {
     static rc_message::gps_v5_t gps_msg;
     if ( gps_node.getUInt("millis") != gps_last_millis ) {
@@ -191,8 +252,8 @@ int host_link_t::write_gps()
     }
 }
 
-// output a binary representation of the Nav data (and metrics)
-int host_link_t::write_nav()
+// nav (ekf) data
+int rc_link_t::write_nav()
 {
     static rc_message::nav_v6_t nav_msg;
     nav_msg.props2msg(nav_node);
@@ -200,16 +261,17 @@ int host_link_t::write_nav()
     return serial.write_packet( nav_msg.id, nav_msg.payload, nav_msg.len );
 }
 
-int host_link_t::write_nav_metrics()
+// nav (ekf) metrics
+int rc_link_t::write_nav_metrics()
 {
     static rc_message::nav_metrics_v6_t metrics_msg;
     metrics_msg.props2msg(nav_node);
+    metrics_msg.metrics_millis = nav_node.getUInt("millis");
     metrics_msg.pack();
     return serial.write_packet( metrics_msg.id, metrics_msg.payload, metrics_msg.len );
 }
 
-// output a binary representation of the barometer data
-int host_link_t::write_airdata()
+int rc_link_t::write_airdata()
 {
     static rc_message::airdata_v8_t air_msg;
     air_msg.props2msg(airdata_node);
@@ -217,8 +279,17 @@ int host_link_t::write_airdata()
     return serial.write_packet( air_msg.id, air_msg.payload, air_msg.len );
 }
 
-// output a binary representation of various volt/amp sensors
-int host_link_t::write_power()
+// autopilot targets / status
+int rc_link_t::write_ap()
+{
+    rc_message::ap_targets_v1_t ap_msg;
+    ap_msg.props2msg(targets_node);
+    ap_msg.millis = imu_node.getUInt("millis");
+    ap_msg.pack();
+    return serial.write_packet( ap_msg.id, ap_msg.payload, ap_msg.len );
+}
+
+int rc_link_t::write_power()
 {
     static rc_message::power_v1_t power_msg;
     power_msg.props2msg(power_node);
@@ -226,8 +297,8 @@ int host_link_t::write_power()
     return serial.write_packet( power_msg.id, power_msg.payload, power_msg.len );
 }
 
-// output a binary representation of various status and config information
-int host_link_t::write_status()
+// system status
+int rc_link_t::write_status()
 {
     static rc_message::status_v7_t status_msg;
     
@@ -244,7 +315,7 @@ int host_link_t::write_status()
     return serial.write_packet( status_msg.id, status_msg.payload, status_msg.len );
 }
 
-void host_link_t::read_commands() {
+void rc_link_t::read_commands() {
     while ( serial.update() ) {
         parse_message( serial.pkt_id, serial.payload, serial.pkt_len );
     }
