@@ -4,11 +4,13 @@
 #include "state_mgr.h"
 
 void state_mgr_t::init() {
-    airdata.init();
     switches.init();
+    airdata.init();
+    ground.init();
 }
 
-void state_mgr_t::update() {
-    airdata.update();
+void state_mgr_t::update(float dt) {
     switches.update();
+    airdata.update();
+    ground.update(dt);
 }
