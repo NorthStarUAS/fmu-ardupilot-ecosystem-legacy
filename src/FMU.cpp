@@ -173,7 +173,7 @@ void loop() {
             nav_mgr.update();
         }
 
-        state_mgr.update();
+        state_mgr.update(1000.0 / MASTER_HZ);
         
         // 4. Send state to host computer
         host_link.update();
