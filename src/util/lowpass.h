@@ -9,13 +9,13 @@ private:
     // Time factor (tf): length of time (sec) to low pass filter the
     // input over.  A time value of zero will result in the filter
     // output being equal to the raw input at each time step.
-    double _time_factor;
+    double _time_factor = 1.0;
 
     // the current filter value
-    double filter_value;
+    double filter_value = 0.0;
 
     // have we been inited
-    bool inited;
+    bool inited = false;
     
 public:
     
