@@ -8,6 +8,10 @@ void nav_mgr_t::init() {
     gps_node = PropertyNode("/sensors/gps");
     imu_node = PropertyNode("/sensors/imu");
     nav_node = PropertyNode("/filters/nav");
+    orient_node = PropertyNode("/orientation");
+    pos_node = PropertyNode("/position");
+    vel_node = PropertyNode("/velocity");
+    
     string selected = config_nav_node.getString("select");
     // fix me ...
     if ( selected == ""  ) {
@@ -16,11 +20,7 @@ void nav_mgr_t::init() {
     } else {
         selected = "nav15";         // force (fixme)
     }
-#if defined(AURA_ONBOARD_EKF)
     console->printf("EKF: selected: %s\n", selected.c_str());
-#else
-    console->printf("EKF: not available for Teensy 3.2\n");
-#endif
     configure();
     console->printf("configured ekf:\n");
     config_nav_node.pretty_print();
@@ -83,7 +83,6 @@ static inline int32_t intround(float f) {
 }
 
 void nav_mgr_t::update() {
-#if defined(AURA_ONBOARD_EKF)
     IMUdata imu1;
     imu1.time = imu_node.getDouble("timestamp");
     imu1.p = imu_node.getDouble("p_rps");
@@ -186,7 +185,6 @@ void nav_mgr_t::update() {
         status = 0;             // not initialized
     }
     nav_node.setInt("status", status);
-#endif // AURA_ONBOARD_EKF
 }
 
 void nav_mgr_t::reinit() {
