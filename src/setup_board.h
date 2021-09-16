@@ -36,9 +36,6 @@ extern Compass compass;
 const uint8_t MAX_RCIN_CHANNELS = 16;
 const uint8_t MAX_RCOUT_CHANNELS = 8;
 
-// mRo Pixracer: can run the ekf at 100hz
-#define AURA_ONBOARD_EKF
-
 // this is the master loop update rate.
 const int MASTER_HZ = 100;
 
