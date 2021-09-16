@@ -95,8 +95,8 @@ void info_t::write_gps_ascii() {
 void info_t::write_nav_ascii() {
     // values
     console->printf("Pos: %.7f, %.7f, %.2f",
-                    nav_node.getDouble("latitude_rad")*R2D,
-                    nav_node.getDouble("longitude_rad")*R2D,
+                    nav_node.getDouble("latitude_deg"),
+                    nav_node.getDouble("longitude_deg"),
                     nav_node.getDouble("altitude_m"));
     console->printf(" Vel: %.2f, %.2f, %.2f",
                     nav_node.getDouble("vn_mps"),

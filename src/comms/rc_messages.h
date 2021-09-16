@@ -1257,6 +1257,7 @@ public:
     float airspeed_smoothed_kt;
     float altitude_smoothed_m;
     float altitude_true_m;
+    float altitude_ground_m;
     uint8_t is_airborne;
     uint32_t flight_timer_millis;
     float wind_dir_deg;
@@ -1275,6 +1276,7 @@ public:
         int16_t airspeed_smoothed_kt;
         float altitude_smoothed_m;
         float altitude_true_m;
+        float altitude_ground_m;
         uint8_t is_airborne;
         uint32_t flight_timer_millis;
         uint16_t wind_dir_deg;
@@ -1308,6 +1310,7 @@ public:
         _buf->airspeed_smoothed_kt = intround(airspeed_smoothed_kt * 100.0);
         _buf->altitude_smoothed_m = altitude_smoothed_m;
         _buf->altitude_true_m = altitude_true_m;
+        _buf->altitude_ground_m = altitude_ground_m;
         _buf->is_airborne = is_airborne;
         _buf->flight_timer_millis = flight_timer_millis;
         _buf->wind_dir_deg = uintround(wind_dir_deg * 100.0);
@@ -1328,6 +1331,7 @@ public:
         airspeed_smoothed_kt = _buf->airspeed_smoothed_kt / (float)100.0;
         altitude_smoothed_m = _buf->altitude_smoothed_m;
         altitude_true_m = _buf->altitude_true_m;
+        altitude_ground_m = _buf->altitude_ground_m;
         is_airborne = _buf->is_airborne;
         flight_timer_millis = _buf->flight_timer_millis;
         wind_dir_deg = _buf->wind_dir_deg / (float)100.0;
@@ -1354,6 +1358,7 @@ public:
         node.setDouble("airspeed_smoothed_kt", airspeed_smoothed_kt);
         node.setDouble("altitude_smoothed_m", altitude_smoothed_m);
         node.setDouble("altitude_true_m", altitude_true_m);
+        node.setDouble("altitude_ground_m", altitude_ground_m);
         node.setUInt("is_airborne", is_airborne);
         node.setUInt("flight_timer_millis", flight_timer_millis);
         node.setDouble("wind_dir_deg", wind_dir_deg);
@@ -1379,6 +1384,7 @@ public:
         airspeed_smoothed_kt = node.getDouble("airspeed_smoothed_kt");
         altitude_smoothed_m = node.getDouble("altitude_smoothed_m");
         altitude_true_m = node.getDouble("altitude_true_m");
+        altitude_ground_m = node.getDouble("altitude_ground_m");
         is_airborne = node.getUInt("is_airborne");
         flight_timer_millis = node.getUInt("flight_timer_millis");
         wind_dir_deg = node.getDouble("wind_dir_deg");
@@ -3080,7 +3086,7 @@ public:
     uint8_t index;
     uint32_t millis;
     float groundtrack_deg;
-    float altitude_ground_m;
+    float altitude_msl_ft;
     float airspeed_kt;
     float roll_deg;
     float pitch_deg;
@@ -3091,7 +3097,7 @@ public:
         uint8_t index;
         uint32_t millis;
         int16_t groundtrack_deg;
-        uint16_t altitude_ground_m;
+        uint16_t altitude_msl_ft;
         int16_t airspeed_kt;
         int16_t roll_deg;
         int16_t pitch_deg;
@@ -3117,7 +3123,7 @@ public:
         _buf->index = index;
         _buf->millis = millis;
         _buf->groundtrack_deg = intround(groundtrack_deg * 10.0);
-        _buf->altitude_ground_m = uintround(altitude_ground_m * 1.0);
+        _buf->altitude_msl_ft = uintround(altitude_msl_ft * 1.0);
         _buf->airspeed_kt = intround(airspeed_kt * 10.0);
         _buf->roll_deg = intround(roll_deg * 10.0);
         _buf->pitch_deg = intround(pitch_deg * 10.0);
@@ -3130,7 +3136,7 @@ public:
         index = _buf->index;
         millis = _buf->millis;
         groundtrack_deg = _buf->groundtrack_deg / (float)10.0;
-        altitude_ground_m = _buf->altitude_ground_m / (float)1.0;
+        altitude_msl_ft = _buf->altitude_msl_ft / (float)1.0;
         airspeed_kt = _buf->airspeed_kt / (float)10.0;
         roll_deg = _buf->roll_deg / (float)10.0;
         pitch_deg = _buf->pitch_deg / (float)10.0;
@@ -3149,7 +3155,7 @@ public:
         node.setUInt("index", index);
         node.setUInt("millis", millis);
         node.setDouble("groundtrack_deg", groundtrack_deg);
-        node.setDouble("altitude_ground_m", altitude_ground_m);
+        node.setDouble("altitude_msl_ft", altitude_msl_ft);
         node.setDouble("airspeed_kt", airspeed_kt);
         node.setDouble("roll_deg", roll_deg);
         node.setDouble("pitch_deg", pitch_deg);
@@ -3167,7 +3173,7 @@ public:
         index = node.getUInt("index");
         millis = node.getUInt("millis");
         groundtrack_deg = node.getDouble("groundtrack_deg");
-        altitude_ground_m = node.getDouble("altitude_ground_m");
+        altitude_msl_ft = node.getDouble("altitude_msl_ft");
         airspeed_kt = node.getDouble("airspeed_kt");
         roll_deg = node.getDouble("roll_deg");
         pitch_deg = node.getDouble("pitch_deg");

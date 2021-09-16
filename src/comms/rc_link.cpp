@@ -33,14 +33,16 @@ void rc_link_t::init(uint8_t port, uint32_t baud) {
     imu_node = PropertyNode("/sensors/imu");
     power_node = PropertyNode("/sensors/power");
     pilot_node = PropertyNode("/pilot");
+    pos_node = PropertyNode("/position");
     route_node = PropertyNode("/task/route");
     status_node = PropertyNode("/status");
     switches_node = PropertyNode("/switches");
     targets_node = PropertyNode("/autopilot/targets");
     task_node = PropertyNode("/task");
 
-    // port: 0 = usb/console, 1 = telem 1, 2 = telem 2
+    // port: 0 = usb/console, 1 = telem 1 (host), 2 = telem 2 (gcs)
     // telemetry baud = 57600 (or 115200), host baud = 500,000
+    saved_port = port;
     serial.open(baud, hal.serial(port));
     printf("opened rc_link port: %d @ %d baud\n", port, baud);
     hal.scheduler->delay(100);
@@ -149,8 +151,10 @@ bool rc_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
                 command_result = 1;
             } else {
                 console->printf("unknown message: %s, relaying to host\n", msg.message.c_str());
-                relay.forward_packet(relay_t::dest_enum::host_dest,
-                                     id, buf, message_size);
+                if ( saved_port == 2 ) {
+                    relay.forward_packet(relay_t::dest_enum::host_dest,
+                                         id, buf, message_size);
+                }
                 command_result = 1;
             }
         } else {
@@ -165,8 +169,10 @@ bool rc_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
         ap_msg.msg2props(targets_node);
     } else if ( id == rc_message::mission_v1_id ) {
         // relay directly to gcs
-        relay.forward_packet(relay_t::dest_enum::gcs_dest,
-                             id, buf, message_size);
+        if ( saved_port == 1 ) {
+            relay.forward_packet(relay_t::dest_enum::gcs_dest,
+                                 id, buf, message_size);
+        }
         // this is the messy message
         rc_message::mission_v1_t mission;
         mission.unpack(buf, message_size);
@@ -275,6 +281,7 @@ int rc_link_t::write_airdata()
 {
     static rc_message::airdata_v8_t air_msg;
     air_msg.props2msg(airdata_node);
+    air_msg.altitude_ground_m = pos_node.getDouble("altitude_ground_m");
     air_msg.pack();
     return serial.write_packet( air_msg.id, air_msg.payload, air_msg.len );
 }

@@ -33,6 +33,7 @@ private:
     PropertyNode home_node;
     PropertyNode imu_node;
     PropertyNode pilot_node;
+    PropertyNode pos_node;
     PropertyNode power_node;
     PropertyNode route_node;
     PropertyNode status_node;
@@ -40,6 +41,7 @@ private:
     PropertyNode targets_node;
     PropertyNode task_node;
 
+    uint8_t saved_port = 0;
     uint32_t gps_last_millis = 0;
     uint32_t bytes_last_millis = 0;
     uint16_t last_command_seq_num = 0;
