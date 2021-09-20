@@ -7,8 +7,6 @@
     },
     "specs": {
         "vehicle_class": "fixed_wing",
-        "battery_cells": "4", 
-        "battery_mah": "6600",
         "cruise_kt": "20",
         "display_units": "kts"
     },
@@ -40,6 +38,8 @@
         "enable": "True"
     },
     "power": {
+        "battery_cells": 4, 
+        "battery_mah": 6600,
         "external_amp_offset": 0.0, 
         "external_amp_ratio": 15.00, 
         "batt_volt_divider": 10.278

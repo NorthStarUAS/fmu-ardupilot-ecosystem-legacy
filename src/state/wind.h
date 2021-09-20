@@ -10,8 +10,6 @@ private:
     PropertyNode airdata_node;
     PropertyNode filter_node;
     PropertyNode orient_node;
-    PropertyNode vel_node;
-    PropertyNode wind_node;
     
     rcLowPassFilter we_filt;
     rcLowPassFilter wn_filt;

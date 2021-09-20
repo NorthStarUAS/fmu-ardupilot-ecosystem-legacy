@@ -16,7 +16,7 @@ private:
     void sas_update();
     void mixing_update();
 
-    PropertyNode effector_node;
+    PropertyNode effectors_node;
     PropertyNode imu_node;
     PropertyNode pilot_node;
     PropertyNode stab_roll_node;

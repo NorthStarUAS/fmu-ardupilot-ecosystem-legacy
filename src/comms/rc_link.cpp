@@ -22,7 +22,7 @@ rc_link_t::~rc_link_t() {}
 
 void rc_link_t::init(uint8_t port, uint32_t baud) {
     config_nav_node = PropertyNode("/config/nav"); // after config.init()
-    effector_node = PropertyNode("/effectors");
+    effectors_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");
     active_node = PropertyNode("/task/route/active");
     airdata_node = PropertyNode("/sensors/airdata");
@@ -57,6 +57,7 @@ void rc_link_t::init(uint8_t port, uint32_t baud) {
         // setup rates for a slower telemetry connection
         airdata_limiter = RateLimiter(2);
         ap_limiter = RateLimiter(2);
+        eff_limiter = RateLimiter(4);
         gps_limiter = RateLimiter(2.5);
         imu_limiter = RateLimiter(4);
         mission_limiter = RateLimiter(2);
@@ -68,6 +69,7 @@ void rc_link_t::init(uint8_t port, uint32_t baud) {
         // setup rates for a full speed host connection
         airdata_limiter = RateLimiter(0);
         ap_limiter = RateLimiter(-1);  // don't send
+        eff_limiter = RateLimiter(-1); // don't send (maybe send for logging?)
         gps_limiter = RateLimiter(0);
         imu_limiter = RateLimiter(0);
         mission_limiter = RateLimiter(0);
@@ -84,6 +86,9 @@ void rc_link_t::update() {
     }
     if ( ap_limiter.update() ) {
         output_counter += write_ap();
+    }
+    if ( eff_limiter.update() ) {
+        output_counter += write_effectors();
     }
     if ( gps_limiter.update() ) {
         output_counter += write_gps();
@@ -116,8 +121,8 @@ bool rc_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
 {
     bool result = false;
     //console->printf("message id: %d  len: %d\n", id, message_size);
-    if ( id == rc_message::inceptors_v4_id ) {
-        static rc_message::inceptors_v4_t inceptors;
+    if ( id == rc_message::inceptors_v1_id ) {
+        static rc_message::inceptors_v1_t inceptors;
         inceptors.unpack(buf, message_size);
         if ( message_size == inceptors.len ) {
             pilot.update_ap(&inceptors);
@@ -224,6 +229,15 @@ int rc_link_t::write_ack( uint16_t sequence_num, uint8_t result )
     ack.result = result;
     ack.pack();
     return serial.write_packet( ack.id, ack.payload, ack.len);
+}
+
+// final effector commands
+int rc_link_t::write_effectors()
+{
+    static rc_message::effectors_v1_t eff_msg;
+    eff_msg.props2msg(effectors_node);
+    eff_msg.pack();
+    return serial.write_packet( eff_msg.id, eff_msg.payload, eff_msg.len);
 }
 
 // pilot manual (rc receiver) data

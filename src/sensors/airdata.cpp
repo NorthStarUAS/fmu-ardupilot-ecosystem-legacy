@@ -10,7 +10,7 @@ void airdata_t::init() {
     airdata_node.setUInt("error_count", error_count);
 
     console->printf("Initializing & calibrating airspeed...\n");
-    // can't, private: airspeed.param[0].type = TYPE_I2C_MS5525;
+    // can't set from here, private: airspeed.param[0].type = TYPE_I2C_MS5525;
     airspeed.init();
     airspeed.calibrate(false);
     
@@ -37,6 +37,7 @@ void airdata_t::update() {
         barometer.update();
 
         if ( barometer.healthy() ) {
+            airdata_node.setDouble("altitude_agl_m", barometer.get_altitude());
             airdata_node.setDouble("baro_press_pa", barometer.get_pressure());
             airdata_node.setDouble("baro_temp_C", barometer.get_temperature());
         }

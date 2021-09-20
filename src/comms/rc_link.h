@@ -23,12 +23,12 @@ public:
 private:
     
     PropertyNode config_nav_node;
-    PropertyNode effector_node;
     PropertyNode nav_node;
     PropertyNode active_node;
     PropertyNode airdata_node;
     PropertyNode ap_node;
     PropertyNode circle_node;
+    PropertyNode effectors_node;
     PropertyNode gps_node;
     PropertyNode home_node;
     PropertyNode imu_node;
@@ -49,6 +49,7 @@ private:
     int write_ack( uint16_t sequence_num, uint8_t result );
     int write_airdata();
     int write_ap();
+    int write_effectors();
     int write_imu();
     int write_gps();
     int write_nav();

@@ -11,8 +11,8 @@ private:
     // is airborne
     float up_kts = 12.0;
     float down_kts = 8.0;
-    float up_ft = 25;
-    float down_ft = 10;
+    float up_m = 6;
+    float down_m = 3;
     bool is_airborne = false;
 
     // flight timer

@@ -16,6 +16,10 @@ void power_t::init() {
     if ( config_node.hasChild("batt_volt_divider") ) {
         batt_volt_divider = config_node.getDouble("batt_volt_divider");
     }
+    if ( config_node.hasChild("battery_cells") ) {
+        cells = config_node.getDouble("battery_cells");
+    }
+    console->printf("Battery cells: %d\n", cells);
     console->printf("Battery volt pin: %d\n", AP_BATT_VOLT_PIN);
     console->printf("Battery current pin: %d\n", AP_BATT_CURR_PIN);
     console->printf("Volt divider: %.2f\n", batt_volt_divider);
@@ -35,6 +39,11 @@ void power_t::update() {
         * batt_volt_divider;
     battery_amps = (_curr_pin_analog_source->voltage_average() - amps_offset)
         * AP_BATT_CURR_AMP_PERVOLT_DEFAULT;
+    double cell_vcc = 0.0;
+    if ( cells > 0 ) {
+        cell_vcc = battery_volts / cells;
+    }
     power_node.setDouble("main_vcc", battery_volts);
     power_node.setDouble("main_amps", battery_amps);
+    power_node.setDouble("cell_vcc", cell_vcc);
 }

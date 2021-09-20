@@ -11,6 +11,7 @@ private:
     AP_HAL::AnalogSource *_volt_pin_analog_source;
     AP_HAL::AnalogSource *_curr_pin_analog_source;
     float batt_volt_divider = 0.0;
+    uint8_t cells = 1;
     
 public:
     float avionics_v = 0.0;

@@ -4,7 +4,7 @@
 #include "airdata_helper.h"
 
 void airdata_helper_t::init() {
-    airdata_node = PropertyNode("/sensors/airdata/0");
+    airdata_node = PropertyNode("/sensors/airdata");
     pos_node = PropertyNode("/position");
     vel_node = PropertyNode("/velocity");
     
@@ -18,12 +18,12 @@ void airdata_helper_t::init() {
 
 void airdata_helper_t::update() {
     // determine if aircraft is flying or not
-    if ( !is_airborne and pos_node.getDouble("altitude_agl_ft") >= up_ft and vel_node.getDouble("airspeed_kt") >= up_kts ) {
+    if ( !is_airborne and pos_node.getDouble("altitude_agl_m") >= up_m and vel_node.getDouble("airspeed_kt") >= up_kts ) {
         // if all conditions over the threshold, we are airborne
         is_airborne = true;
         airdata_node.setBool("is_airborne", true);
         // fixme! comms.events.log("mission", "airborne");
-    } else if ( is_airborne and pos_node.getDouble("altitude_agl_ft") <= down_ft and vel_node.getDouble("airspeed_kt") <= down_kts ) {
+    } else if ( is_airborne and pos_node.getDouble("altitude_agl_m") <= down_m and vel_node.getDouble("airspeed_kt") <= down_kts ) {
         // if all conditions under their threshold, we are on the ground
         is_airborne = false;
         airdata_node.setBool("is_airborne", false);

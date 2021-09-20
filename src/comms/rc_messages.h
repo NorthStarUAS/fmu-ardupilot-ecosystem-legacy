@@ -44,10 +44,11 @@ const uint8_t nav_v6_id = 52;
 const uint8_t nav_metrics_v6_id = 53;
 const uint8_t actuator_v2_id = 21;
 const uint8_t actuator_v3_id = 37;
-const uint8_t inceptors_v4_id = 58;
+const uint8_t effectors_v1_id = 61;
 const uint8_t pilot_v2_id = 20;
 const uint8_t pilot_v3_id = 38;
 const uint8_t pilot_v4_id = 51;
+const uint8_t inceptors_v1_id = 62;
 const uint8_t power_v1_id = 55;
 const uint8_t ap_status_v6_id = 33;
 const uint8_t ap_status_v7_id = 39;
@@ -1254,14 +1255,14 @@ public:
     float baro_press_pa;
     float diff_press_pa;
     float air_temp_C;
-    float airspeed_smoothed_kt;
-    float altitude_smoothed_m;
+    float airspeed_mps;
+    float altitude_agl_m;
     float altitude_true_m;
     float altitude_ground_m;
     uint8_t is_airborne;
     uint32_t flight_timer_millis;
     float wind_dir_deg;
-    float wind_speed_kt;
+    float wind_speed_mps;
     float pitot_scale_factor;
     uint16_t error_count;
 
@@ -1273,14 +1274,14 @@ public:
         uint16_t baro_press_pa;
         uint16_t diff_press_pa;
         int16_t air_temp_C;
-        int16_t airspeed_smoothed_kt;
-        float altitude_smoothed_m;
+        int16_t airspeed_mps;
+        float altitude_agl_m;
         float altitude_true_m;
         float altitude_ground_m;
         uint8_t is_airborne;
         uint32_t flight_timer_millis;
         uint16_t wind_dir_deg;
-        uint8_t wind_speed_kt;
+        uint8_t wind_speed_mps;
         uint8_t pitot_scale_factor;
         uint16_t error_count;
     };
@@ -1307,14 +1308,14 @@ public:
         _buf->baro_press_pa = uintround(baro_press_pa * 0.5);
         _buf->diff_press_pa = uintround(diff_press_pa * 10.0);
         _buf->air_temp_C = intround(air_temp_C * 250.0);
-        _buf->airspeed_smoothed_kt = intround(airspeed_smoothed_kt * 100.0);
-        _buf->altitude_smoothed_m = altitude_smoothed_m;
+        _buf->airspeed_mps = intround(airspeed_mps * 100.0);
+        _buf->altitude_agl_m = altitude_agl_m;
         _buf->altitude_true_m = altitude_true_m;
         _buf->altitude_ground_m = altitude_ground_m;
         _buf->is_airborne = is_airborne;
         _buf->flight_timer_millis = flight_timer_millis;
         _buf->wind_dir_deg = uintround(wind_dir_deg * 100.0);
-        _buf->wind_speed_kt = uintround(wind_speed_kt * 5.0);
+        _buf->wind_speed_mps = uintround(wind_speed_mps * 10.0);
         _buf->pitot_scale_factor = uintround(pitot_scale_factor * 100.0);
         _buf->error_count = error_count;
         return true;
@@ -1328,14 +1329,14 @@ public:
         baro_press_pa = _buf->baro_press_pa / (float)0.5;
         diff_press_pa = _buf->diff_press_pa / (float)10.0;
         air_temp_C = _buf->air_temp_C / (float)250.0;
-        airspeed_smoothed_kt = _buf->airspeed_smoothed_kt / (float)100.0;
-        altitude_smoothed_m = _buf->altitude_smoothed_m;
+        airspeed_mps = _buf->airspeed_mps / (float)100.0;
+        altitude_agl_m = _buf->altitude_agl_m;
         altitude_true_m = _buf->altitude_true_m;
         altitude_ground_m = _buf->altitude_ground_m;
         is_airborne = _buf->is_airborne;
         flight_timer_millis = _buf->flight_timer_millis;
         wind_dir_deg = _buf->wind_dir_deg / (float)100.0;
-        wind_speed_kt = _buf->wind_speed_kt / (float)5.0;
+        wind_speed_mps = _buf->wind_speed_mps / (float)10.0;
         pitot_scale_factor = _buf->pitot_scale_factor / (float)100.0;
         error_count = _buf->error_count;
         return true;
@@ -1355,14 +1356,14 @@ public:
         node.setDouble("baro_press_pa", baro_press_pa);
         node.setDouble("diff_press_pa", diff_press_pa);
         node.setDouble("air_temp_C", air_temp_C);
-        node.setDouble("airspeed_smoothed_kt", airspeed_smoothed_kt);
-        node.setDouble("altitude_smoothed_m", altitude_smoothed_m);
+        node.setDouble("airspeed_mps", airspeed_mps);
+        node.setDouble("altitude_agl_m", altitude_agl_m);
         node.setDouble("altitude_true_m", altitude_true_m);
         node.setDouble("altitude_ground_m", altitude_ground_m);
         node.setUInt("is_airborne", is_airborne);
         node.setUInt("flight_timer_millis", flight_timer_millis);
         node.setDouble("wind_dir_deg", wind_dir_deg);
-        node.setDouble("wind_speed_kt", wind_speed_kt);
+        node.setDouble("wind_speed_mps", wind_speed_mps);
         node.setDouble("pitot_scale_factor", pitot_scale_factor);
         node.setUInt("error_count", error_count);
     }
@@ -1381,14 +1382,14 @@ public:
         baro_press_pa = node.getDouble("baro_press_pa");
         diff_press_pa = node.getDouble("diff_press_pa");
         air_temp_C = node.getDouble("air_temp_C");
-        airspeed_smoothed_kt = node.getDouble("airspeed_smoothed_kt");
-        altitude_smoothed_m = node.getDouble("altitude_smoothed_m");
+        airspeed_mps = node.getDouble("airspeed_mps");
+        altitude_agl_m = node.getDouble("altitude_agl_m");
         altitude_true_m = node.getDouble("altitude_true_m");
         altitude_ground_m = node.getDouble("altitude_ground_m");
         is_airborne = node.getUInt("is_airborne");
         flight_timer_millis = node.getUInt("flight_timer_millis");
         wind_dir_deg = node.getDouble("wind_dir_deg");
-        wind_speed_kt = node.getDouble("wind_speed_kt");
+        wind_speed_mps = node.getDouble("wind_speed_mps");
         pitot_scale_factor = node.getDouble("pitot_scale_factor");
         error_count = node.getUInt("error_count");
     }
@@ -2306,29 +2307,29 @@ public:
     }
 };
 
-// Message: inceptors_v4 (id: 58)
-class inceptors_v4_t {
+// Message: effectors_v1 (id: 61)
+class effectors_v1_t {
 public:
 
     uint8_t index;
     uint32_t millis;
-    float channel[ap_channels];
+    float channel[8];
 
     // internal structure for packing
     #pragma pack(push, 1)
     struct _compact_t {
         uint8_t index;
         uint32_t millis;
-        int16_t channel[ap_channels];
+        int16_t channel[8];
     };
     #pragma pack(pop)
 
     // id, ptr to payload and len
-    static const uint8_t id = 58;
+    static const uint8_t id = 61;
     uint8_t *payload = nullptr;
     int len = 0;
 
-    ~inceptors_v4_t() {
+    ~effectors_v1_t() {
         free(payload);
     }
 
@@ -2341,7 +2342,7 @@ public:
         _compact_t *_buf = (_compact_t *)payload;
         _buf->index = index;
         _buf->millis = millis;
-        for (int _i=0; _i<ap_channels; _i++) _buf->channel[_i] = intround(channel[_i] * 2000.0);
+        for (int _i=0; _i<8; _i++) _buf->channel[_i] = intround(channel[_i] * 20000.0);
         return true;
     }
 
@@ -2350,7 +2351,7 @@ public:
         len = sizeof(_compact_t);
         index = _buf->index;
         millis = _buf->millis;
-        for (int _i=0; _i<ap_channels; _i++) channel[_i] = _buf->channel[_i] / (float)2000.0;
+        for (int _i=0; _i<8; _i++) channel[_i] = _buf->channel[_i] / (float)20000.0;
         return true;
     }
 
@@ -2365,7 +2366,7 @@ public:
     void msg2props(PropertyNode &node) {
         node.setUInt("index", index);
         node.setUInt("millis", millis);
-        for (int _i=0; _i<ap_channels; _i++) node.setDouble("channel", channel[_i], _i);
+        for (int _i=0; _i<8; _i++) node.setDouble("channel", channel[_i], _i);
     }
 
     void props2msg(string _path, int _index = -1) {
@@ -2379,7 +2380,7 @@ public:
     void props2msg(PropertyNode &node) {
         index = node.getUInt("index");
         millis = node.getUInt("millis");
-        for (int _i=0; _i<ap_channels; _i++) channel[_i] = node.getDouble("channel", _i);
+        for (int _i=0; _i<8; _i++) channel[_i] = node.getDouble("channel", _i);
     }
 };
 
@@ -2641,6 +2642,83 @@ public:
         failsafe = node.getUInt("failsafe");
         master_switch = node.getUInt("master_switch");
         throttle_safety = node.getUInt("throttle_safety");
+    }
+};
+
+// Message: inceptors_v1 (id: 62)
+class inceptors_v1_t {
+public:
+
+    uint8_t index;
+    uint32_t millis;
+    float channel[ap_channels];
+
+    // internal structure for packing
+    #pragma pack(push, 1)
+    struct _compact_t {
+        uint8_t index;
+        uint32_t millis;
+        int16_t channel[ap_channels];
+    };
+    #pragma pack(pop)
+
+    // id, ptr to payload and len
+    static const uint8_t id = 62;
+    uint8_t *payload = nullptr;
+    int len = 0;
+
+    ~inceptors_v1_t() {
+        free(payload);
+    }
+
+    bool pack() {
+        len = sizeof(_compact_t);
+        // compute dynamic packet size (if neede)
+        int size = len;
+        payload = (uint8_t *)REALLOC(payload, size);
+        // copy values
+        _compact_t *_buf = (_compact_t *)payload;
+        _buf->index = index;
+        _buf->millis = millis;
+        for (int _i=0; _i<ap_channels; _i++) _buf->channel[_i] = intround(channel[_i] * 2000.0);
+        return true;
+    }
+
+    bool unpack(uint8_t *external_message, int message_size) {
+        _compact_t *_buf = (_compact_t *)external_message;
+        len = sizeof(_compact_t);
+        index = _buf->index;
+        millis = _buf->millis;
+        for (int _i=0; _i<ap_channels; _i++) channel[_i] = _buf->channel[_i] / (float)2000.0;
+        return true;
+    }
+
+    void msg2props(string _path, int _index = -1) {
+        if ( _index >= 0 ) {
+            _path += "/" + std::to_string(_index);
+        }
+        PropertyNode node(_path.c_str());
+        msg2props(node);
+    }
+
+    void msg2props(PropertyNode &node) {
+        node.setUInt("index", index);
+        node.setUInt("millis", millis);
+        for (int _i=0; _i<ap_channels; _i++) node.setDouble("channel", channel[_i], _i);
+    }
+
+    void props2msg(string _path, int _index = -1) {
+        if ( _index >= 0 ) {
+            _path += "/" + std::to_string(_index);
+        }
+        PropertyNode node(_path.c_str());
+        props2msg(node);
+    }
+
+    void props2msg(PropertyNode &node) {
+        index = node.getUInt("index");
+        millis = node.getUInt("millis");
+        for (int _i=0; _i<ap_channels; _i++) channel[_i] = node.getDouble("channel", _i);
     }
 };
 
@@ -3086,7 +3164,7 @@ public:
     uint8_t index;
     uint32_t millis;
     float groundtrack_deg;
-    float altitude_msl_ft;
+    float altitude_agl_ft;
     float airspeed_kt;
     float roll_deg;
     float pitch_deg;
@@ -3097,7 +3175,7 @@ public:
         uint8_t index;
         uint32_t millis;
         int16_t groundtrack_deg;
-        uint16_t altitude_msl_ft;
+        uint16_t altitude_agl_ft;
         int16_t airspeed_kt;
         int16_t roll_deg;
         int16_t pitch_deg;
@@ -3123,7 +3201,7 @@ public:
         _buf->index = index;
         _buf->millis = millis;
         _buf->groundtrack_deg = intround(groundtrack_deg * 10.0);
-        _buf->altitude_msl_ft = uintround(altitude_msl_ft * 1.0);
+        _buf->altitude_agl_ft = uintround(altitude_agl_ft * 10.0);
         _buf->airspeed_kt = intround(airspeed_kt * 10.0);
         _buf->roll_deg = intround(roll_deg * 10.0);
         _buf->pitch_deg = intround(pitch_deg * 10.0);
@@ -3136,7 +3214,7 @@ public:
         index = _buf->index;
         millis = _buf->millis;
         groundtrack_deg = _buf->groundtrack_deg / (float)10.0;
-        altitude_msl_ft = _buf->altitude_msl_ft / (float)1.0;
+        altitude_agl_ft = _buf->altitude_agl_ft / (float)10.0;
         airspeed_kt = _buf->airspeed_kt / (float)10.0;
         roll_deg = _buf->roll_deg / (float)10.0;
         pitch_deg = _buf->pitch_deg / (float)10.0;
@@ -3155,7 +3233,7 @@ public:
         node.setUInt("index", index);
         node.setUInt("millis", millis);
         node.setDouble("groundtrack_deg", groundtrack_deg);
-        node.setDouble("altitude_msl_ft", altitude_msl_ft);
+        node.setDouble("altitude_agl_ft", altitude_agl_ft);
         node.setDouble("airspeed_kt", airspeed_kt);
         node.setDouble("roll_deg", roll_deg);
         node.setDouble("pitch_deg", pitch_deg);
@@ -3173,7 +3251,7 @@ public:
         index = node.getUInt("index");
         millis = node.getUInt("millis");
         groundtrack_deg = node.getDouble("groundtrack_deg");
-        altitude_msl_ft = node.getDouble("altitude_msl_ft");
+        altitude_agl_ft = node.getDouble("altitude_agl_ft");
         airspeed_kt = node.getDouble("airspeed_kt");
         roll_deg = node.getDouble("roll_deg");
         pitch_deg = node.getDouble("pitch_deg");

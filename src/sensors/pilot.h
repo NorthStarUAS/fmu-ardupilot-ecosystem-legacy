@@ -94,7 +94,7 @@ public:
     bool read();
     void write();
     
-    void update_ap( rc_message::inceptors_v4_t *inceptors );
+    void update_ap( rc_message::inceptors_v1_t *inceptors );
 
 };
 

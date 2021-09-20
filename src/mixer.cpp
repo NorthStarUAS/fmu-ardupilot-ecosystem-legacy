@@ -88,7 +88,7 @@ void mixer_t::print_mixer_matrix() {
 }
 
 void mixer_t::init() {
-    effector_node = PropertyNode("/effectors");
+    effectors_node = PropertyNode("/effectors");
     imu_node = PropertyNode("/sensors/imu");
     pilot_node = PropertyNode("/pilot");
     stab_roll_node = PropertyNode("/config/stability_damper/roll");
@@ -149,8 +149,9 @@ void mixer_t::mixing_update() {
     }
 
     // publish
+    effectors_node.setUInt("millis", AP_HAL::millis());
     for ( int i = 0; i < MAX_RCOUT_CHANNELS; i++ ) {
-        effector_node.setDouble("channel", outputs[i], i);
+        effectors_node.setDouble("channel", outputs[i], i);
     }
 }
 

@@ -33,6 +33,5 @@ void ground_est_t::update(float dt) {
         float agl_m = filter_node.getDouble( "altitude_m" )
             - ground_alt_filt.get_value();
         pos_node.setDouble( "altitude_agl_m", agl_m );
-        pos_node.setDouble( "altitude_agl_ft", agl_m * m2ft );
     }
 }
