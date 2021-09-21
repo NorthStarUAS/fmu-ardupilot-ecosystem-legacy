@@ -145,7 +145,7 @@ void setup() {
     state_mgr.init();
      
     // do these after gps initialization
-    gcs_link.init(2, 115200);
+    gcs_link.init(2, 57600);
     host_link.init(1, 500000);
     info.init();
 
@@ -242,9 +242,7 @@ void loop() {
         // read in any host commmands (config, inceptors, etc.)
         host_link.read_commands();
 
-        if ( pilot.changed ) {
-            pilot.write();
-        }
+        pilot.write();
 
         // blink the led
         led.do_policy(imu_mgr.gyros_calibrated);

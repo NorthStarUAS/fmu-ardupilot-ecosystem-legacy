@@ -11,8 +11,6 @@ void ground_est_t::init() {
 }
 
 void ground_est_t::update(float dt) {
-    const double ft2m = 0.3048;
-    const double m2ft = 1.0 / ft2m;
     if ( filter_node.getInt("status") == 2 ) {
         // determine ground reference altitude.  Average filter altitude
         // over the most recent 30 seconds that we are !is_airborne

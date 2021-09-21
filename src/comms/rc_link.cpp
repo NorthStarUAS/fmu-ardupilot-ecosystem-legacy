@@ -61,6 +61,7 @@ void rc_link_t::init(uint8_t port, uint32_t baud) {
         gps_limiter = RateLimiter(2.5);
         imu_limiter = RateLimiter(4);
         mission_limiter = RateLimiter(2);
+        nav_limiter = RateLimiter(10);
         nav_metrics_limiter = RateLimiter(0.5);
         pilot_limiter = RateLimiter(4);
         power_limiter = RateLimiter(1);
@@ -73,6 +74,7 @@ void rc_link_t::init(uint8_t port, uint32_t baud) {
         gps_limiter = RateLimiter(0);
         imu_limiter = RateLimiter(0);
         mission_limiter = RateLimiter(0);
+        nav_limiter = RateLimiter(0);
         nav_metrics_limiter = RateLimiter(0.5);
         pilot_limiter = RateLimiter(0);
         power_limiter = RateLimiter(0);
