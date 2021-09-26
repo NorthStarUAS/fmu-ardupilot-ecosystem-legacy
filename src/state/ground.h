@@ -8,7 +8,7 @@ class ground_est_t {
 private:
 
     PropertyNode airdata_node;
-    PropertyNode filter_node;
+    PropertyNode nav_node;
     PropertyNode pos_node;
     rcLowPassFilter ground_alt_filt;
     bool ground_alt_calibrated = false;

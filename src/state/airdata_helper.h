@@ -4,13 +4,13 @@ class airdata_helper_t {
     
 private:
     
+    const double kt2mps = 0.5144444444444444444;
+
     PropertyNode airdata_node;
-    PropertyNode pos_node;
-    PropertyNode vel_node;
 
     // is airborne
-    float up_kts = 12.0;
-    float down_kts = 8.0;
+    float up_mps = 6.0;
+    float down_mps = 4.0;
     float up_m = 6;
     float down_m = 3;
     bool is_airborne = false;

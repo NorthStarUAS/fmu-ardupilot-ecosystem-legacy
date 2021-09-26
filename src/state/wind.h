@@ -8,8 +8,7 @@ class wind_est_t {
 private:
     
     PropertyNode airdata_node;
-    PropertyNode filter_node;
-    PropertyNode orient_node;
+    PropertyNode nav_node;
     
     rcLowPassFilter we_filt;
     rcLowPassFilter wn_filt;

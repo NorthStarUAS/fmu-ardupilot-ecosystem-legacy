@@ -19,9 +19,6 @@ private:
     PropertyNode gps_node;
     PropertyNode imu_node;
     PropertyNode nav_node;
-    PropertyNode orient_node;
-    PropertyNode pos_node;
-    PropertyNode vel_node;
     
 public:
     NAVdata data;

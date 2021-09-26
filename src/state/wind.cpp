@@ -5,8 +5,7 @@
 // initialize wind estimator variables
 void wind_est_t::init() {
     airdata_node = PropertyNode( "/sensors/airdata" );
-    filter_node = PropertyNode( "/filters/nav" );
-    orient_node = PropertyNode( "/orientation" );
+    nav_node = PropertyNode( "/filters/nav" );
     
     airdata_node.setDouble( "pitot_scale_factor", 1.0 );
 
@@ -29,11 +28,11 @@ void wind_est_t::update( double dt ) {
 
     if ( airdata_node.getBool("is_airborne") ) {
         // only update wind estimate when airborne
-        double psi = M_PI_2 - orient_node.getDouble("heading_deg") * d2r;
+        double psi = M_PI_2 - nav_node.getDouble("yaw_deg") * d2r;
         double ue = cos(psi) * (airspeed_mps * pitot_scale);
         double un = sin(psi) * (airspeed_mps * pitot_scale);
-        double we = ue - filter_node.getDouble("ve_mps");
-        double wn = un - filter_node.getDouble("vn_mps");
+        double we = ue - nav_node.getDouble("ve_mps");
+        double wn = un - nav_node.getDouble("vn_mps");
         we_filt.update(we, dt);
         wn_filt.update(wn, dt);
     }
@@ -54,8 +53,8 @@ void wind_est_t::update( double dt ) {
     //airdata_node.setDouble( "wn_mps", wn_filt_val );
 
     // estimate pitot tube bias
-    double true_e = we_filt_val + filter_node.getDouble("ve_mps");
-    double true_n = wn_filt_val + filter_node.getDouble("vn_mps");
+    double true_e = we_filt_val + nav_node.getDouble("ve_mps");
+    double true_n = wn_filt_val + nav_node.getDouble("vn_mps");
 
     double true_deg = 90 - atan2( true_n, true_e ) * r2d;
     if ( true_deg < 0 ) {

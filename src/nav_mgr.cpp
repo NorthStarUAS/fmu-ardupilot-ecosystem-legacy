@@ -8,9 +8,6 @@ void nav_mgr_t::init() {
     gps_node = PropertyNode("/sensors/gps");
     imu_node = PropertyNode("/sensors/imu");
     nav_node = PropertyNode("/filters/nav");
-    orient_node = PropertyNode("/orientation");
-    pos_node = PropertyNode("/position");
-    vel_node = PropertyNode("/velocity");
     
     string selected = config_nav_node.getString("select");
     // fix me ...
