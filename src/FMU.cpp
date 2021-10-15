@@ -21,6 +21,8 @@
 #include "state/state_mgr.h"
 #include "util/ratelimiter.h"
 
+#include "gimbal/RC_Mount_SToRM32.h"
+
 const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 static AP_BoardConfig BoardConfig;
 AP_HAL::UARTDriver *console;
@@ -69,6 +71,8 @@ static led_t led;
 static menu_t menu;
 static power_t power;
 static state_mgr_t state_mgr;
+
+static RC_Mount_SToRM32 gimbal;
 
 static RateLimiter maintimer(MASTER_HZ);
 static RateLimiter heartbeat(0.1);
@@ -150,6 +154,8 @@ void setup() {
     info.init();
 
     menu.init();
+
+    gimbal.init();
     
     printf("Setup finished.\n");
     printf("Ready and transmitting...\n");
@@ -244,6 +250,8 @@ void loop() {
 
         pilot.write();
 
+        gimbal.update();
+        
         // blink the led
         led.do_policy(imu_mgr.gyros_calibrated);
         led.update();

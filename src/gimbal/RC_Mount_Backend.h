@@ -37,9 +37,7 @@ public:
         //_frontend(frontend),
         //_state(state),
         //_instance(instance)
-    {
-        mount_node = PropertyNode("/gimbal");
-    }
+    {}
 
     // Virtual destructor
     virtual ~RC_Mount_Backend(void) {}

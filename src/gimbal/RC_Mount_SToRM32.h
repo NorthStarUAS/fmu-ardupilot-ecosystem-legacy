@@ -23,7 +23,9 @@ public:
     RC_Mount_SToRM32(/*RC_Mount &frontend, RC_Mount::mount_state &state, uint8_t instance*/);
 
     // init - performs any required initialisation for this instance
-    void init() override {}
+    void init() override {
+        mount_node = PropertyNode("/gimbal");
+    }
 
     // update mount position - should be called periodically
     void update() override;
