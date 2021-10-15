@@ -1,11 +1,11 @@
-#include "AP_Mount_Backend.h"
+#include "RC_Mount_Backend.h"
 #if HAL_MOUNT_ENABLED
 #include <AP_AHRS/AP_AHRS.h>
 
 extern const AP_HAL::HAL& hal;
 
 // set_angle_targets - sets angle targets in degrees
-void AP_Mount_Backend::set_angle_targets(float roll, float tilt, float pan)
+void RC_Mount_Backend::set_angle_targets(float roll, float tilt, float pan)
 {
     // set angle targets
     _angle_ef_target_rad.x = radians(roll);
@@ -13,68 +13,56 @@ void AP_Mount_Backend::set_angle_targets(float roll, float tilt, float pan)
     _angle_ef_target_rad.z = radians(pan);
 
     // set the mode to mavlink targeting
-    _frontend.set_mode(_instance, MAV_MOUNT_MODE_MAVLINK_TARGETING);
+    // _frontend.set_mode(_instance, MAV_MOUNT_MODE_MAVLINK_TARGETING);
+    mount_node.setString("mode", "MAVLINK_TARGETING");
 }
 
 // set_roi_target - sets target location that mount should attempt to point towards
-void AP_Mount_Backend::set_roi_target(const struct Location &target_loc)
+void RC_Mount_Backend::set_roi_target(const struct Location &target_loc)
 {
     // set the target gps location
-    _state._roi_target = target_loc;
-    _state._roi_target_set = true;
-
+    //_state._roi_target = target_loc;
+    //_state._roi_target_set = true;
     // set the mode to GPS tracking mode
-    _frontend.set_mode(_instance, MAV_MOUNT_MODE_GPS_POINT);
+    //_frontend.set_mode(_instance, MAV_MOUNT_MODE_GPS_POINT);
+    mount_node.setDouble("roi_lat_deg", target_loc.lat);
+    mount_node.setDouble("roi_lon_deg", target_loc.lng);
+    int32_t target_alt_cm;
+    if ( target_loc.get_alt_cm(Location::AltFrame::ABOVE_HOME, target_alt_cm) ) {
+        mount_node.setInt("roi_alt_cm", target_alt_cm);
+    }
+    mount_node.setBool("roi_target_set", true);    
+    mount_node.setString("mode", "GPS_POINT");
 }
 
-// set_sys_target - sets system that mount should attempt to point towards
-void AP_Mount_Backend::set_target_sysid(uint8_t sysid)
+void RC_Mount_Backend::control(int32_t pitch_or_lat, int32_t roll_or_lon, int32_t yaw_or_alt, MAV_MOUNT_MODE mount_mode)
 {
-    _state._target_sysid = sysid;
-
-    // set the mode to sysid tracking mode
-    _frontend.set_mode(_instance, MAV_MOUNT_MODE_SYSID_TARGET);
-}
-
-// process MOUNT_CONFIGURE messages received from GCS.  deprecated.
-void AP_Mount_Backend::handle_mount_configure(const mavlink_mount_configure_t &packet)
-{
-    set_mode((MAV_MOUNT_MODE)packet.mount_mode);
-    _state._stab_roll = packet.stab_roll;
-    _state._stab_tilt = packet.stab_pitch;
-    _state._stab_pan = packet.stab_yaw;
-}
-
-// process MOUNT_CONTROL messages received from GCS. deprecated.
-void AP_Mount_Backend::handle_mount_control(const mavlink_mount_control_t &packet)
-{
-    control((int32_t)packet.input_a, (int32_t)packet.input_b, (int32_t)packet.input_c, _state._mode);
-}
-
-void AP_Mount_Backend::control(int32_t pitch_or_lat, int32_t roll_or_lon, int32_t yaw_or_alt, MAV_MOUNT_MODE mount_mode)
-{
-    _frontend.set_mode(_instance, mount_mode);
-
     // interpret message fields based on mode
-    switch (_frontend.get_mode(_instance)) {
+    switch (mount_mode) {
         case MAV_MOUNT_MODE_RETRACT:
+            mount_node.setString("mode", "RETRACT");
+            break;
         case MAV_MOUNT_MODE_NEUTRAL:
             // do nothing with request if mount is retracted or in neutral position
+            mount_node.setString("mode", "NEUTRAL");
             break;
 
         // set earth frame target angles from mavlink message
         case MAV_MOUNT_MODE_MAVLINK_TARGETING:
+            mount_node.setString("mode", "MAVLINK_TARGETING");
             set_angle_targets(roll_or_lon*0.01f, pitch_or_lat*0.01f, yaw_or_alt*0.01f);
             break;
 
         // Load neutral position and start RC Roll,Pitch,Yaw control with stabilization
         case MAV_MOUNT_MODE_RC_TARGETING:
             // do nothing if pilot is controlling the roll, pitch and yaw
+            mount_node.setString("mode", "RC_TARGETING");
             break;
 
         // set lat, lon, alt position targets from mavlink message
 
         case MAV_MOUNT_MODE_GPS_POINT: {
+            mount_node.setString("mode", "GPS_POINT");
             const Location target_location{
                 pitch_or_lat,
                 roll_or_lon,
@@ -86,9 +74,11 @@ void AP_Mount_Backend::control(int32_t pitch_or_lat, int32_t roll_or_lon, int32_
         }
 
         case MAV_MOUNT_MODE_HOME_LOCATION: {
+            mount_node.setString("mode", "HOME_LOCATION");
             // set the target gps location
-            _state._roi_target = AP::ahrs().get_home();
-            _state._roi_target_set = true;
+            //_state._roi_target = AP::ahrs().get_home();
+            //_state._roi_target_set = true;
+            set_roi_target(AP::ahrs().get_home());
             break;
         }
 
@@ -98,88 +88,75 @@ void AP_Mount_Backend::control(int32_t pitch_or_lat, int32_t roll_or_lon, int32_
     }
 }
 
-void AP_Mount_Backend::rate_input_rad(float &out, const RC_Channel *chan, float min, float max) const
+void RC_Mount_Backend::rate_input_rad(float &out, const RC_Channel *chan, float min, float max)
 {
     if ((chan == nullptr) || (chan->get_radio_in() == 0)) {
         return;
     }
-    out += chan->norm_input_dz() * 0.0001f * _frontend._joystick_speed;
+    out += chan->norm_input_dz() * 0.0001f * mount_node.getDouble("joystick_speed");
     out = constrain_float(out, radians(min*0.01f), radians(max*0.01f));
 }
 
 // update_targets_from_rc - updates angle targets using input from receiver
-void AP_Mount_Backend::update_targets_from_rc()
+void RC_Mount_Backend::update_targets_from_rc()
 {
-    const RC_Channel *roll_ch = rc().channel(_state._roll_rc_in - 1);
-    const RC_Channel *tilt_ch = rc().channel(_state._tilt_rc_in - 1);
-    const RC_Channel *pan_ch = rc().channel(_state._pan_rc_in - 1);
+    const RC_Channel *roll_ch = rc().channel(mount_node.getInt("roll_rc_in"));
+    const RC_Channel *tilt_ch = rc().channel(mount_node.getInt("tilt_rc_in"));
+    const RC_Channel *pan_ch = rc().channel(mount_node.getInt("pan_rc_in"));
 
     // if joystick_speed is defined then pilot input defines a rate of change of the angle
-    if (_frontend._joystick_speed) {
+    if ( mount_node.getDouble("joystick_speed") ) {
         // allow pilot position input to come directly from an RC_Channel
         rate_input_rad(_angle_ef_target_rad.x,
                        roll_ch,
-                       _state._roll_angle_min,
-                       _state._roll_angle_max);
+                       mount_node.getDouble("roll_angle_min"),
+                       mount_node.getDouble("roll_angle_max"));
         rate_input_rad(_angle_ef_target_rad.y,
                        tilt_ch,
-                       _state._tilt_angle_min,
-                       _state._tilt_angle_max);
+                       mount_node.getDouble("tilt_angle_min"),
+                       mount_node.getDouble("tilt_angle_max"));
         rate_input_rad(_angle_ef_target_rad.z,
                        pan_ch,
-                       _state._pan_angle_min,
-                       _state._pan_angle_max);
+                       mount_node.getDouble("pan_angle_min"),
+                       mount_node.getDouble("pan_angle_max"));
     } else {
         // allow pilot rate input to come directly from an RC_Channel
         if ((roll_ch != nullptr) && (roll_ch->get_radio_in() != 0)) {
-            _angle_ef_target_rad.x = angle_input_rad(roll_ch, _state._roll_angle_min, _state._roll_angle_max);
+            _angle_ef_target_rad.x = angle_input_rad(roll_ch, mount_node.getDouble("roll_angle_min"), mount_node.getDouble("roll_angle_max"));
         }
         if ((tilt_ch != nullptr) && (tilt_ch->get_radio_in() != 0)) {
-            _angle_ef_target_rad.y = angle_input_rad(tilt_ch, _state._tilt_angle_min, _state._tilt_angle_max);
+            _angle_ef_target_rad.y = angle_input_rad(tilt_ch, mount_node.getDouble("tilt_angle_min"), mount_node.getDouble("tilt_angle_max"));
         }
         if ((pan_ch != nullptr) && (pan_ch->get_radio_in() != 0)) {
-            _angle_ef_target_rad.z = angle_input_rad(pan_ch, _state._pan_angle_min, _state._pan_angle_max);
+            _angle_ef_target_rad.z = angle_input_rad(pan_ch, mount_node.getDouble("pan_angle_min"), mount_node.getDouble("pan_angle_max"));
         }
     }
 }
 
 // returns the angle (radians) that the RC_Channel input is receiving
-float AP_Mount_Backend::angle_input_rad(const RC_Channel* rc, int16_t angle_min, int16_t angle_max)
+float RC_Mount_Backend::angle_input_rad(const RC_Channel* rc, int16_t angle_min, int16_t angle_max)
 {
     return radians(((rc->norm_input_ignore_trim() + 1.0f) * 0.5f * (angle_max - angle_min) + angle_min)*0.01f);
 }
 
-bool AP_Mount_Backend::calc_angle_to_roi_target(Vector3f& angles_to_target_rad,
+bool RC_Mount_Backend::calc_angle_to_roi_target(Vector3f& angles_to_target_rad,
                                                 bool calc_tilt,
                                                 bool calc_pan,
-                                                bool relative_pan) const
+                                                bool relative_pan)
 {
-    if (!_state._roi_target_set) {
+    if ( !mount_node.getBool("roi_target_set") ) {
         return false;
     }
-    return calc_angle_to_location(_state._roi_target, angles_to_target_rad, calc_tilt, calc_pan, relative_pan);
-}
-
-bool AP_Mount_Backend::calc_angle_to_sysid_target(Vector3f& angles_to_target_rad,
-                                                  bool calc_tilt,
-                                                  bool calc_pan,
-                                                  bool relative_pan) const
-{
-    if (!_state._target_sysid_location_set) {
-        return false;
-    }
-    if (!_state._target_sysid) {
-        return false;
-    }
-    return calc_angle_to_location(_state._target_sysid_location,
-                                  angles_to_target_rad,
-                                  calc_tilt,
-                                  calc_pan,
-                                  relative_pan);
+    struct Location roi_target;
+    roi_target.lat = mount_node.getDouble("target_lat_deg");
+    roi_target.lng = mount_node.getDouble("target_lon_deg");
+    roi_target.set_alt_cm(mount_node.getInt("target_alt_cm"),
+                          Location::AltFrame::ABOVE_HOME);
+    return calc_angle_to_location(roi_target, angles_to_target_rad, calc_tilt, calc_pan, relative_pan);
 }
 
 // calc_angle_to_location - calculates the earth-frame roll, tilt and pan angles (and radians) to point at the given target
-bool AP_Mount_Backend::calc_angle_to_location(const struct Location &target, Vector3f& angles_to_target_rad, bool calc_tilt, bool calc_pan, bool relative_pan) const
+bool RC_Mount_Backend::calc_angle_to_location(const struct Location &target, Vector3f& angles_to_target_rad, bool calc_tilt, bool calc_pan, bool relative_pan) const
 {
     Location current_loc;
     if (!AP::ahrs().get_position(current_loc)) {

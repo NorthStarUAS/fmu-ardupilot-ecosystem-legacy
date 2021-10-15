@@ -11,6 +11,7 @@ def build(bld):
             [ 'src/*.cpp',
               'src/calibration/*.cpp',
               'src/comms/*.cpp',
+              'src/gimbal/*.cpp',
               'src/nav/*.cpp',
               'src/sensors/*.cpp',
               'src/state/*.cpp',

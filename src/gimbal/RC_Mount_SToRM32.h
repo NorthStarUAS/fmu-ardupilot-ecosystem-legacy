@@ -9,18 +9,18 @@
 #include <AP_Math/AP_Math.h>
 #include <AP_Common/AP_Common.h>
 #include <RC_Channel/RC_Channel.h>
-#include "AP_Mount_Backend.h"
+#include "RC_Mount_Backend.h"
 #if HAL_MOUNT_ENABLED
 
 #define AP_MOUNT_STORM32_RESEND_MS  1000    // resend angle targets to gimbal once per second
 #define AP_MOUNT_STORM32_SEARCH_MS  60000   // search for gimbal for 1 minute after startup
 
-class AP_Mount_SToRM32 : public AP_Mount_Backend
+class RC_Mount_SToRM32 : public RC_Mount_Backend
 {
 
 public:
     // Constructor
-    AP_Mount_SToRM32(AP_Mount &frontend, AP_Mount::mount_state &state, uint8_t instance);
+    RC_Mount_SToRM32(/*RC_Mount &frontend, RC_Mount::mount_state &state, uint8_t instance*/);
 
     // init - performs any required initialisation for this instance
     void init() override {}

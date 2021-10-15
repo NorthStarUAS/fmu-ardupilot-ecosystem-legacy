@@ -19,23 +19,30 @@
  */
 #pragma once
 
+#define HAL_MOUNT_ENABLED 1
+
 #include <AP_Common/AP_Common.h>
-#include "AP_Mount.h"
+// #include "AP_Mount.h"
 #if HAL_MOUNT_ENABLED
 #include <RC_Channel/RC_Channel.h>
+#include <GCS_MAVLink/GCS_MAVLink.h>
 
-class AP_Mount_Backend
+#include "props2.h"
+
+class RC_Mount_Backend
 {
 public:
     // Constructor
-    AP_Mount_Backend(AP_Mount &frontend, AP_Mount::mount_state& state, uint8_t instance) :
-        _frontend(frontend),
-        _state(state),
-        _instance(instance)
-    {}
+    RC_Mount_Backend(/*RC_Mount &frontend, RC_Mount::mount_state& state, uint8_t instance*/) /*:*/
+        //_frontend(frontend),
+        //_state(state),
+        //_instance(instance)
+    {
+        mount_node = PropertyNode("/gimbal");
+    }
 
     // Virtual destructor
-    virtual ~AP_Mount_Backend(void) {}
+    virtual ~RC_Mount_Backend(void) {}
 
     // init - performs any required initialisation for this instance
     virtual void init() = 0;
@@ -64,12 +71,6 @@ public:
     // control - control the mount
     virtual void control(int32_t pitch_or_lat, int32_t roll_or_lon, int32_t yaw_or_alt, MAV_MOUNT_MODE mount_mode);
     
-    // process MOUNT_CONFIGURE messages received from GCS:
-    void handle_mount_configure(const mavlink_mount_configure_t &msg);
-
-    // process MOUNT_CONTROL messages received from GCS:
-    void handle_mount_control(const mavlink_mount_control_t &packet);
-
     // send_mount_status - called to allow mounts to send their status to GCS via MAVLink
     virtual void send_mount_status(mavlink_channel_t chan) = 0;
 
@@ -104,7 +105,7 @@ protected:
     bool calc_angle_to_roi_target(Vector3f& angles_to_target_rad,
                                   bool calc_tilt,
                                   bool calc_pan,
-                                  bool relative_pan = true) const WARN_IF_UNUSED;
+                                  bool relative_pan = true) WARN_IF_UNUSED;
 
     // calc_angle_to_sysid_target - calculates the earth-frame roll, tilt
     // and pan angles (and radians) to point at the sysid-target (as set
@@ -112,19 +113,21 @@ protected:
     bool calc_angle_to_sysid_target(Vector3f& angles_to_target_rad,
                                     bool calc_tilt,
                                     bool calc_pan,
-                                    bool relative_pan = true) const WARN_IF_UNUSED;
+                                    bool relative_pan = true) WARN_IF_UNUSED;
 
     // get the mount mode from frontend
-    MAV_MOUNT_MODE get_mode(void) const { return _frontend.get_mode(_instance); }
+    string get_mode(void) { return mount_node.getString("mode"); }
 
-    AP_Mount    &_frontend; // reference to the front end which holds parameters
-    AP_Mount::mount_state &_state;    // references to the parameters and state for this backend
-    uint8_t     _instance;  // this instance's number
+    //RC_Mount    &_frontend; // reference to the front end which holds parameters
+    //RC_Mount::mount_state &_state;    // references to the parameters and state for this backend
+    //uint8_t     _instance;  // this instance's number
     Vector3f    _angle_ef_target_rad;   // desired earth-frame roll, tilt and vehicle-relative pan angles in radians
 
+    PropertyNode mount_node;
+    
 private:
 
-    void rate_input_rad(float &out, const RC_Channel *ch, float min, float max) const;
+    void rate_input_rad(float &out, const RC_Channel *ch, float min, float max);
 };
 
 #endif // HAL_MOUNT_ENABLED

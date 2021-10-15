@@ -1,17 +1,17 @@
-#include "AP_Mount_SToRM32.h"
+#include "RC_Mount_SToRM32.h"
 #if HAL_MOUNT_ENABLED
 #include <AP_HAL/AP_HAL.h>
 #include <GCS_MAVLink/GCS.h>
 
 extern const AP_HAL::HAL& hal;
 
-AP_Mount_SToRM32::AP_Mount_SToRM32(AP_Mount &frontend, AP_Mount::mount_state &state, uint8_t instance) :
-    AP_Mount_Backend(frontend, state, instance),
+RC_Mount_SToRM32::RC_Mount_SToRM32(/*RC_Mount &frontend, RC_Mount::mount_state &state, uint8_t instance*/) :
+    RC_Mount_Backend(/*frontend, state, instance*/),
     _chan(MAVLINK_COMM_0)
 {}
 
 // update mount position - should be called periodically
-void AP_Mount_SToRM32::update()
+void RC_Mount_SToRM32::update()
 {
     // exit immediately if not initialised
     if (!_initialised) {
@@ -23,68 +23,42 @@ void AP_Mount_SToRM32::update()
     bool resend_now = false;
 
     // update based on mount mode
-    switch(get_mode()) {
-        // move mount to a "retracted" position.  To-Do: remove support and replace with a relaxed mode?
-        case MAV_MOUNT_MODE_RETRACT:
-            {
-            const Vector3f &target = _state._retract_angles.get();
-            _angle_ef_target_rad.x = ToRad(target.x);
-            _angle_ef_target_rad.y = ToRad(target.y);
-            _angle_ef_target_rad.z = ToRad(target.z);
-            }
-            break;
-
+    string mode = mount_node.getString("mode");
+    if ( mode == "MODE_RETRACT" ) {
+        // move mount to a "retracted" position.  To-Do: remove
+        // support and replace with a relaxed mode?
+        _angle_ef_target_rad.x = ToRad(mount_node.getDouble("retract_roll_deg"));
+        _angle_ef_target_rad.y = ToRad(mount_node.getDouble("retract_pitch_deg"));
+        _angle_ef_target_rad.z = ToRad(mount_node.getDouble("retract_yaw_deg"));
+    } else if ( mode == "NEUTRAL" ) {
         // move mount to a neutral position, typically pointing forward
-        case MAV_MOUNT_MODE_NEUTRAL:
-            {
-            const Vector3f &target = _state._neutral_angles.get();
-            _angle_ef_target_rad.x = ToRad(target.x);
-            _angle_ef_target_rad.y = ToRad(target.y);
-            _angle_ef_target_rad.z = ToRad(target.z);
-            }
-            break;
-
-        // point to the angles given by a mavlink message
-        case MAV_MOUNT_MODE_MAVLINK_TARGETING:
-            // do nothing because earth-frame angle targets (i.e. _angle_ef_target_rad) should have already been set by a MOUNT_CONTROL message from GCS
-            resend_now = true;
-            break;
-
+        _angle_ef_target_rad.x = ToRad(mount_node.getDouble("neutral_roll_deg"));
+        _angle_ef_target_rad.y = ToRad(mount_node.getDouble("neutral_pitch_deg"));
+        _angle_ef_target_rad.z = ToRad(mount_node.getDouble("neutral_yaw_deg"));
+    } else if ( mode == "MAVLINK_TARGETING" ) {
+        // point to the angles given by a mavlink message ...
+        // do nothing because earth-frame angle targets
+        // (i.e. _angle_ef_target_rad) should have already been set by
+        // a MOUNT_CONTROL message from GCS
+        resend_now = true;
+    } else if ( mode == "RC_TARGETING" ) {
         // RC radio manual angle control, but with stabilization from the AHRS
-        case MAV_MOUNT_MODE_RC_TARGETING:
-            // update targets using pilot's rc inputs
-            update_targets_from_rc();
-            resend_now = true;
-            break;
-
+        // update targets using pilot's rc inputs
+        update_targets_from_rc();
+        resend_now = true;
+    } else if ( mode == "GPS_POINT" ) {
         // point mount to a GPS point given by the mission planner
-        case MAV_MOUNT_MODE_GPS_POINT:
+        if (calc_angle_to_roi_target(_angle_ef_target_rad, true, true)) {
+            resend_now = true;
+        }
+    } else if ( mode == "HOME_LOCATION" ) {
+        // constantly update the home location:
+        if ( AP::ahrs().home_is_set() ) {
+            set_roi_target(AP::ahrs().get_home());
             if (calc_angle_to_roi_target(_angle_ef_target_rad, true, true)) {
                 resend_now = true;
             }
-            break;
-
-        case MAV_MOUNT_MODE_HOME_LOCATION:
-            // constantly update the home location:
-            if (!AP::ahrs().home_is_set()) {
-                break;
-            }
-            _state._roi_target = AP::ahrs().get_home();
-            _state._roi_target_set = true;
-            if (calc_angle_to_roi_target(_angle_ef_target_rad, true, true)) {
-                resend_now = true;
-            }
-            break;
-
-        case MAV_MOUNT_MODE_SYSID_TARGET:
-            if (calc_angle_to_sysid_target(_angle_ef_target_rad, true, true)) {
-                resend_now = true;
-            }
-            break;
-
-        default:
-            // we do not know this mode so do nothing
-            break;
+        }
     }
 
     // resend target angles at least once per second
@@ -94,14 +68,14 @@ void AP_Mount_SToRM32::update()
 }
 
 // has_pan_control - returns true if this mount can control it's pan (required for multicopters)
-bool AP_Mount_SToRM32::has_pan_control() const
+bool RC_Mount_SToRM32::has_pan_control() const
 {
     // we do not have yaw control
     return false;
 }
 
 // set_mode - sets mount's mode
-void AP_Mount_SToRM32::set_mode(enum MAV_MOUNT_MODE mode)
+void RC_Mount_SToRM32::set_mode(enum MAV_MOUNT_MODE mode)
 {
     // exit immediately if not initialised
     if (!_initialised) {
@@ -109,18 +83,40 @@ void AP_Mount_SToRM32::set_mode(enum MAV_MOUNT_MODE mode)
     }
 
     // record the mode change
-    _state._mode = mode;
+    switch (mode) {
+        case MAV_MOUNT_MODE_RETRACT:
+            mount_node.setString("mode", "RETRACT");
+            break;
+        case MAV_MOUNT_MODE_NEUTRAL:
+            mount_node.setString("mode", "NEUTRAL");
+            break;
+        case MAV_MOUNT_MODE_MAVLINK_TARGETING:
+            mount_node.setString("mode", "MAVLINK_TARGETING");
+            break;
+        case MAV_MOUNT_MODE_RC_TARGETING:
+            mount_node.setString("mode", "RC_TARGETING");
+            break;
+        case MAV_MOUNT_MODE_GPS_POINT:
+            mount_node.setString("mode", "GPS_POINT");
+            break;
+        case MAV_MOUNT_MODE_HOME_LOCATION:
+            mount_node.setString("mode", "HOME_LOCATION");
+            break;
+        default:
+            // do nothing
+            break;
+    }
 }
 
 // send_mount_status - called to allow mounts to send their status to GCS using the MOUNT_STATUS message
-void AP_Mount_SToRM32::send_mount_status(mavlink_channel_t chan)
+void RC_Mount_SToRM32::send_mount_status(mavlink_channel_t chan)
 {
     // return target angles as gimbal's actual attitude.  To-Do: retrieve actual gimbal attitude and send these instead
     mavlink_msg_mount_status_send(chan, 0, 0, ToDeg(_angle_ef_target_rad.y)*100, ToDeg(_angle_ef_target_rad.x)*100, ToDeg(_angle_ef_target_rad.z)*100);
 }
 
 // search for gimbal in GCS_MAVLink routing table
-void AP_Mount_SToRM32::find_gimbal()
+void RC_Mount_SToRM32::find_gimbal()
 {
     // return immediately if initialised
     if (_initialised) {
@@ -138,7 +134,7 @@ void AP_Mount_SToRM32::find_gimbal()
 }
 
 // send_do_mount_control - send a COMMAND_LONG containing a do_mount_control message
-void AP_Mount_SToRM32::send_do_mount_control(float pitch_deg, float roll_deg, float yaw_deg, enum MAV_MOUNT_MODE mount_mode)
+void RC_Mount_SToRM32::send_do_mount_control(float pitch_deg, float roll_deg, float yaw_deg, enum MAV_MOUNT_MODE mount_mode)
 {
     // exit immediately if not initialised
     if (!_initialised) {
