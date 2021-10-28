@@ -13,3 +13,16 @@ property system.
 Initially there is only interest in the SToRM32 driver (via mavlink)
 so that is all the code that has been migrated here and subjected to
 these modifications.
+
+# Notes
+
+* Full gimbal must be powered on (not just the mount interface) to
+  talk to it and read/write anything.
+
+* Burns battery crazy fast
+
+* Got the gSDK working with FTDI cable jumpered to COM2 on Gremsy
+  (Gnd, Tx, Rx)
+
+* See if I can understand what linux sdk is doing that I'm not on the
+  pixhawk4
