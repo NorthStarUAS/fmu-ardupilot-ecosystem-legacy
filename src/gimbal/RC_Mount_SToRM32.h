@@ -30,6 +30,9 @@ public:
     // send the mavlink heartbeat message periodically
     void send_heartbeat();
 
+    // test: send set gimbal model message
+    void set_gimbal_mode();
+    
     // update mount position - should be called periodically
     void update() override;
 
