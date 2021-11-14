@@ -25,11 +25,13 @@ void led_t::update() {
         } else {
             hal.gpio->write(HAL_GPIO_B_LED_PIN, HAL_GPIO_LED_OFF);
         }
+#if defined(HAL_HAVE_PIXRACER_LED)
         if ( blink_state and b > 0 ) {
             hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_ON);
         } else {
             hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
         }
+#endif
         // console->printf("LED: %d\n", blink_state);
     }
 }

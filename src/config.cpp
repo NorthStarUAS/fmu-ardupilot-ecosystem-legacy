@@ -11,10 +11,12 @@ static const uint8_t START_OF_CFG0 = 147;
 static const uint8_t START_OF_CFG1 = 224;
 
 uint16_t config_t::read_serial_number() {
-    uint8_t buf[2];
-    hal.storage->read_block(buf, 0, 2);
+    // uint8_t buf[2];
+    // uint16_t buf;
+    hal.storage->read_block(&serial_number, 0, 2);
     // Serial.printf(" raw serial number read %d %d\n", hi, lo);
-    serial_number = *(uint16_t *)(&buf);
+    // serial_number = *(uint16_t *)(&buf);
+    // serial_number = *buf;
     if ( !config_node.isNull() ) {
         config_node.setInt("serial_number", serial_number);
     }

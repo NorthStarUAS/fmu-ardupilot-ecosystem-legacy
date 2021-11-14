@@ -26,7 +26,7 @@ extern AP_SerialManager serial_manager;
 #include <AP_Baro/AP_Baro.h>
 #include <AP_Compass/AP_Compass.h>
 extern AP_InertialSensor ins;
-extern AP_AHRS_DCM ahrs;  // need ...
+extern AP_AHRS ahrs;  // need ...
 extern AP_Baro baro; // Compass tries to set magnetic model based on location.
 extern Compass compass;
 

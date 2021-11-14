@@ -36,7 +36,7 @@ AP_SerialManager serial_manager;
 #include <AP_Baro/AP_Baro.h>
 #include <AP_Compass/AP_Compass.h>
 AP_InertialSensor ins;
-AP_AHRS_DCM ahrs;  // need ...
+AP_AHRS ahrs;  // need ...
 AP_Baro baro; // Compass tries to set magnetic model based on location.
 Compass compass;
 
@@ -65,7 +65,6 @@ static config_t config;
 static airdata_t airdata;
 static gps_mgr_t gps_mgr;
 static rc_link_t gcs_link;
-static rc_link_t host_link;
 static info_t info;
 static led_t led;
 static menu_t menu;
@@ -149,8 +148,7 @@ void setup() {
     state_mgr.init();
      
     // do these after gps initialization
-    gcs_link.init(2, 57600);
-    host_link.init(1, 500000);
+    gcs_link.init(2, 115200 /*FIXME 57600*/);
     info.init();
 
     menu.init();
@@ -181,9 +179,6 @@ void loop() {
 
         state_mgr.update(1000.0 / MASTER_HZ);
         
-        // 4. Send state to host computer
-        host_link.update();
-
         // 10hz human console output, (begins when gyros finish calibrating)
         if ( debugging.update() ) {
             if ( imu_mgr.gyros_calibrated == 2 ) {
@@ -245,9 +240,6 @@ void loop() {
             last_ap_state = ap_state;
         }
 
-        // read in any host commmands (config, inceptors, etc.)
-        host_link.read_commands();
-
         pilot.write();
 
         gimbal.update();
@@ -262,6 +254,7 @@ void loop() {
         gcs_link.read_commands();
         gcs_link.update();
         
+    
         counter++;
     }
 }

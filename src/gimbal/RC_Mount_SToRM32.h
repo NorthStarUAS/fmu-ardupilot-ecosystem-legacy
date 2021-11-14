@@ -5,6 +5,7 @@
 
 #include <AP_HAL/AP_HAL.h>
 #include <AP_AHRS/AP_AHRS.h>
+#include <AP_HAL/utility/RingBuffer.h>
 
 #include <AP_Math/AP_Math.h>
 #include <AP_Common/AP_Common.h>
@@ -32,6 +33,7 @@ public:
 
     // test: send set gimbal model message
     void set_gimbal_mode();
+    void set_mount_configure();
     
     // update mount position - should be called periodically
     void update() override;
@@ -58,4 +60,5 @@ private:
     uint32_t _last_send;            // system time of last do_mount_control sent to gimbal
     uint32_t _last_heartbeat;       // ssytem tim eof last heartbeat
     AP_HAL::UARTDriver *_port;
+    // ByteBuffer *write_buf;
 };

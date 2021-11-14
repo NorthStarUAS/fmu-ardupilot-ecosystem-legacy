@@ -2,6 +2,8 @@
 
 #include "serial.h"
 
+#include <stdio.h>
+
 SerialLink::SerialLink() {
 }
 
@@ -62,6 +64,7 @@ bool SerialLink::update() {
         while ( _port->available() >= 1 ) {
             // scan for start of message
             input = _port->read();
+            printf("%02x ", input);
             // console->println(input);
             if ( input == START_OF_MSG0 ) {
                 // console->println("start of msg0");

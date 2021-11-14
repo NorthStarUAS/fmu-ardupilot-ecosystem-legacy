@@ -13,9 +13,12 @@ RC_Mount_SToRM32::RC_Mount_SToRM32(/*RC_Mount &frontend, RC_Mount::mount_state &
 
 void RC_Mount_SToRM32::init()
 {
+    // write_buf = new ByteBuffer(300);
     mount_node = PropertyNode("/gimbal");
+    pilot_node = PropertyNode("/pilot");
     _port = hal.serial(1);           // telem 1
     _port->begin(115200);
+    hal.scheduler->delay(100);
 }
 
 void RC_Mount_SToRM32::read_messages() {
@@ -24,7 +27,7 @@ void RC_Mount_SToRM32::read_messages() {
         mavlink_message_t in_msg;
         mavlink_status_t in_status;
         if ( mavlink_parse_char(MAVLINK_COMM_1, input, &in_msg, &in_status) ) {
-            printf("Received message with ID %d, sequence: %d from component %d of sysid %d\n", in_msg.msgid, in_msg.seq, in_msg.compid, in_msg.sysid);
+            // printf("Received message with ID %d, sequence: %d from component %d of sysid %d\n", in_msg.msgid, in_msg.seq, in_msg.compid, in_msg.sysid);
             if ( ! _found_gimbal and in_msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
                 printf("The gimbal is talking to us!\n");
                 _found_gimbal = true;
@@ -44,8 +47,9 @@ void RC_Mount_SToRM32::read_messages() {
 
 #define SYSID_ONBOARD 4
 void RC_Mount_SToRM32::send_heartbeat() {
-    if ( (AP_HAL::millis() - _last_heartbeat) > 10000 ) {
+    if ( (AP_HAL::millis() - _last_heartbeat) > 1000 ) {
         set_gimbal_mode();
+        set_mount_configure();
         printf("Sending HB to gimbal.\n");
         mavlink_heartbeat_t heartbeat;
         heartbeat.type 		= MAV_TYPE_ONBOARD_CONTROLLER;
@@ -63,43 +67,44 @@ void RC_Mount_SToRM32::send_heartbeat() {
     }
 }
 
-#define LOCK_MODE 0x01    // solid green
-#define FOLLOW_MODE 0x02  // blinking green
 void RC_Mount_SToRM32::set_gimbal_mode() {
     printf("set_gimbal_mode()\n");
-    uint8_t buf[300];
-    uint16_t buf_len = 0;
-    if ( true ) {
-        mavlink_command_long_t comm = { 0 };
-        comm.target_system    	= _sysid;
-        comm.target_component 	= MAV_COMP_ID_GIMBAL;
-        comm.command            = MAV_CMD_USER_2;
-        comm.param7             = LOCK_MODE;
-        comm.confirmation     	= false;
-        mavlink_message_t message;
-        mavlink_msg_command_long_encode(_sysid, MAV_COMP_ID_SYSTEM_CONTROL, &message, &comm);
-        buf_len = mavlink_msg_to_send_buffer(buf, &message);
-        printf("  send buffer len = %d\n", buf_len);
-    }
-    if ( false ) {
-        mavlink_message_t msg;
-        uint16_t msg_len = mavlink_msg_command_long_pack(0,
-                                                         0,
-                                                         &msg,
-                                                         0,
-                                                         MAV_COMP_ID_GIMBAL,
-                                                         MAV_CMD_USER_2,
-                                                         0,        // confirmation of zero means this is the first time this message has been sent
-                                                         0, // param 1-3 unused
-                                                         0,
-                                                         0,
-                                                         0, 0, 0,  // param4 ~ param6 unused
-                                                         FOLLOW_MODE);
-        printf("mount control message len = %d\n", msg_len);
-        buf_len = mavlink_msg_to_send_buffer(buf, &msg);
-        printf("  send buffer len = %d\n", buf_len);
-    }
-    _port->write((uint8_t *)&buf, buf_len);
+    //uint8_t buf[300];
+    //uint16_t buf_len = 0;
+    mavlink_command_long_t comm = { 0 };
+    comm.target_system    	= _sysid;
+    comm.target_component 	= MAV_COMP_ID_GIMBAL;
+    comm.command            = MAV_CMD_USER_2;
+    comm.param7             = 0x01; // 0x00 motors off, 0x01 lock mode (blinking green), 0x02 follow mode (solid green)
+    comm.confirmation     	= false;
+    mavlink_message_t message;
+    mavlink_msg_command_long_encode(_sysid, MAV_COMP_ID_SYSTEM_CONTROL, &message, &comm);
+    //buf_len = mavlink_msg_to_send_buffer(buf, &message);
+    //printf("  send buffer len = %d\n", buf_len);
+    //_port->write((uint8_t *)&buf, buf_len);
+}
+
+void RC_Mount_SToRM32::set_mount_configure() {
+    printf("set_mount_configure()\n");
+    //uint8_t buf[300];
+    //uint16_t buf_len = 0;
+    mavlink_command_long_t comm = { 0 };
+    comm.target_system    	= _sysid;
+    comm.target_component 	= MAV_COMP_ID_GIMBAL;
+    comm.command            = MAV_CMD_DO_MOUNT_CONFIGURE;
+    comm.param1             = MAV_MOUNT_MODE_MAVLINK_TARGETING; // operation mode
+    comm.param2             = 1;   // stabalize roll
+    comm.param3             = 1;   // stabalize pitch
+    comm.param4             = 1;   // stabalize yaw
+    comm.param5             = 0;   // roll body angles (encoder)
+    comm.param6             = 0;   // pitch body angles (encoder)
+    comm.param7             = 0;   // yaw body angles (encoder)
+    comm.confirmation       = false;
+    mavlink_message_t message;
+    mavlink_msg_command_long_encode(_sysid, MAV_COMP_ID_SYSTEM_CONTROL, &message, &comm);
+    //buf_len = mavlink_msg_to_send_buffer(buf, &message);
+    //printf("  send buffer len = %d\n", buf_len);
+    //_port->write((uint8_t *)&buf, buf_len);
 }
 
 // update mount position - should be called periodically
@@ -155,11 +160,11 @@ void RC_Mount_SToRM32::update() {
     }
 
     // resend target angles at least once per second
-    if (resend_now || ((AP_HAL::millis() - _last_send) > AP_MOUNT_STORM32_RESEND_MS)) {
-        double sec = AP_HAL::millis() / 1000.0;
-        _angle_ef_target_rad.x = 10*sin(sec*0.5);
-        _angle_ef_target_rad.y = 10*sin(sec*0.2);
-        _angle_ef_target_rad.z = 10*sin(sec*0.1);
+    if (resend_now || ((AP_HAL::millis() - _last_send) > 100)) {
+        //double sec = AP_HAL::millis() / 1000.0;
+        _angle_ef_target_rad.x = 30*pilot_node.getDouble("channel", 3);
+        _angle_ef_target_rad.y = 30*pilot_node.getDouble("channel", 3);
+        _angle_ef_target_rad.z = 30*pilot_node.getDouble("channel", 3);
         /*printf("Trying to send to: %.1f %.1f %.1f (deg)\n",
                _angle_ef_target_rad.y,
                _angle_ef_target_rad.x,
@@ -167,6 +172,17 @@ void RC_Mount_SToRM32::update() {
                
         send_do_mount_control(_angle_ef_target_rad.y, _angle_ef_target_rad.x, _angle_ef_target_rad.z, MAV_MOUNT_MODE_MAVLINK_TARGETING);
     }
+
+    /*
+    uint8_t buf[300];
+    uint16_t avail = write_buf->available();
+    uint16_t got = write_buf->peekbytes((uint8_t *)buf, avail);
+    uint16_t result = _port->write((uint8_t *)&buf, got);
+    if ( result > 0 ) {
+        printf("  bytes written = %d of %d\n", result, got);
+        write_buf->advance(result);
+    }
+    */
 }
 
 // has_pan_control - returns true if this mount can control it's pan (required for multicopters)
@@ -220,8 +236,6 @@ void RC_Mount_SToRM32::send_mount_status(mavlink_channel_t chan)
 // send_do_mount_control - send a COMMAND_LONG containing a do_mount_control message
 void RC_Mount_SToRM32::send_do_mount_control(float pitch_deg, float roll_deg, float yaw_deg, enum MAV_MOUNT_MODE mount_mode)
 {
-    return;
-    
     // exit immediately if not initialised
     if ( !_found_gimbal ) {
         return;
@@ -236,8 +250,9 @@ void RC_Mount_SToRM32::send_do_mount_control(float pitch_deg, float roll_deg, fl
     pitch_deg = -pitch_deg;
     yaw_deg = -yaw_deg;
 
-    uint16_t msg_len = 0;
-    mavlink_message_t msg;
+    // uint16_t msg_len = 0;
+    // mavlink_message_t msg;
+    
     //msg_len = mavlink_msg_mount_control_pack(0, MAV_COMP_ID_GIMBAL, &msg, 0, 0, 10*100, 10*100, 10*100, 0);
     //printf("mount control message len = %d\n", msg_len);
     //_port->write((uint8_t *)&msg, msg_len);
@@ -254,29 +269,47 @@ void RC_Mount_SToRM32::send_do_mount_control(float pitch_deg, float roll_deg, fl
     //                               yaw_deg,
     //                               0, 0, 0,  // param4 ~ param6 unused
     //                               mount_mode);
-    msg_len = mavlink_msg_command_long_pack(0,
-                                  0,
-                                  &msg,
-                                  0,
-                                  MAV_COMP_ID_GIMBAL,
-                                  MAV_CMD_DO_MOUNT_CONTROL,
-                                  0,        // confirmation of zero means this is the first time this message has been sent
-                                  pitch_deg,
-                                  roll_deg,
-                                  yaw_deg,
-                                  0, 0, 0,  // param4 ~ param6 unused
-                                  mount_mode);
-    printf("mount control message len = %d\n", msg_len);
-    uint8_t buf[300];
-    uint16_t buf_len = mavlink_msg_to_send_buffer(buf, &msg);
-    printf("  send buffer len = %d\n", buf_len);
-    // for ( int i = 0; i < buf_len; i++ ) {
-    //     if ( ((uint8_t *)(&msg))[i] != buf[i] ) {
-    //         printf("    byte %d mismatch %d %d\n", i, ((uint8_t *)(&msg))[i], buf[i]);
-    //     }
-    // }
-    // _port->write((uint8_t *)&buf, buf_len);
     
+    // msg_len = mavlink_msg_command_long_pack(0,
+    //                               0,
+    //                               &msg,
+    //                               0,
+    //                               MAV_COMP_ID_GIMBAL,
+    //                               MAV_CMD_DO_MOUNT_CONTROL,
+    //                               0,        // confirmation of zero means this is the first time this message has been sent
+    //                               pitch_deg,
+    //                               roll_deg,
+    //                               yaw_deg,
+    //                               0, 0, 0,  // param4 ~ param6 unused
+    //                               mount_mode);
+    // printf("mount control message len = %d\n", msg_len);
+    // uint8_t buf[300];
+    // uint16_t buf_len = mavlink_msg_to_send_buffer(buf, &msg);
+    // printf("  send buffer len = %d\n", buf_len);
+    
+    printf("do_mount_control()\n");
+    uint8_t buf[300];
+    uint16_t buf_len = 0;
+    mavlink_command_long_t comm = { 0 };
+    comm.target_system    	= _sysid;
+    comm.target_component 	= MAV_COMP_ID_GIMBAL;
+    comm.command                = MAV_CMD_DO_MOUNT_CONTROL;
+    comm.confirmation     	= true;
+    comm.param1 = pitch_deg;
+    comm.param2 = roll_deg;
+    comm.param3 = yaw_deg;
+    comm.param7 = (float) MAV_MOUNT_MODE_MAVLINK_TARGETING;
+    mavlink_message_t message;
+    mavlink_msg_command_long_encode(_sysid, MAV_COMP_ID_SYSTEM_CONTROL, &message, &comm);
+    buf_len = mavlink_msg_to_send_buffer(buf, &message);
+    printf("  send buffer len = %d\n", buf_len);
+
+    /*if ( buf_len <= write_buf->space() ) {
+        write_buf->write((uint8_t *)buf, buf_len);
+        }*/
+    
+    uint16_t result = _port->write((uint8_t *)&buf, buf_len);
+    printf("  bytes written = %d\n", result);
 
     // store time of send
     _last_send = AP_HAL::millis();
