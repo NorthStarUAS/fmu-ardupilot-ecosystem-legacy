@@ -30,7 +30,8 @@ public:
 
     // send the mavlink heartbeat message periodically
     void send_heartbeat();
-
+    void set_imu_rate();
+    
     // test: send set gimbal model message
     void set_gimbal_mode();
     void set_mount_configure();
@@ -53,7 +54,8 @@ private:
     void send_do_mount_control(float pitch_deg, float roll_deg, float yaw_deg, enum MAV_MOUNT_MODE mount_mode);
 
     // internal variables
-    bool _found_gimbal;              // true once the driver has been initialised
+    bool _found_gimbal = false;     // true once the driver has been initialised
+    bool _receiving_imu = false;    // true when we start getting imu messages
     uint8_t _sysid;                 // sysid of gimbal
     uint8_t _compid;                // component id of gimbal
     mavlink_channel_t _chan;        // mavlink channel used to communicate with gimbal.  Currently hard-coded to Telem2

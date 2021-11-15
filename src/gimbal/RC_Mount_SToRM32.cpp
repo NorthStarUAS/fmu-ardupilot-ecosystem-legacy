@@ -28,18 +28,64 @@ void RC_Mount_SToRM32::read_messages() {
         mavlink_status_t in_status;
         if ( mavlink_parse_char(MAVLINK_COMM_1, input, &in_msg, &in_status) ) {
             // printf("Received message with ID %d, sequence: %d from component %d of sysid %d\n", in_msg.msgid, in_msg.seq, in_msg.compid, in_msg.sysid);
-            if ( ! _found_gimbal and in_msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
-                printf("The gimbal is talking to us!\n");
-                _found_gimbal = true;
-                _sysid = in_msg.sysid;
-                _compid = in_msg.compid;
+            if ( in_msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+                if ( !_found_gimbal ) {
+                    printf("The gimbal is talking to us!\n");
+                    _found_gimbal = true;
+                    _sysid = in_msg.sysid;
+                    _compid = in_msg.compid;
+                }
             } else if ( in_msg.msgid == MAVLINK_MSG_ID_COMMAND_ACK ) {
                 mavlink_command_ack_t ack_msg;
                 mavlink_msg_command_ack_decode(&in_msg, &ack_msg);
+                /*
                 printf("Received message ack to command id = %d\n",
                        ack_msg.command);
                 printf("  result = %d\n", ack_msg.result);
-                // printf("  result_param2 = %d\n", ack_msg.result_param2);
+                printf("  result_param2 = %d\n", ack_msg.result_param2);
+                */
+            } else if ( in_msg.msgid == MAVLINK_MSG_ID_SYS_STATUS ) {
+                mavlink_sys_status_t msg;
+                mavlink_msg_sys_status_decode(&in_msg, &msg);
+                //printf("Gimbal sys status:\n");
+                //printf("  voltage_battery: %d V\n", msg.voltage_battery);
+                mount_node.setUInt("battery_volts", msg.voltage_battery);
+            } else if ( in_msg.msgid == MAVLINK_MSG_ID_MOUNT_STATUS ) {
+                mavlink_mount_status_t msg;
+                mavlink_msg_mount_status_decode(&in_msg, &msg);
+                /*printf("Gimbal mount status:\n");
+                printf("  angles: %d %d %d\n", msg.pointing_a, msg.pointing_b, msg.pointing_c);
+                printf("  target: %d %d\n", msg.target_system, msg.target_component);
+                mount_node.setUInt("battery_volts", msg.voltage_battery);*/
+            } else if ( in_msg.msgid == MAVLINK_MSG_ID_MOUNT_ORIENTATION ) {
+                mavlink_mount_orientation_t msg;
+                mavlink_msg_mount_orientation_decode(&in_msg, &msg);
+                // printf("Gimbal mount orientation:\n");
+                // printf("  angles: %.1f %.1f %.1f %.1f\n", msg.roll, msg.pitch, msg.yaw, msg.yaw_absolute);
+                mount_node.setDouble("relative_roll_deg", msg.roll);
+                mount_node.setDouble("relative_pitch_deg", msg.pitch);
+                mount_node.setDouble("relative_yaw_deg", msg.yaw);
+                mount_node.setDouble("absolute_yaw_deg", msg.yaw_absolute);
+            } else if ( in_msg.msgid == MAVLINK_MSG_ID_RAW_IMU ) {
+                _receiving_imu = true;
+                mavlink_raw_imu_t msg;
+                mavlink_msg_raw_imu_decode(&in_msg, &msg);
+                /*
+                printf("Gimbal raw imu:\n");
+                //printf("  time:  %d\n", msg.time_usec); // zero
+                printf("  accel: %d %d %d\n", msg.xacc, msg.yacc, msg.zacc);
+                printf("  gyro:  %d %d %d\n", msg.xgyro, msg.ygyro, msg.zgyro);
+                printf("  mags:  %d %d %d\n", msg.xmag, msg.ymag, msg.zmag);
+                //printf("  temp:  %d\n", msg.temperature); // bogus?
+                */
+                mount_node.setDouble("ax_mps2", msg.xacc / 100.0);
+                mount_node.setDouble("ay_mps2", msg.yacc / 100.0);
+                mount_node.setDouble("az_mps2", msg.zacc / 100.0);
+                mount_node.setDouble("p_radsec", msg.xgyro / 100.0);
+                mount_node.setDouble("q_radsec", msg.ygyro / 100.0);
+                mount_node.setDouble("r_radsec", msg.zgyro / 100.0);
+            } else {
+                printf("Recieved unknown msgid: %d\n", in_msg.msgid);
             }
         }
     }
@@ -48,6 +94,9 @@ void RC_Mount_SToRM32::read_messages() {
 #define SYSID_ONBOARD 4
 void RC_Mount_SToRM32::send_heartbeat() {
     if ( (AP_HAL::millis() - _last_heartbeat) > 1000 ) {
+        if ( ! _receiving_imu ) {
+            set_imu_rate();
+        }
         set_gimbal_mode();
         set_mount_configure();
         printf("Sending HB to gimbal.\n");
@@ -65,6 +114,22 @@ void RC_Mount_SToRM32::send_heartbeat() {
         _port->write((uint8_t *)&buf, buf_len);
         _last_heartbeat = AP_HAL::millis();
     }
+}
+
+void RC_Mount_SToRM32::set_imu_rate() {
+    printf("Sending imu rate to gimbal.\n");
+    mavlink_param_set_t param_set = {0};
+    param_set.param_value = 50;       // Onboard parameter value
+    param_set.target_system	= _sysid; // System ID
+    param_set.target_component = MAV_COMP_ID_GIMBAL; // Component ID
+    mav_array_memcpy(param_set.param_id, "IMU_RATE", sizeof("IMU_RATE"));
+    param_set.param_type		= MAVLINK_TYPE_UINT16_T;
+    mavlink_message_t message;
+    mavlink_msg_param_set_encode(SYSID_ONBOARD, MAV_COMP_ID_SYSTEM_CONTROL, &message, &param_set);
+    uint8_t buf[300];
+    uint16_t buf_len = mavlink_msg_to_send_buffer(buf, &message);
+    printf("  send buffer len = %d\n", buf_len);
+    _port->write((uint8_t *)&buf, buf_len);
 }
 
 void RC_Mount_SToRM32::set_gimbal_mode() {
