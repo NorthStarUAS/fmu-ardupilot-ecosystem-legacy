@@ -227,15 +227,27 @@ void RC_Mount_SToRM32::update() {
     // resend target angles at least once per second
     if (resend_now || ((AP_HAL::millis() - _last_send) > 100)) {
         //double sec = AP_HAL::millis() / 1000.0;
-        _angle_ef_target_rad.x = 30*pilot_node.getDouble("channel", 3);
-        _angle_ef_target_rad.y = 30*pilot_node.getDouble("channel", 3);
-        _angle_ef_target_rad.z = 30*pilot_node.getDouble("channel", 3);
+        double target_roll = 30 * pilot_node.getDouble("channel", 0);
+        double target_pitch = 30 * pilot_node.getDouble("channel", 1);
+        double target_yaw = 30 * pilot_node.getDouble("channel", 3);
+        double curr_roll = mount_node.getDouble("relative_roll_deg");
+        double curr_pitch = mount_node.getDouble("relative_pitch_deg");
+        double curr_yaw = mount_node.getDouble("relative_yaw_deg");
+        double cmd_roll = curr_roll - target_roll;
+        double cmd_pitch = curr_pitch - target_pitch;
+        double cmd_yaw = curr_yaw - target_yaw;
+        if ( cmd_roll < -180 ) { cmd_roll += 360; }
+        if ( cmd_roll > 180 ) { cmd_roll -= 360; }
+        if ( cmd_pitch < -180 ) { cmd_pitch += 360; }
+        if ( cmd_pitch > 180 ) { cmd_pitch -= 360; }
+        if ( cmd_yaw < -180 ) { cmd_yaw += 360; }
+        if ( cmd_yaw > 180 ) { cmd_yaw -= 360; }
         /*printf("Trying to send to: %.1f %.1f %.1f (deg)\n",
                _angle_ef_target_rad.y,
                _angle_ef_target_rad.x,
                _angle_ef_target_rad.z);*/
-               
-        send_do_mount_control(_angle_ef_target_rad.y, _angle_ef_target_rad.x, _angle_ef_target_rad.z, MAV_MOUNT_MODE_MAVLINK_TARGETING);
+        
+        send_do_mount_control(cmd_pitch, -cmd_roll, cmd_yaw, MAV_MOUNT_MODE_MAVLINK_TARGETING);
     }
 
     /*
