@@ -154,6 +154,9 @@ void setup() {
     menu.init();
 
     gimbal.init();
+
+    gcs().init();
+    // gcs().setup_console();
     
     printf("Setup finished.\n");
     printf("Ready and transmitting...\n");
@@ -242,6 +245,9 @@ void loop() {
 
         pilot.write();
 
+	gcs().update_receive();
+	gcs().update_send();
+	
         gimbal.update();
         
         // blink the led
@@ -251,8 +257,8 @@ void loop() {
         // status
         status_node.setUInt("available_memory", hal.util->available_memory());
 
-        gcs_link.read_commands();
-        gcs_link.update();
+        //gimbal_link.read_commands();
+        //gimbal_link.update();
         
     
         counter++;
