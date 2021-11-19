@@ -21,7 +21,7 @@
 #include "state/state_mgr.h"
 #include "util/ratelimiter.h"
 
-#include "gimbal/RC_Mount_SToRM32.h"
+#include "gimbal/gimbal_mavlink.h"
 
 const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 static AP_BoardConfig BoardConfig;
@@ -71,7 +71,7 @@ static menu_t menu;
 static power_t power;
 static state_mgr_t state_mgr;
 
-static RC_Mount_SToRM32 gimbal;
+static gimbal_mavlink_t gimbal;
 
 static RateLimiter maintimer(MASTER_HZ);
 static RateLimiter heartbeat(0.1);
