@@ -11,7 +11,7 @@ import transformations
 r2d = 180.0 / math.pi
 d2r = math.pi / 180.0
 
-euler_deg = [0, 0, 0]
+euler_deg = [45, -30, 310]
 pos_lla = [ 45.0, -93.0, 300.0 ]
 tgt_lla = [ 45.001, -93.001, 287.0 ]
 ref_lla = pos_lla

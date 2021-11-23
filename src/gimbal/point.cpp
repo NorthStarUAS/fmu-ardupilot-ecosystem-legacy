@@ -3,8 +3,8 @@
 #include "nav/nav_functions.h"
 #include "point.h"
 
-const double r2d = 180.0 / M_PI;
-const double d2r = M_PI / 180.0;
+const double r2d = 180.0l / M_PI;
+const double d2r = M_PI / 180.0l;
 
 static Eigen::Vector3f lla2ned( Eigen::Vector3d lla, Eigen::Vector3d ref ) {
     Eigen::Vector3d ecef  = lla2ecef(lla);
@@ -26,16 +26,15 @@ static void printmat3( const char *label, Eigen::Matrix3f m ) {
     printf("  %.2f %.2f %.2f %.2f\n", m(2,0), m(2,1), m(2,2));
 }
 
-void pointing_update() {
-    static Eigen::Vector3d pos_lla;
-    static Eigen::Vector3d tgt_lla;
+Eigen::Vector3f pointing_update(Eigen::Vector3d pos_lla, Eigen::Vector3f euler_deg, Eigen::Vector3d tgt_lla) {
     static Eigen::Vector3d ref_lla;
-    pos_lla << 45.0, -93.0, 300.0;
-    tgt_lla << 45.001, -93.001, 287.0;
+    // pos_lla << 45.0*d2r, -93.0*d2r, 300.0;
+    // tgt_lla << 45.001*d2r, -93.001*d2r, 287.0;
     ref_lla = pos_lla;
+    ref_lla(2) = 0.0;
 
-    static Eigen::Vector3f euler_deg;
-    euler_deg << 0, 0, 0;
+    // static Eigen::Vector3f euler_deg;
+    // euler_deg << 45, -30, 310;
     
     // Where to point in ned space
     Eigen::Vector3f pos_ned = lla2ned( pos_lla, ref_lla );
@@ -43,6 +42,7 @@ void pointing_update() {
     printvec("from (ned)", pos_ned);
     printvec("to (ned)", tgt_ned);
 
+    /*
     float course_deg = atan2(tgt_ned(1)-pos_ned(1), tgt_ned(0)-pos_ned(0)) * r2d;
     if (course_deg < 0) { course_deg += 360.0; }
     
@@ -51,15 +51,16 @@ void pointing_update() {
     
     float az_deg = atan2(pos_ned(2)-tgt_ned(2), dist_m) * r2d;
     printf("(ned) azimuth: %.2f\n", az_deg);
-
+    */
+    
     // construct body to ned transformation matrix
     Eigen::Quaternionf ned2body = eul2quat(euler_deg(0)*d2r, euler_deg(1)*d2r, euler_deg(2)*d2r);
     printquat("ned2body", ned2body);
 
     Eigen::Matrix3f C_N2B = quat2dcm(ned2body);
-    Eigen::Matrix3f C_B2N = C_N2B.inverse();
     printmat3("C_N2B", C_N2B);
-    printmat3("C_B2N", C_B2N);
+    // Eigen::Matrix3f C_B2N = C_N2B.inverse();
+    // printmat3("C_B2N", C_B2N);
 
     Eigen::Vector3f mount_vec;
     mount_vec << 0.0, 1.0, 0.0;
@@ -73,7 +74,11 @@ void pointing_update() {
     float pan = 90.0 - atan2(t(0), t(1)) * r2d;
     printf("pan: %.2f\n", pan);
     float length = t.head(2).norm();
-    printf("length: %.2f", length);
+    printf("length: %.2f\n", length);
     float tilt = atan2(-t(2), length) * r2d;
     printf("tilt: %.2f\n", tilt);
+
+    Eigen::Vector3f result;
+    result << pan, tilt, 0.0;
+    return result;
 }

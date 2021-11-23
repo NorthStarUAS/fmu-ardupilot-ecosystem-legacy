@@ -48,5 +48,7 @@ private:
     AP_HAL::UARTDriver *_port;
 
     PropertyNode mount_node;
+    PropertyNode imu_node;
     PropertyNode pilot_node;
+    PropertyNode nav_node;
 };

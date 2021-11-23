@@ -1,16 +1,21 @@
-#include "gimbal_mavlink.h"
 #include <AP_HAL/AP_HAL.h>
 #include <GCS_MAVLink/GCS.h>
 
 #include <GCS_MAVLink/include/mavlink/v2.0/mavlink_types.h>
 #include <GCS_MAVLink/include/mavlink/v2.0/ardupilotmega/mavlink_msg_mount_control.h>
 
-extern const AP_HAL::HAL& hal;
+#include "setup_board.h"
+#include "point.h"
+#include "gimbal_mavlink.h"
+
+const double r2d = 180.0l / M_PI;
 
 void gimbal_mavlink_t::init() {
     // write_buf = new ByteBuffer(300);
     mount_node = PropertyNode("/gimbal");
+    mount_node = PropertyNode("/gimbal/imu");
     pilot_node = PropertyNode("/pilot");
+    nav_node = PropertyNode("/filters/nav");
     _port = hal.serial(1);           // telem 1
     _port->begin(115200);
     hal.scheduler->delay(100);
@@ -44,7 +49,7 @@ void gimbal_mavlink_t::read_messages() {
                 mavlink_msg_sys_status_decode(&in_msg, &msg);
                 //printf("Gimbal sys status:\n");
                 //printf("  voltage_battery: %d V\n", msg.voltage_battery);
-                mount_node.setUInt("battery_volts", msg.voltage_battery);
+                mount_node.setUInt("input_volts", msg.voltage_battery);
             } else if ( in_msg.msgid == MAVLINK_MSG_ID_MOUNT_STATUS ) {
                 mavlink_mount_status_t msg;
                 mavlink_msg_mount_status_decode(&in_msg, &msg);
@@ -73,12 +78,14 @@ void gimbal_mavlink_t::read_messages() {
                 printf("  mags:  %d %d %d\n", msg.xmag, msg.ymag, msg.zmag);
                 //printf("  temp:  %d\n", msg.temperature); // bogus?
                 */
-                mount_node.setDouble("ax_mps2", msg.xacc / 100.0);
-                mount_node.setDouble("ay_mps2", msg.yacc / 100.0);
-                mount_node.setDouble("az_mps2", msg.zacc / 100.0);
-                mount_node.setDouble("p_radsec", msg.xgyro / 100.0);
-                mount_node.setDouble("q_radsec", msg.ygyro / 100.0);
-                mount_node.setDouble("r_radsec", msg.zgyro / 100.0);
+                imu_node.setDouble("ax_mps2", -msg.yacc / 1000.0);
+                imu_node.setDouble("ay_mps2", msg.xacc / 1000.0);
+                imu_node.setDouble("az_mps2", msg.zacc / 1000.0);
+                imu_node.setDouble("p_rps", msg.xgyro / 1000.0);
+                imu_node.setDouble("q_rps", msg.ygyro / 1000.0);
+                imu_node.setDouble("r_rps", msg.zgyro / 1000.0);
+		imu_node.setUInt("millis", AP_HAL::millis());
+		imu_node.setDouble("timestamp", AP_HAL::millis() / 1000.0);
             } else {
                 printf("Recieved unknown msgid: %d\n", in_msg.msgid);
             }
@@ -173,7 +180,16 @@ void gimbal_mavlink_t::update() {
     
     read_messages();
 
-    // update based on mount mode
+    Eigen::Vector3d pos_lla;
+    pos_lla << nav_node.getDouble("latitude_deg"), nav_node.getDouble("longitude_deg"), nav_node.getDouble("altitude_m");
+    Eigen::Vector3d tgt_lla;
+    tgt_lla << 45.062326136727314, -93.13958711609263, pos_lla(2);
+    Eigen::Vector3f euler_deg;
+    euler_deg << nav_node.getDouble("phi_rad")*r2d, nav_node.getDouble("the_rad")*r2d, nav_node.getDouble("psi_rad")*r2d;
+    
+    Eigen::Vector3f ptr_deg = pointing_update(pos_lla, euler_deg, tgt_lla);
+
+// update based on mount mode
     string mode = mount_node.getString("mode");
     if ( mode == "" ) {
         mode = "GPS_POINT";
@@ -182,9 +198,12 @@ void gimbal_mavlink_t::update() {
     // resend target angles at least once per second
     if ( (AP_HAL::millis() - _last_send) > 100 ) {
         //double sec = AP_HAL::millis() / 1000.0;
-        double target_roll = 30 * pilot_node.getDouble("channel", 0);
-        double target_pitch = 30 * pilot_node.getDouble("channel", 1);
-        double target_yaw = 30 * pilot_node.getDouble("channel", 3);
+        //double target_roll = 30 * pilot_node.getDouble("channel", 0);
+        //double target_pitch = 30 * pilot_node.getDouble("channel", 1);
+        //double target_yaw = 30 * pilot_node.getDouble("channel", 3);
+        double target_roll = ptr_deg(2);
+        double target_pitch = ptr_deg(1);
+        double target_yaw = ptr_deg(0);
         double curr_roll = mount_node.getDouble("relative_roll_deg");
         double curr_pitch = mount_node.getDouble("relative_pitch_deg");
         double curr_yaw = mount_node.getDouble("relative_yaw_deg");
@@ -202,7 +221,11 @@ void gimbal_mavlink_t::update() {
                _angle_ef_target_rad.x,
                _angle_ef_target_rad.z);*/
         
-        send_do_mount_control(cmd_pitch, -cmd_roll, cmd_yaw);
+	// don't send micro adjustments
+	float thresh = 0.5;     // deg
+	if ( fabs(cmd_roll) > thresh or fabs(cmd_pitch) > thresh or fabs(cmd_yaw) > thresh ) {
+	    send_do_mount_control(cmd_pitch, -cmd_roll, cmd_yaw);
+	}
     }
 }
 
