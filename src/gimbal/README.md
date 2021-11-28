@@ -26,3 +26,14 @@ these modifications.
 
 * See if I can understand what linux sdk is doing that I'm not on the
   pixhawk4
+
+# Pointing notes:
+
+Put the gimbal in lock mode (holds position specified)
+
+roll and pitch angles we send to gimbal are in ned frame as estimated
+by the gimbal.  We can compute ned azimuth and send that directly (we
+don't care about our own body orienation here.)
+
+Still need to work out what is going on with relative vs. absolute yaw
+angles reported by gimbal.

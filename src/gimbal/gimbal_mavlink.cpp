@@ -61,7 +61,7 @@ void gimbal_mavlink_t::read_messages() {
                 mavlink_mount_orientation_t msg;
                 mavlink_msg_mount_orientation_decode(&in_msg, &msg);
                 // printf("Gimbal mount orientation:\n");
-                // printf("  angles: %.1f %.1f %.1f %.1f\n", msg.roll, msg.pitch, msg.yaw, msg.yaw_absolute);
+                printf("  gimbal angles: %.1f %.1f %.1f %.1f\n", msg.roll, msg.pitch, msg.yaw, msg.yaw_absolute);
                 mount_node.setDouble("relative_roll_deg", msg.roll);
                 mount_node.setDouble("relative_pitch_deg", msg.pitch);
                 mount_node.setDouble("relative_yaw_deg", msg.yaw);
@@ -136,8 +136,8 @@ void gimbal_mavlink_t::set_imu_rate() {
 
 void gimbal_mavlink_t::set_gimbal_mode() {
     printf("set_gimbal_mode()\n");
-    //uint8_t buf[300];
-    //uint16_t buf_len = 0;
+    uint8_t buf[300];
+    uint16_t buf_len = 0;
     mavlink_command_long_t comm = { 0 };
     comm.target_system    	= _sysid;
     comm.target_component 	= MAV_COMP_ID_GIMBAL;
@@ -146,9 +146,9 @@ void gimbal_mavlink_t::set_gimbal_mode() {
     comm.confirmation     	= false;
     mavlink_message_t message;
     mavlink_msg_command_long_encode(_sysid, MAV_COMP_ID_SYSTEM_CONTROL, &message, &comm);
-    //buf_len = mavlink_msg_to_send_buffer(buf, &message);
-    //printf("  send buffer len = %d\n", buf_len);
-    //_port->write((uint8_t *)&buf, buf_len);
+    buf_len = mavlink_msg_to_send_buffer(buf, &message);
+    printf("  send buffer len = %d\n", buf_len);
+    _port->write((uint8_t *)&buf, buf_len);
 }
 
 void gimbal_mavlink_t::set_mount_configure() {

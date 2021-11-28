@@ -15,6 +15,7 @@ void RC_Mount_SToRM32::init()
 {
     // write_buf = new ByteBuffer(300);
     mount_node = PropertyNode("/gimbal");
+    imu_node = PropertyNode("/gimbal/imu");
     pilot_node = PropertyNode("/pilot");
     _port = hal.serial(1);           // telem 1
     _port->begin(115200);
@@ -49,7 +50,7 @@ void RC_Mount_SToRM32::read_messages() {
                 mavlink_msg_sys_status_decode(&in_msg, &msg);
                 //printf("Gimbal sys status:\n");
                 //printf("  voltage_battery: %d V\n", msg.voltage_battery);
-                mount_node.setUInt("battery_volts", msg.voltage_battery);
+                mount_node.setUInt("input_volts", msg.voltage_battery);
             } else if ( in_msg.msgid == MAVLINK_MSG_ID_MOUNT_STATUS ) {
                 mavlink_mount_status_t msg;
                 mavlink_msg_mount_status_decode(&in_msg, &msg);
@@ -78,12 +79,14 @@ void RC_Mount_SToRM32::read_messages() {
                 printf("  mags:  %d %d %d\n", msg.xmag, msg.ymag, msg.zmag);
                 //printf("  temp:  %d\n", msg.temperature); // bogus?
                 */
-                mount_node.setDouble("ax_mps2", msg.xacc / 100.0);
-                mount_node.setDouble("ay_mps2", msg.yacc / 100.0);
-                mount_node.setDouble("az_mps2", msg.zacc / 100.0);
-                mount_node.setDouble("p_radsec", msg.xgyro / 100.0);
-                mount_node.setDouble("q_radsec", msg.ygyro / 100.0);
-                mount_node.setDouble("r_radsec", msg.zgyro / 100.0);
+                imu_node.setDouble("ax_mps2", -msg.yacc / 1000.0);
+                imu_node.setDouble("ay_mps2", msg.xacc / 1000.0);
+                imu_node.setDouble("az_mps2", msg.zacc / 1000.0);
+                imu_node.setDouble("p_rps", msg.ygyro / 1000.0);
+                imu_node.setDouble("q_rps", -msg.xgyro / 1000.0);
+                imu_node.setDouble("r_rps", msg.zgyro / 1000.0);
+		imu_node.setUInt("millis", AP_HAL::millis());
+		imu_node.setDouble("timestamp", AP_HAL::millis() / 1000.0);
             } else {
                 printf("Recieved unknown msgid: %d\n", in_msg.msgid);
             }
@@ -246,8 +249,11 @@ void RC_Mount_SToRM32::update() {
                _angle_ef_target_rad.y,
                _angle_ef_target_rad.x,
                _angle_ef_target_rad.z);*/
-        
-        send_do_mount_control(cmd_pitch, -cmd_roll, cmd_yaw, MAV_MOUNT_MODE_MAVLINK_TARGETING);
+	// don't send micro adjustments
+	float thresh = 0.5;	// deg
+	if ( fabs(cmd_roll) > thresh or fabs(cmd_pitch) > thresh or fabs(cmd_yaw) > thresh ) {
+	  send_do_mount_control(cmd_pitch, -cmd_roll, cmd_yaw, MAV_MOUNT_MODE_MAVLINK_TARGETING);
+	}
     }
 
     /*

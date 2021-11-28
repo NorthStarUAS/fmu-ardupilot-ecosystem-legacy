@@ -122,6 +122,7 @@ protected:
     Vector3f    _angle_ef_target_rad;   // desired earth-frame roll, tilt and vehicle-relative pan angles in radians
 
     PropertyNode mount_node;
+    PropertyNode imu_node;
     PropertyNode pilot_node;
     
 private:
