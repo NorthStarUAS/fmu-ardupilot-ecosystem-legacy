@@ -4,12 +4,12 @@
 #include "serial.h"
 #include "util/ratelimiter.h"
 
-class rc_link_t {
+class message_link_t {
 
 public:
 
-    rc_link_t();
-    ~rc_link_t();
+    message_link_t();
+    ~message_link_t();
     
     // Serial = usb, Serial1 connects to /dev/ttyO4 on beaglebone in
     // aura-v2 and marmot-v1 hardware

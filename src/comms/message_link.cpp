@@ -15,12 +15,12 @@
 
 #include "relay.h"
 #include "rc_messages.h"
-#include "rc_link.h"
+#include "message_link.h"
 
-rc_link_t::rc_link_t() {}
-rc_link_t::~rc_link_t() {}
+message_link_t::message_link_t() {}
+message_link_t::~message_link_t() {}
 
-void rc_link_t::init(uint8_t port, uint32_t baud, string relay_name) {
+void message_link_t::init(uint8_t port, uint32_t baud, string relay_name) {
     config_nav_node = PropertyNode("/config/nav"); // after config.init()
     effectors_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");
@@ -83,7 +83,7 @@ void rc_link_t::init(uint8_t port, uint32_t baud, string relay_name) {
     }
 }
 
-void rc_link_t::update() {
+void message_link_t::update() {
     if ( airdata_limiter.update() ) {
         output_counter += write_airdata();
     }
@@ -120,7 +120,7 @@ void rc_link_t::update() {
     }
 }
 
-bool rc_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
+bool message_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
 {
     bool result = false;
     //console->printf("message id: %d  len: %d\n", id, message_size);
@@ -225,7 +225,7 @@ bool rc_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
 }
 
 // return an ack of a message received
-int rc_link_t::write_ack( uint16_t sequence_num, uint8_t result )
+int message_link_t::write_ack( uint16_t sequence_num, uint8_t result )
 {
     static rc_message::ack_v1_t ack;
     ack.sequence_num = sequence_num;
@@ -235,7 +235,7 @@ int rc_link_t::write_ack( uint16_t sequence_num, uint8_t result )
 }
 
 // final effector commands
-int rc_link_t::write_effectors()
+int message_link_t::write_effectors()
 {
     static rc_message::effectors_v1_t eff_msg;
     eff_msg.props2msg(effectors_node);
@@ -244,7 +244,7 @@ int rc_link_t::write_effectors()
 }
 
 // pilot manual (rc receiver) data
-int rc_link_t::write_pilot()
+int message_link_t::write_pilot()
 {
     static rc_message::pilot_v4_t pilot_msg;
     pilot_msg.props2msg(pilot_node);
@@ -254,7 +254,7 @@ int rc_link_t::write_pilot()
     return serial.write_packet( pilot_msg.id, pilot_msg.payload, pilot_msg.len);
 }
 
-int rc_link_t::write_imu()
+int message_link_t::write_imu()
 {
     static rc_message::imu_v6_t imu_msg;
     imu_msg.props2msg(imu_node);
@@ -262,7 +262,7 @@ int rc_link_t::write_imu()
     return serial.write_packet( imu_msg.id, imu_msg.payload, imu_msg.len );
 }
 
-int rc_link_t::write_gps()
+int message_link_t::write_gps()
 {
     static rc_message::gps_v5_t gps_msg;
     if ( gps_node.getUInt("millis") != gps_last_millis ) {
@@ -276,7 +276,7 @@ int rc_link_t::write_gps()
 }
 
 // nav (ekf) data
-int rc_link_t::write_nav()
+int message_link_t::write_nav()
 {
     static rc_message::nav_v6_t nav_msg;
     nav_msg.props2msg(nav_node);
@@ -285,7 +285,7 @@ int rc_link_t::write_nav()
 }
 
 // nav (ekf) metrics
-int rc_link_t::write_nav_metrics()
+int message_link_t::write_nav_metrics()
 {
     static rc_message::nav_metrics_v6_t metrics_msg;
     metrics_msg.props2msg(nav_node);
@@ -294,7 +294,7 @@ int rc_link_t::write_nav_metrics()
     return serial.write_packet( metrics_msg.id, metrics_msg.payload, metrics_msg.len );
 }
 
-int rc_link_t::write_airdata()
+int message_link_t::write_airdata()
 {
     static rc_message::airdata_v8_t air_msg;
     air_msg.props2msg(airdata_node);
@@ -304,7 +304,7 @@ int rc_link_t::write_airdata()
 }
 
 // autopilot targets / status
-int rc_link_t::write_ap()
+int message_link_t::write_ap()
 {
     rc_message::ap_targets_v1_t ap_msg;
     ap_msg.props2msg(targets_node);
@@ -313,7 +313,7 @@ int rc_link_t::write_ap()
     return serial.write_packet( ap_msg.id, ap_msg.payload, ap_msg.len );
 }
 
-int rc_link_t::write_power()
+int message_link_t::write_power()
 {
     static rc_message::power_v1_t power_msg;
     power_msg.props2msg(power_node);
@@ -322,7 +322,7 @@ int rc_link_t::write_power()
 }
 
 // system status
-int rc_link_t::write_status()
+int message_link_t::write_status()
 {
     static rc_message::status_v7_t status_msg;
     
@@ -339,7 +339,7 @@ int rc_link_t::write_status()
     return serial.write_packet( status_msg.id, status_msg.payload, status_msg.len );
 }
 
-void rc_link_t::read_commands() {
+void message_link_t::read_commands() {
     while ( serial.update() ) {
         parse_message( serial.pkt_id, serial.payload, serial.pkt_len );
     }

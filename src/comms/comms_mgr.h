@@ -6,13 +6,13 @@
 #include "util/ratelimiter.h"
 
 #include "info.h"
-#include "rc_link.h"
 #include "menu.h"
+#include "message_link.h"
 
 class comms_mgr_t {  
 private:
-    rc_link_t gcs_link;
-    rc_link_t host_link;
+    message_link_t gcs_link;
+    message_link_t host_link;
     info_t info;
     menu_t menu;
     
