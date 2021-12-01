@@ -1,6 +1,7 @@
 #include "comms_mgr.h"
 
 void comms_mgr_t::init() {
+    config_node = PropertyNode("/config/comms");
     imu_node = PropertyNode("/sensors/imu");
     status_node = PropertyNode("/status");
     
@@ -8,10 +9,30 @@ void comms_mgr_t::init() {
     heartbeat = RateLimiter(0.1);
     tempTimer = AP_HAL::millis();
     counter = 0;
+
+    if ( config_node.hasChild("gcs") ) {
+        PropertyNode gcs_node = config_node.getChild("gcs");
+        int port = gcs_node.getUInt("port");
+        int baud = gcs_node.getUInt("baud");
+        if ( port > 0 and baud > 0 ) {
+            gcs_link.init(port, baud, "gcs");
+        } else {
+            printf("comms config error in gcs link section!\n");
+            hal.scheduler->delay(500);
+        }
+    }
+    if ( config_node.hasChild("host") ) {
+        PropertyNode host_node = config_node.getChild("host");
+        int port = host_node.getUInt("port");
+        int baud = host_node.getUInt("baud");
+        if ( port > 0 and baud > 0 ) {
+            host_link.init(port, baud, "host");
+        } else {
+            printf("comms config error in host link section!\n");
+            hal.scheduler->delay(500);
+        }
+    }
     
-    //gcs_link.init(2, 57600);
-    gcs_link.init(2, 115200 /*FIXME 57600*/);
-    //host_link.init(1, 500000);
     info.init();
 
     menu.init();
@@ -21,12 +42,12 @@ void comms_mgr_t::update() {
     counter++;
     
     gcs_link.read_commands();
-    host_link.read_commands();
+    //host_link.read_commands();
 
     gcs_link.update();
-    host_link.update();
+    //host_link.update();
     
-    // 10hz human console output, (begins when gyros finish calibrating)
+    // human console interaction begins when gyros finish calibrating
     if ( imu_node.getUInt("gyros_calibrated") != 2 ) {
         return;
     }

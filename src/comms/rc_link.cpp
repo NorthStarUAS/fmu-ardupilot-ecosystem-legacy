@@ -13,14 +13,14 @@
 #include "sensors/imu_mgr.h"            // reset gyros
 #include "sensors/pilot.h"              // update_ap()
 
-// #include "relay.h"
+#include "relay.h"
 #include "rc_messages.h"
 #include "rc_link.h"
 
 rc_link_t::rc_link_t() {}
 rc_link_t::~rc_link_t() {}
 
-void rc_link_t::init(uint8_t port, uint32_t baud) {
+void rc_link_t::init(uint8_t port, uint32_t baud, string relay_name) {
     config_nav_node = PropertyNode("/config/nav"); // after config.init()
     effectors_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");
@@ -46,11 +46,12 @@ void rc_link_t::init(uint8_t port, uint32_t baud) {
     serial.open(baud, hal.serial(port));
     printf("opened rc_link port: %d @ %d baud\n", port, baud);
     hal.scheduler->delay(100);
-    /*if ( port == 1 ) {
+    relay_id = relay_name;
+    if ( relay_id == "host" ) {
         relay.set_host_link(&serial);
-    } else if ( port == 2 ) {
+    } else if ( relay_id == "gcs" ) {
         relay.set_gcs_link(&serial);
-        }*/
+    }
 
     // fixme: make externally configurable?
     if ( baud <= 115200 ) {
@@ -157,13 +158,12 @@ bool rc_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
                 serial.write_packet( reply.id, reply.payload, reply.len);
                 command_result = 1;
             } else {
-                /*console->printf("unknown message: %s, relaying to host\n", msg.message.c_str());
-                if ( saved_port == 2 ) {
+                // printf("unknown message: %s, relaying to host\n", msg.message.c_str());
+                if ( relay_id == "gcs" ) {
                     relay.forward_packet(relay_t::dest_enum::host_dest,
                                          id, buf, message_size);
                 }
                 command_result = 1;
-                */
             }
         } else {
             console->printf("ignoring duplicate command\n");
@@ -177,10 +177,10 @@ bool rc_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_size )
         ap_msg.msg2props(targets_node);
     } else if ( id == rc_message::mission_v1_id ) {
         // relay directly to gcs
-        /*if ( saved_port == 1 ) {
+        if ( relay_id == "host" ) {
             relay.forward_packet(relay_t::dest_enum::gcs_dest,
                                  id, buf, message_size);
-                                 }*/
+        }
         // this is the messy message
         rc_message::mission_v1_t mission;
         mission.unpack(buf, message_size);

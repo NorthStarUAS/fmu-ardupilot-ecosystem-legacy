@@ -15,8 +15,9 @@ public:
     // aura-v2 and marmot-v1 hardware
     SerialLink serial;
     unsigned long output_counter = 0;
-
-    void init(uint8_t port, uint32_t baud);
+    string relay_id;
+    
+    void init(uint8_t port, uint32_t baud, string relay_name);
     void update();
     void read_commands();
     

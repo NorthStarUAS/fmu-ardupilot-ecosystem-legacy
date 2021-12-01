@@ -20,7 +20,8 @@ private:
     RateLimiter heartbeat;
     uint32_t tempTimer;
     uint32_t counter;
-    
+
+    PropertyNode config_node;
     PropertyNode imu_node;
     PropertyNode status_node;
     
