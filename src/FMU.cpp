@@ -6,11 +6,9 @@
 
 #include "setup_board.h"
 
-#include "comms/info.h"
-#include "comms/rc_link.h"
+#include "comms/comms_mgr.h"
 #include "config.h"
 #include "led.h"
-#include "menu.h"
 #include "nav_mgr.h"
 #include "props2.h"
 #include "sensors/airdata.h"
@@ -61,21 +59,17 @@ static PropertyNode config_nav_node;
 static PropertyNode pilot_node;
 static PropertyNode status_node;
 
+static comms_mgr_t comms_mgr;
 static config_t config;
 static airdata_t airdata;
 static gps_mgr_t gps_mgr;
-static rc_link_t gcs_link;
-static info_t info;
 static led_t led;
-static menu_t menu;
 static power_t power;
 static state_mgr_t state_mgr;
 
 static gimbal_mavlink_t gimbal;
 
 static RateLimiter maintimer(MASTER_HZ);
-static RateLimiter heartbeat(0.1);
-static RateLimiter debugging(10);
 
 // -Wmissing-declarations requires these
 void setup();
@@ -148,10 +142,7 @@ void setup() {
     state_mgr.init();
      
     // do these after gps initialization
-    gcs_link.init(2, 115200 /*FIXME 57600*/);
-    info.init();
-
-    menu.init();
+    comms_mgr.init();
 
     gimbal.init();
 
@@ -162,8 +153,6 @@ void setup() {
 // main loop
 void loop() {
     if ( maintimer.update() ) {
-        static uint32_t tempTimer = AP_HAL::millis();
-        static uint32_t counter = 0;
         status_node.setUInt("main_loop_timer_misses", maintimer.misses);
         
         // 1. Sense motion
@@ -178,51 +167,7 @@ void loop() {
         }
 
         state_mgr.update(1000.0 / MASTER_HZ);
-        
-        // 10hz human console output, (begins when gyros finish calibrating)
-        if ( debugging.update() ) {
-            if ( imu_mgr.gyros_calibrated == 2 ) {
-                menu.update();
-                if ( menu.display_pilot ) { info.write_pilot_in_ascii(); }
-                if ( menu.display_gps ) { info.write_gps_ascii(); }
-                if ( menu.display_airdata ) { info.write_airdata_ascii(); }
-                if ( menu.display_imu ) { info.write_imu_ascii(); }
-                if ( menu.display_nav ) { info.write_nav_ascii(); }
-                if ( menu.display_nav_stats ) { info.write_nav_stats_ascii(); }
-                if ( menu.display_act ) { info.write_actuator_out_ascii(); }
-            }
-        }
 
-        // 10 second heartbeat console output
-        if ( heartbeat.update() ) {
-            if ( imu_mgr.gyros_calibrated == 2 ) {
-                info.write_status_info_ascii();
-                info.write_power_ascii();
-                float elapsed_sec = (AP_HAL::millis() - tempTimer) / 1000.0;
-                console->printf("Available mem: %d bytes\n",
-                                status_node.getUInt("available_memory"));
-                console->printf("Performance = %.1f hz\n", counter/elapsed_sec);
-                //PropertyNode("/").pretty_print();
-                console->printf("\n");
-
-#if 0
-                // system info
-                ExpandingString dma_info {};
-                ExpandingString mem_info {};
-                ExpandingString uart_info {};
-                ExpandingString thread_info {};
-                hal.util->dma_info(dma_info);
-                hal.util->mem_info(mem_info);
-                hal.util->uart_info(uart_info);
-                hal.util->thread_info(thread_info);
-                console->printf("dma info:\n%s\n", dma_info.get_string());
-                console->printf("mem info:\n%s\n", mem_info.get_string());
-                console->printf("uart info:\n%s\n", uart_info.get_string());
-                // console->printf("thread info:\n%s\n", thread_info.get_string());
-#endif
-            }
-        }
-        
         // airdata
         airdata.update();
 
@@ -251,7 +196,8 @@ void loop() {
         // status
         status_node.setUInt("available_memory", hal.util->available_memory());
 
-        counter++;
+        // comms
+        comms_mgr.update();
     }
 }
 
