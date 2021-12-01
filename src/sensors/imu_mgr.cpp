@@ -149,6 +149,7 @@ void imu_mgr_t::update() {
     imu_node.setDouble("hy", mags_cal(1));
     imu_node.setDouble("hz", mags_cal(2));
     imu_node.setDouble("temp_C", temp_C);
+    imu_node.setUInt("gyros_calibrated", gyros_calibrated);
 
     calib_accels.update();      // run if requested
 }
