@@ -1,3 +1,5 @@
+#pragma once
+
 #include "props2.h"
 
 class menu_t {
