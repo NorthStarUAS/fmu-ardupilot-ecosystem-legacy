@@ -31,14 +31,15 @@ void imu_mgr_t::set_strapdown_calibration() {
         }
     }
     
-    console->printf("IMU strapdown calibration matrix:\n");
+    printf("IMU strapdown calibration matrix:\n");
     for ( int i = 0; i < 3; i++ ) {
-        console->printf("  ");
+        printf("  ");
         for ( int j = 0; j < 3; j++ ) {
-            console->printf("%.4f ", strapdown(i,j));
+            printf("%.4f ", strapdown(i,j));
         }
-        console->printf("\n");
+        printf("\n");
     }
+    hal.scheduler->delay(200);
 }
 
 // update the mag calibration matrix from the config structur
@@ -50,14 +51,15 @@ void imu_mgr_t::set_accel_calibration() {
         }
     }
 
-    console->printf("Accelerometer affine matrix:\n");
+    printf("Accelerometer affine matrix:\n");
     for ( int i = 0; i < 4; i++ ) {
-        console->printf("  ");
+        printf("  ");
         for ( int j = 0; j < 4; j++ ) {
-            console->printf("%.4f ", accel_affine(i,j));
+            printf("%.4f ", accel_affine(i,j));
         }
-        console->printf("\n");
+        printf("\n");
     }
+    hal.scheduler->delay(200);
 }
 
 // update the mag calibration matrix from the config structur
@@ -69,14 +71,15 @@ void imu_mgr_t::set_mag_calibration() {
         }
     }
 
-    console->printf("Magnetometer affine matrix:\n");
+    printf("Magnetometer affine matrix:\n");
     for ( int i = 0; i < 4; i++ ) {
-        console->printf("  ");
+        printf("  ");
         for ( int j = 0; j < 4; j++ ) {
-            console->printf("%.4f ", mag_affine(i,j));
+            printf("%.4f ", mag_affine(i,j));
         }
-        console->printf("\n");
+        printf("\n");
     }
+    hal.scheduler->delay(200);
 }
 
 // configure the IMU settings and setup the ISR to aquire the data
