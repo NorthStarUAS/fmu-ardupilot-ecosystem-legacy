@@ -17,7 +17,7 @@ these modifications.
 More heavy modifications to support gremsy gimbal setup and optimal
 modes for our pointing use case.
 
-# Gremsy Notes
+## Gremsy Notes
 
 * Full gimbal must be powered on (not just the mount interface) to
   talk to it and read/write anything.
@@ -32,7 +32,7 @@ modes for our pointing use case.
   pointing mode (using pwm inputs.)
 
 
-# Pointing notes:
+## Pointing notes
 
 Put the gimbal in lock mode (holds position specified) otherwise will
 'follow' mount orientation smoothly.
