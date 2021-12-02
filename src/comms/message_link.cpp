@@ -8,7 +8,7 @@
 
 #include "setup_board.h"
 
-#include "nav_mgr.h"                    // reset ekf
+#include "nav/nav_mgr.h"                // reset ekf
 #include "nav/nav_constants.h"
 #include "sensors/imu_mgr.h"            // reset gyros
 #include "sensors/pilot.h"              // update_ap()

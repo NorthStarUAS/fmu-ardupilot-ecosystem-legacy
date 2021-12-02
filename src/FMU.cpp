@@ -9,7 +9,7 @@
 #include "comms/comms_mgr.h"
 #include "config.h"
 #include "led.h"
-#include "nav_mgr.h"
+#include "nav/nav_mgr.h"
 #include "props2.h"
 #include "sensors/airdata.h"
 #include "sensors/gps_mgr.h"
