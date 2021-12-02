@@ -14,22 +14,32 @@ Initially there is only interest in the SToRM32 driver (via mavlink)
 so that is all the code that has been migrated here and subjected to
 these modifications.
 
-# Notes
+More heavy modifications to support gremsy gimbal setup and optimal
+modes for our pointing use case.
+
+# Gremsy Notes
 
 * Full gimbal must be powered on (not just the mount interface) to
   talk to it and read/write anything.
 
-* Burns battery crazy fast
+* Pay careful attention to Gremsy cable pinout ... this is not a
+  standard drone-code cable pinout and tx/rx need to be crossed over.
 
 * Got the gSDK working with FTDI cable jumpered to COM2 on Gremsy
   (Gnd, Tx, Rx)
 
-* See if I can understand what linux sdk is doing that I'm not on the
-  pixhawk4
+* Must send mavlink HB at 1hz or gimbal will revert to default
+  pointing mode (using pwm inputs.)
+
 
 # Pointing notes:
 
-Put the gimbal in lock mode (holds position specified)
+Put the gimbal in lock mode (holds position specified) otherwise will
+'follow' mount orientation smoothly.
+
+Default 'lock' mode commands send pitch/roll angles to 'world'
+coordinates so you are depending on the gimbal's imu/ekf for pitch and
+roll angles which may or may not be that great.
 
 roll and pitch angles we send to gimbal are in ned frame as estimated
 by the gimbal.  We can compute ned azimuth and send that directly (we
