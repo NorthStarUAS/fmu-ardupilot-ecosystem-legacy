@@ -4,9 +4,9 @@
 
 #include "setup_board.h"
 #include "props2.h"
-#include "nav/nav_structs.h"
-#include "nav/ekf15.h"
-#include "nav/ekf15_mag.h"
+#include "nav_structs.h"
+#include "ekf15.h"
+#include "ekf15_mag.h"
 
 class nav_mgr_t {
     

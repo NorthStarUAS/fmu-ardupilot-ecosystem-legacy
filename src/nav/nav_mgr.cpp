@@ -1,7 +1,7 @@
 #include <math.h>
 
 #include "nav_mgr.h"
-#include "nav/nav_constants.h"  // R2D
+#include "nav_constants.h"  // R2D
 
 void nav_mgr_t::init() {
     config_nav_node = PropertyNode("/config/nav");
