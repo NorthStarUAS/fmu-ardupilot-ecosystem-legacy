@@ -37,7 +37,7 @@ private:
     vector<waypoint_t> active_route;
     vector<waypoint_t> standby_route;
     int current_wp = 0;
-    bool aquired = false;
+    bool acquired = false;
 
     double last_lon = 0.0;
     double last_lat = 0.0;

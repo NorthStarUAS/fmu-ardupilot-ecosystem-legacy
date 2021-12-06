@@ -239,32 +239,27 @@ float route_mgr_t::wind_heading_error( float current_crs_deg, float target_crs_d
     return hdg_error;
 }
 
-def update(dt):
-    global current_wp
-    global acquired
+void route_mgr_t::update( float dt ) {
+    reposition();  // check if home has changed and reposition if needed
+
+    string request = route_node.getString("route_request");
+    if ( request.length() ) {
+        string result = "";
+        if ( build_str(request) ) {
+            swap();
+            reposition(true);
+            result = "success: " + request;
+            dribble(true);
+        } else {
+            result = "failed: " + request;
+        }
+        route_node.setString("request_result", result.c_str());
+        route_node.setString("route_request", "");
+    }
     
-    reposition()
-
-    nav_course = 0.0
-    nav_dist_m = 0.0
-    direct_dist = 0.0
-
-    request = route_node.getString("route_request")
-    if len(request):
-        result = ""
-        if build_str(request):
-            swap()
-            reposition(force=true)
-            result = "success: " + request
-            dribble(reset=true)
-        else:
-            result = "failed: " + request
-        route_node.setString("request_result", result)
-        route_node.setString("route_request", "")
-
-    route_node.setInt("route_size", len(active_route))
-    if len(active_route) > 0:
-        if gps_node.getDouble("data_age") < 10.0:
+    route_node.setInt("route_size", active_route.size());
+    if ( active_route.size() > 0 ) {
+        if ( gps_node.getDouble("data_age") < 10.0 ) {
             // track current waypoint of route (only!) if we have
             // recent gps data
 
@@ -277,112 +272,116 @@ def update(dt):
             // given along with first_leg startup behavior, then
             // don't do that again, force some sort of sane route
             // parameters instead!
-            start_mode = route_node.getString("start_mode")
-            if start_mode == "first_leg" and current_wp == 0:
-                if len(active_route) > 1:
-                    current_wp += 1
-                else:
-                    route_node.setString("start_mode", "first_wpt")
-                    route_node.setString("follow_mode", "direct")
+            string start_mode = route_node.getString("start_mode");
+            if ( start_mode == "first_leg" and current_wp == 0 ) {
+                if ( active_route.size() > 1 ) {
+                    current_wp += 1;
+                } else {
+                    route_node.setString("start_mode", "first_wpt");
+                    route_node.setString("follow_mode", "direct");
+                }
+            }
+            
+            float L1_period = L1_node.getDouble("period");
+            float L1_damping = L1_node.getDouble("damping");
+            float gs_mps = vel_node.getDouble("groundspeed_ms");
+            float groundtrack_deg = orient_node.getDouble("groundtrack_deg");
+            float tas_kt = wind_node.getDouble("true_airspeed_kt");
+            float tas_mps = tas_kt * kt2mps;
 
-            L1_period = L1_node.getDouble("period")
-            L1_damping = L1_node.getDouble("damping")
-            gs_mps = vel_node.getDouble("groundspeed_ms")
-            groundtrack_deg = orient_node.getDouble("groundtrack_deg")
-            tas_kt = wind_node.getDouble("true_airspeed_kt")
-            tas_mps = tas_kt * kt2mps
-
-            prev = get_previous_wp()
-            wp = get_current_wp()
+            waypoint_t prev = get_previous_wp();
+            waypoint_t wp = get_current_wp();
 
             // compute direct-to course and distance
-            pos_lon = pos_node.getDouble("longitude_deg")
-            pos_lat = pos_node.getDouble("latitude_deg")
-            (direct_course, rev_course, direct_dist) = \
-                wgs84.geo_inverse( pos_lat, pos_lon, wp.lat_deg, wp.lon_deg )
+            double pos_lon = pos_node.getDouble("longitude_deg");
+            double pos_lat = pos_node.getDouble("latitude_deg");
+            double direct_course = 0.0;
+            double rev_course = 0.0;
+            double direct_dist = 0.0;
+            geo_inverse_wgs_84( pos_lat, pos_lon, wp.lat_deg, wp.lon_deg,
+                                &direct_course, &rev_course, &direct_dist );
             //print pos_lat, pos_lon, ":", wp.lat_deg, wp.lon_deg
             //print " course to:", direct_course, "dist:", direct_dist
 
             // compute leg course and distance
-            (leg_course, rev_course, leg_dist) = \
-                wgs84.geo_inverse( prev.lat_deg, prev.lon_deg,
-                                   wp.lat_deg, wp.lon_deg )
+            double leg_course = 0.0;
+            double leg_dist = 0.0;
+            geo_inverse_wgs_84( prev.lat_deg, prev.lon_deg,
+                                wp.lat_deg, wp.lon_deg,
+                                &leg_course, &rev_course, &leg_dist );
             //print prev.lat_deg, prev.lon_deg, " ", wp.lat_deg, wp.lon_deg
             //print " leg course:", leg_course, "dist:", leg_dist
 
             // difference between ideal (leg) course and direct course
-            angle = leg_course - direct_course
-            if angle < -180.0: angle += 360.0
-            elif angle > 180.0: angle -= 360.0
+            float angle = leg_course - direct_course;
+            if ( angle < -180.0 ) { angle += 360.0; }
+            if ( angle > 180.0 ) { angle -= 360.0; }
 
             // compute cross-track error
-            angle_rad = angle * d2r
-            xtrack_m = math.sin(angle_rad) * direct_dist
-            dist_m = math.cos(angle_rad) * direct_dist
+            float angle_rad = angle * d2r;
+            float xtrack_m = sin(angle_rad) * direct_dist;
+            float dist_m = cos(angle_rad) * direct_dist;
             // print("lc: %.1f  dc: %.1f  a: %.1f  xc: %.1f  dd: %.1f" % (leg_course, direct_course, angle, xtrack_m, direct_dist))
-            route_node.setDouble( "xtrack_dist_m", xtrack_m )
-            route_node.setDouble( "projected_dist_m", dist_m )
+            route_node.setDouble( "xtrack_dist_m", xtrack_m );
+            route_node.setDouble( "projected_dist_m", dist_m );
 
             // default distance for waypoint acquisition = direct
             // distance to the target waypoint.  This can be
             // overridden later by leg following and replaced with
             // distance remaining along the leg.
-            nav_dist_m = direct_dist
+            float nav_dist_m = direct_dist;
 
-            follow_mode = route_node.getString("follow_mode")
-            completion_mode = route_node.getString("completion_mode")
-            if follow_mode == "direct":
+            string follow_mode = route_node.getString("follow_mode");
+            string completion_mode = route_node.getString("completion_mode");
+            float nav_course = 0.0;
+            if ( follow_mode == "direct" ) {
                 // steer direct to
-                nav_course = direct_course
-            elif follow_mode == "xtrack_direct_hdg":
-                // cross track steering depricated.  See
-                // route_mgr.cxx in the historical archives for
-                // reference code.
-                pass
-            elif follow_mode == "xtrack_leg_hdg":
-                // cross track steering depricated.  See
-                // route_mgr.cxx in the historical archives for
-                // reference code.
-                pass
-            elif follow_mode == "leader":
+                nav_course = direct_course;
+            } else if ( follow_mode == "leader" ) {
                 // scale our L1_dist (something like a target heading
                 // gain) proportional to ground speed
-                L1_dist = (1.0 / math.pi) * L1_damping * L1_period * gs_mps
-                wangle = 0.0
-                if L1_dist < 1.0:
-                    // ground really small or negative (problem?!?)
-                    L1_dist = 1.0
-                if L1_dist <= abs(xtrack_m):
+                float L1_dist = (1.0 / M_PI) * L1_damping * L1_period * gs_mps;
+                float wangle = 0.0;
+                if ( L1_dist < 1.0 ) {
+                    // ground speed really small or negative (problem?!?)
+                    L1_dist = 1.0;
+                }
+                if ( L1_dist <= fabs(xtrack_m) ) {
                     // beyond L1 distance, steer as directly toward
                     // leg as allowed
-                    wangle = 0.0
-                else:
+                    wangle = 0.0;
+                } else {
                     // steer towards imaginary point projected onto
                     // the route leg L1_distance ahead of us
-                    wangle = math.acos(abs(xtrack_m) / L1_dist) * r2d
-                if wangle < 30.0: wangle = 30.0
-                if xtrack_m > 0.0:
-                    nav_course = direct_course + angle - 90.0 + wangle
-                else:
-                    nav_course = direct_course + angle + 90.0 - wangle
+                    wangle = acos(fabs(xtrack_m) / L1_dist) * r2d;
+                }
+                if ( wangle < 30.0 ) { wangle = 30.0; }
+                if ( xtrack_m > 0.0 ) {
+                    nav_course = direct_course + angle - 90.0 + wangle;
+                } else {
+                    nav_course = direct_course + angle + 90.0 - wangle;
+                }
                 // print("x: %.1f  dc: %.1f  a: %.1f  wa: %.1f  nc: %.1f" % (xtrack_m, direct_course, angle, wangle, nav_course))
-                if acquired:
-                    nav_dist_m = dist_m
-                else:
+                if ( acquired ) {
+                    nav_dist_m = dist_m;
+                } else {
                     // direct to first waypoint until we've
                     // acquired this route
-                    nav_course = direct_course
-                    nav_dist_m = direct_dist
+                    nav_course = direct_course;
+                    nav_dist_m = direct_dist;
+                }
 
                 // printf("direct=%.1f angle=%.1f nav=%.1f L1=%.1f xtrack=%.1f wangle=%.1f nav_dist=%.1f\n", direct_course, angle, nav_course, L1_dist, xtrack_m, wangle, nav_dist_m)
+            }
 
-            gs_mps = vel_node.getDouble("groundspeed_ms")
-            if gs_mps > 0.1 and abs(nav_dist_m) > 0.1:
-                wp_eta_sec = nav_dist_m / gs_mps
-            else:
-                wp_eta_sec = 999  // just any sorta big value
-            route_node.setDouble( "wp_eta_sec", wp_eta_sec )
-            route_node.setDouble( "wp_dist_m", direct_dist )
+            float wp_eta_sec = 0.0;
+            if ( gs_mps > 0.1 and fabs(nav_dist_m) > 0.1 ) {
+                wp_eta_sec = nav_dist_m / gs_mps;
+            } else {
+                wp_eta_sec = 9999;  // just any sorta big value
+            }
+            route_node.setDouble( "wp_eta_sec", wp_eta_sec );
+            route_node.setDouble( "wp_dist_m", direct_dist );
                 
             if nav_course < 0.0: nav_course += 360.0
             if nav_course > 360.0: nav_course -= 360.0
@@ -462,8 +461,8 @@ def update(dt):
             // if ( display_on ) {
             // printf("route dist = %0f\n", dist_remaining_m)
             // }
-    else:
-        pass
+        }
+    } else {
         // FIXME: we've been commanded to follow a route, but no
         // route has been defined.
 
@@ -472,6 +471,8 @@ def update(dt):
 
         // FIXME: need to go to circle mode somehow here!!!!
         // mission_mgr.request_task_circle()
-
+    }
+    
     // dribble active route into property tree
     dribble()
+}
