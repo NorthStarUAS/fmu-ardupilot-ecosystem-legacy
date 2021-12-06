@@ -2,6 +2,18 @@
 
 #include "waypoint.h"
 
+waypoint_t::waypoint_t( int mode, double coord1, double coord2 ) {
+    if ( mode == 0 ) {
+        absolute = false;
+        dist_m = coord1;
+        hdg_deg = coord2;
+    } else {
+        absolute = true;
+        lon_deg = coord1;
+        lat_deg = coord2;
+    }
+}
+
 void waypoint_t::build( PropertyNode config_node ) {
     if ( config_node.hasChild("lon_deg") and
          config_node.hasChild("lat_deg") ) {
