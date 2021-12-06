@@ -13,6 +13,7 @@ def build(bld):
               'src/comms/*.cpp',
               'src/control/*.cpp',
               'src/gimbal/*.cpp',
+              'src/guidance/*.cpp',
               'src/nav/*.cpp',
               'src/sensors/*.cpp',
               'src/state/*.cpp',
