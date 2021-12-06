@@ -4,10 +4,10 @@
 
 #include "circle_mgr.h"
 
-const double d2r = M_PI / 180.0;
-const double r2d = 180.0 / M_PI;
-const double sqrt_of_2 = sqrt(2.0);
-const double gravity = 9.81;         // m/sec^2
+static const double d2r = M_PI / 180.0;
+static const double r2d = 180.0 / M_PI;
+static const double sqrt_of_2 = sqrt(2.0);
+static const double gravity = 9.81;         // m/sec^2
 
 void circle_mgr_t::init() {
     circle_node = PropertyNode("/task/circle/active");
@@ -17,6 +17,7 @@ void circle_mgr_t::init() {
     route_node = PropertyNode("/task/route");
     L1_node = PropertyNode("/config/autopilot/L1_controller");
     targets_node = PropertyNode("/autopilot/targets");
+    
     // sanity check, set some conservative values if none are provided
     // in the autopilot config
     if ( L1_node.getDouble("bank_limit_deg") < 0.1 ) {
