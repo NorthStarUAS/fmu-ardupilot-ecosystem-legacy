@@ -2,6 +2,7 @@
 
 #include "util/strutils.h"
 #include "util/wgs84.h"
+#include "util/windtri.h"
 
 #include "route_mgr.h"
 
@@ -196,21 +197,26 @@ float route_mgr_t::get_remaining_distance_from_next_waypoint() {
 // match truth if the wind estimate has any error at all, but we care
 // about the relative heading error, so this function will produce the
 // "correct" heading error.
-def wind_heading_error( current_crs_deg, target_crs_deg ):
-    ws_kt = wind_node.getDouble("wind_speed_kt")
-    tas_kt = wind_node.getDouble("true_airspeed_kt")
-    wd_deg = wind_node.getDouble("wind_dir_deg")
-    (est_cur_hdg_deg, gs1_kt) = windtri.wind_course( ws_kt, tas_kt, wd_deg,
-                                                     current_crs_deg )
-    (est_nav_hdg_deg, gs2_kt) = windtri.wind_course( ws_kt, tas_kt, wd_deg,
-		                                     target_crs_deg )
+float route_mgr_t::wind_heading_error( float current_crs_deg, float target_crs_deg ) {
+    float ws_kt = wind_node.getDouble("wind_speed_kt");
+    float tas_kt = wind_node.getDouble("true_airspeed_kt");
+    float wd_deg = wind_node.getDouble("wind_dir_deg");
+    float est_cur_hdg_deg = 0.0;
+    float gs1_kt = 0.0;
+    float est_nav_hdg_deg = 0.0;
+    float gs2_kt = 0.0;
+    wind_course( ws_kt, tas_kt, wd_deg, current_crs_deg,
+                 &est_cur_hdg_deg, &gs1_kt );
+    wind_course( ws_kt, tas_kt, wd_deg, target_crs_deg,
+                 &est_nav_hdg_deg, &gs2_kt );
     // print("est cur body:", est_cur_hdg_deg, "est nav body:", est_nav_hdg_deg)
-    if est_cur_hdg_deg != None and est_nav_hdg_deg != None:
-        // life is good
+    float hdg_error = 0.0;
+    if ( gs1_kt > 0.0 and gs2_kt > 0.0 ) {
+        // life is good, we are flying faster than the wind and making progress
         // print " cur:", est_cur_hdg_deg, "gs1:", gs1_kt
         // print " nav:", est_nav_hdg_deg, "gs2:", gs2_kt
-        hdg_error = est_cur_hdg_deg - est_nav_hdg_deg
-    else:
+        hdg_error = est_cur_hdg_deg - est_nav_hdg_deg;
+    } else {
 	// Yikes, course cannot be flown, wind too strong!  Compute a
 	// heading error relative to the wind "from" direction.  This
 	// will cause the aircraft to point it's nose into the wind and
@@ -224,12 +230,14 @@ def wind_heading_error( current_crs_deg, target_crs_deg ):
 
         // point to wind (will probably slide laterally due to some
         // inevitable assymetries in bank angle verus turn rate):
-        hdg_error = orient_node.getDouble("heading_deg") - wd_deg
-
-    if hdg_error < -180: hdg_error += 360
-    if hdg_error > 180: hdg_error -= 360
+        hdg_error = orient_node.getDouble("heading_deg") - wd_deg;
+    }
+    if ( hdg_error < -180 ) { hdg_error += 360; }
+    if ( hdg_error > 180 ) { hdg_error -= 360; }
     // print " body err:", hdg_error
-    return hdg_error
+    
+    return hdg_error;
+}
 
 def update(dt):
     global current_wp
