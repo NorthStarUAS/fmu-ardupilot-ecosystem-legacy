@@ -2,10 +2,9 @@
 
 #include "windtri.h"
 
-static const double pi = 3.141592653589793;
-static const double d2r = pi / 180.0;
-static const double r2d = 180.0 / pi;
-static const double m2pi = pi * 2.0;
+static const double d2r = M_PI / 180.0;
+static const double r2d = 180.0 / M_PI;
+static const double m2pi = M_PI * 2.0;
 
 // Given a wind speed estimate, true airspeed estimate, wind direction
 // estimate, and a desired course to fly, then compute a true heading to
@@ -19,8 +18,8 @@ void wind_course( float ws_kt, float tas_kt, float wd_deg,
     float wd = wd_deg * d2r;
     float crs = crs_deg * d2r;
     float hd = 0.0;
-    *gs_kt = 0.0;
-    *hd_deg = 0.0;
+    *gs_kt = tas_kt;
+    *hd_deg = crs_deg;
     if ( tas_kt > 0.1 ) {
 	// printf("ws=%.1f tas=%.1f wd=%.1f crs=%.1f\n", ws_kt, tas_kt, wd_deg, crs_deg);
         // printf("wd=%.4f crs=%.4f\n", wd, crs);
@@ -31,8 +30,10 @@ void wind_course( float ws_kt, float tas_kt, float wd_deg,
 	if ( fabs(swc) > 1.0 ) {
 	    // course cannot be flown, wind too strong
 	    // point nose into estimated wind and "kite" as best we can
-	    hd = wd + pi;
+	    hd = wd + M_PI;
 	    if ( hd > m2pi ) { hd -= m2pi; }
+            // estimate negative ground speed
+            *gs_kt = ws_kt - tas_kt;
 	} else {
 	    hd = crs + asin(swc);
 	    if ( hd < 0.0 ) { hd += m2pi; }
