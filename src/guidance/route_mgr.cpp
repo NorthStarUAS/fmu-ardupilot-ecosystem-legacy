@@ -383,80 +383,84 @@ void route_mgr_t::update( float dt ) {
             route_node.setDouble( "wp_eta_sec", wp_eta_sec );
             route_node.setDouble( "wp_dist_m", direct_dist );
                 
-            if nav_course < 0.0: nav_course += 360.0
-            if nav_course > 360.0: nav_course -= 360.0
-
-            targets_node.setDouble( "groundtrack_deg", nav_course )
+            if ( nav_course < 0.0 ) { nav_course += 360.0; }
+            if ( nav_course > 360.0 ) { nav_course -= 360.0; }
+            targets_node.setDouble( "groundtrack_deg", nav_course );
 
             // allow a crude fudge factor for non-straight airframes or
             // imu mounting errors.  This is essentially the bank angle
             // that yields zero turn rate
-            bank_bias_deg = L1_node.getDouble("bank_bias_deg");
-
-            // target bank angle computed here
-            target_bank_deg = 0.0
+            float bank_bias_deg = L1_node.getDouble("bank_bias_deg");
 
             // heading error is computed with wind triangles so this is
             // the actual body heading error, not the ground track
             // error, thus Vomega is computed with tas_mps, not gs_mps
-            omegaA = sqrt_of_2 * math.pi / L1_period
+            float omegaA = sqrt_of_2 * M_PI / L1_period;
             //VomegaA = gs_mps * omegaA
             //course_error = orient_node.getDouble("groundtrack_deg") - nav_course
-            VomegaA = tas_mps * omegaA
+            float VomegaA = tas_mps * omegaA;
             // print "gt:", groundtrack_deg, "nc:", nav_course, "error:", groundtrack_deg - nav_course
-            hdg_error = wind_heading_error(groundtrack_deg, nav_course)
+            float hdg_error = wind_heading_error(groundtrack_deg, nav_course);
             // clamp to +/-90 so we still get max turn input when flying directly away from the heading.
-            if hdg_error < -90.0: hdg_error = -90.0
-            if hdg_error > 90.0: hdg_error = 90.0
-            targets_node.setDouble( "wind_heading_error_deg", hdg_error )
+            if ( hdg_error < -90.0 ) { hdg_error = -90.0; }
+            if ( hdg_error > 90.0 ) { hdg_error = 90.0; }
+            targets_node.setDouble( "wind_heading_error_deg", hdg_error );
 
-            accel = 2.0 * math.sin(hdg_error * d2r) * VomegaA
+            // target bank angle computed here
+            float accel = 2.0 * sin(hdg_error * d2r) * VomegaA;
 
-            target_bank_deg = -math.atan( accel / gravity )*r2d + bank_bias_deg
+            float target_bank_deg = -atan(accel / gravity)*r2d + bank_bias_deg;
             
-            bank_limit_deg = L1_node.getDouble("bank_limit_deg")
-            if target_bank_deg < -bank_limit_deg + bank_bias_deg:
-                target_bank_deg = -bank_limit_deg + bank_bias_deg
-            if target_bank_deg > bank_limit_deg + bank_bias_deg:
-                target_bank_deg = bank_limit_deg + bank_bias_deg
-            targets_node.setDouble( "roll_deg", target_bank_deg )
+            float bank_limit_deg = L1_node.getDouble("bank_limit_deg");
+            if ( target_bank_deg < -bank_limit_deg + bank_bias_deg ) {
+                target_bank_deg = -bank_limit_deg + bank_bias_deg;
+            }
+            if ( target_bank_deg > bank_limit_deg + bank_bias_deg ) {
+                target_bank_deg = bank_limit_deg + bank_bias_deg;
+            }
+            targets_node.setDouble( "roll_deg", target_bank_deg );
 
             // estimate distance remaining to completion of route
-            if dist_valid:
-                dist_remaining_m = nav_dist_m + \
-                                   get_remaining_distance_from_next_waypoint()
-                route_node.setDouble("dist_remaining_m", dist_remaining_m)
-
+            if ( dist_valid ) {
+                float dist_remaining_m = nav_dist_m +
+                    get_remaining_distance_from_next_waypoint();
+                route_node.setDouble("dist_remaining_m", dist_remaining_m);
+            }
             //if comms_node.getBool("display_on"):
             //    print "next leg: %.1f  to end: %.1f  wpt=%d of %d" % (nav_dist_m, dist_remaining_m, current_wp, len(active_route))
 
             // logic to mark completion of leg and move to next leg.
-            if completion_mode == "loop":
-                if wp_eta_sec < 1.0:
-                    acquired = true
-                    increment_current_wp()
-            elif completion_mode == "circle_last_wpt":
-                if wp_eta_sec < 1.0:
-                    acquired = true
-                    if current_wp < len(active_route) - 1:
-                        increment_current_wp()
-                    else:
-                        wp = get_current()
+            if ( completion_mode == "loop" ) {
+                if ( wp_eta_sec < 1.0 ) {
+                    acquired = true;
+                    increment_wp();
+                }
+            } else if ( completion_mode == "circle_last_wpt" ) {
+                if ( wp_eta_sec < 1.0 ) {
+                    acquired = true;
+                    if ( current_wp < active_route.size() - 1 ) {
+                        increment_wp();
+                    } else {
+                        wp = get_current_wp();
                         // FIXME: NEED TO GO TO CIRCLE MODE HERE SOME HOW!!!
                         // mission_mgr.request_task_circle(wp.get_target_lon(),
                         //   wp.get_target_lat(),
                         //   0.0, 0.0)
-            elif completion_mode == "extend_last_leg":
-                if wp_eta_sec < 1.0:
-                    acquired = true
-                    if current_wp < len(active_route) - 1:
-                        increment_current_wp()
-                    else:
+                    }
+                }
+            } else if ( completion_mode == "extend_last_leg" ) {
+                if ( wp_eta_sec < 1.0 ) {
+                    acquired = true;
+                    if ( current_wp < active_route.size() - 1 ) {
+                        increment_wp();
+                    } else {
                         // follow the last leg forever
-                        pass
-
+                    }
+                }
+            }
+            
             // publish current target waypoint
-            route_node.setInt("target_waypoint_idx", current_wp)
+            route_node.setInt("target_waypoint_idx", current_wp);
 
             // if ( display_on ) {
             // printf("route dist = %0f\n", dist_remaining_m)
@@ -474,5 +478,5 @@ void route_mgr_t::update( float dt ) {
     }
     
     // dribble active route into property tree
-    dribble()
+    dribble();
 }
