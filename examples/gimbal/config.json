@@ -16,6 +16,9 @@
     "airdata": {
         "pitot_calibrate_factor": 1.0
     },
+    "comms": {
+	"include": "comms.json"
+    },
     "imu": {
 	"calibration": {
 	    "include": "imu-calibration.json"
