@@ -20,7 +20,8 @@ public:
     void init(uint8_t port, uint32_t baud, string relay_name);
     void update();
     void read_commands();
-    
+    bool is_inited() { return saved_port >= 0; }
+  
 private:
     
     PropertyNode config_nav_node;
@@ -42,7 +43,7 @@ private:
     PropertyNode targets_node;
     PropertyNode task_node;
 
-    uint8_t saved_port = 0;
+    int saved_port = -1;
     uint32_t gps_last_millis = 0;
     uint32_t bytes_last_millis = 0;
     uint16_t last_command_seq_num = 0;

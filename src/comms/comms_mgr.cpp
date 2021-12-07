@@ -20,6 +20,8 @@ void comms_mgr_t::init() {
             printf("comms config error in gcs link section!\n");
             hal.scheduler->delay(500);
         }
+    } else {
+        printf("No gcs comms link configured.\n");
     }
     if ( config_node.hasChild("host") ) {
         PropertyNode host_node = config_node.getChild("host");
@@ -31,21 +33,29 @@ void comms_mgr_t::init() {
             printf("comms config error in host link section!\n");
             hal.scheduler->delay(500);
         }
+    } else {
+        printf("No host comms link configured.\n");
     }
     
     info.init();
 
     menu.init();
+    
+    hal.scheduler->delay(100);
 }
 
 void comms_mgr_t::update() {
     counter++;
-    
-    gcs_link.read_commands();
-    //host_link.read_commands();
 
-    gcs_link.update();
-    //host_link.update();
+    if ( gcs_link.is_inited() ) {
+        gcs_link.read_commands();
+        gcs_link.update();
+    }
+
+    if ( host_link.is_inited() ) {
+        host_link.read_commands();
+	host_link.update();
+    }
     
     // human console interaction begins when gyros finish calibrating
     if ( imu_node.getUInt("gyros_calibrated") != 2 ) {
