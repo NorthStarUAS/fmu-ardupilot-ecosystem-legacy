@@ -33,7 +33,7 @@ void wind_course( float ws_kt, float tas_kt, float wd_deg,
 	    hd = wd + M_PI;
 	    if ( hd > m2pi ) { hd -= m2pi; }
             // estimate negative ground speed
-            *gs_kt = ws_kt - tas_kt;
+            *gs_kt = tas_kt - ws_kt;
 	} else {
 	    hd = crs + asin(swc);
 	    if ( hd < 0.0 ) { hd += m2pi; }
