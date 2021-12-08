@@ -8,6 +8,7 @@
 
 #include "comms/comms_mgr.h"
 #include "config.h"
+#include "guidance/guidance_mgr.h"
 #include "led.h"
 #include "nav/nav_mgr.h"
 #include "props2.h"
@@ -63,6 +64,7 @@ static comms_mgr_t comms_mgr;
 static config_t config;
 static airdata_t airdata;
 static gps_mgr_t gps_mgr;
+static guidance_mgr_t guidance_mgr;
 static led_t led;
 static power_t power;
 static state_mgr_t state_mgr;
@@ -131,6 +133,9 @@ void setup() {
 
     // power sensing
     power.init();
+
+    // guidance
+    guidance_mgr.init();
     
     // led status
     led.init();
@@ -152,6 +157,8 @@ void setup() {
 
 // main loop
 void loop() {
+    const float dt = 1.0 / MASTER_HZ;
+    
     if ( maintimer.update() ) {
         status_node.setUInt("main_loop_timer_misses", maintimer.misses);
         
@@ -174,6 +181,9 @@ void loop() {
         // read power values
         power.update();
 
+        // guidance
+        guidance_mgr.update(dt);
+        
         if ( pilot.read() ) {
             bool ap_state = pilot_node.getBool("ap_enabled");
             static bool last_ap_state = ap_state;
