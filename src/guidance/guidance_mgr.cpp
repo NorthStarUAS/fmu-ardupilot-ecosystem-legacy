@@ -1,3 +1,7 @@
+// note: circle_mgr and route_mgr exist in the global shared space.
+#include "circle_mgr.h"
+#include "route_mgr.h"
+
 #include "guidance_mgr.h"
 
 void guidance_mgr_t::init() {

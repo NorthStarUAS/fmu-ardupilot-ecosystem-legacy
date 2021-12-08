@@ -8,6 +8,7 @@
 
 #include "setup_board.h"
 
+#include "guidance/route_mgr.h"
 #include "nav/nav_mgr.h"                // reset ekf
 #include "nav/nav_constants.h"
 #include "sensors/imu_mgr.h"            // reset gyros
@@ -24,7 +25,6 @@ void message_link_t::init(uint8_t port, uint32_t baud, string relay_name) {
     config_nav_node = PropertyNode("/config/nav"); // after config.init()
     effectors_node = PropertyNode("/effectors");
     nav_node = PropertyNode("/filters/nav");
-    active_node = PropertyNode("/task/route/active");
     airdata_node = PropertyNode("/sensors/airdata");
     ap_node = PropertyNode("/autopilot");
     circle_node = PropertyNode("/task/circle/active");
@@ -188,26 +188,20 @@ bool message_link_t::parse_message( uint8_t id, uint8_t *buf, uint8_t message_si
             task_node.setDouble("flight_timer", mission.flight_timer);
             task_node.setString("current_task", mission.task_name);
             task_node.setInt("task_attribute", mission.task_attribute);
-            active_node.setInt("route_size", mission.route_size);
             route_node.setInt("target_waypoint_idx", mission.target_waypoint_idx);
             double wp_lon = mission.wp_longitude_raw / 10000000.0l;
             double wp_lat = mission.wp_latitude_raw / 10000000.0l;
             int wp_index = mission.wp_index;
             PropertyNode wp_node;
-            if ( mission.route_size != active_node.getInt("route_size") ) {
+            if ( mission.route_size != route_mgr.get_active_size() ) {
                 // route size change, zero all the waypoint coordinates
-                for ( int i = 0; i < active_node.getInt("route_size"); i++ ) {
-                    string wp_path = "wpt/" + std::to_string(i);
-                    wp_node = active_node.getChild(wp_path.c_str());
-                    wp_node.setDouble("longitude_deg", 0);
-                    wp_node.setDouble("latitude_deg", 0);
+                route_mgr.set_active_size( mission.route_size );
+                for ( int i = 0; i < mission.route_size; i++ ) {
+                    route_mgr.set_wp( i, waypoint_t() );
                 }
             }
             if ( wp_index < mission.route_size ) {
-                string wp_path = "wpt/" + std::to_string(wp_index);
-                wp_node = active_node.getChild(wp_path.c_str());
-                wp_node.setDouble("longitude_deg", wp_lon);
-                wp_node.setDouble("latitude_deg", wp_lat);
+                route_mgr.set_wp( wp_index, waypoint_t(1, wp_lon, wp_lat) );
             } else if ( wp_index == 65534 ) {
                 circle_node.setDouble("longitude_deg", wp_lon);
                 circle_node.setDouble("latitude_deg", wp_lat);

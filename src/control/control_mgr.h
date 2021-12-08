@@ -24,7 +24,6 @@ private:
     PropertyNode flight_node;
     PropertyNode engine_node;
     PropertyNode route_node;
-    PropertyNode active_node;
     PropertyNode home_node;
     PropertyNode circle_node;
     PropertyNode pos_node;

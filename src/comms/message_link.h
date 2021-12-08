@@ -26,7 +26,6 @@ private:
     
     PropertyNode config_nav_node;
     PropertyNode nav_node;
-    PropertyNode active_node;
     PropertyNode airdata_node;
     PropertyNode ap_node;
     PropertyNode circle_node;

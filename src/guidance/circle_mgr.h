@@ -15,3 +15,5 @@ private:
     PropertyNode L1_node;
     PropertyNode targets_node;
 };
+
+extern circle_mgr_t circle_mgr;

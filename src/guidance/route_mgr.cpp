@@ -18,7 +18,6 @@ void route_mgr_t::init() {
     vel_node = PropertyNode("/velocity");
     orient_node = PropertyNode("/orientation");
     home_node = PropertyNode("/task/home");
-    active_route_node = PropertyNode("/task/route/active");
     L1_node = PropertyNode("/config/autopilot/L1_controller");
     targets_node = PropertyNode("/autopilot/targets");
     gps_node = PropertyNode("/sensors/gps");
@@ -109,32 +108,24 @@ void route_mgr_t::increment_wp() {
     }
 }
 
-// fixme ... we don't want to store the entire route in the property
-// tree due to memory inefficiencies
+// fixme: need a more representative method name
 void route_mgr_t::dribble( bool reset ) {
     if ( reset ) {
         wp_counter = 0;
         dist_valid = false;
     }
         
-    // dribble active route into the active_node tree (one waypoint
-    // per interation to keep the load consistent and light.)
+    // compute one route leg distance per call to spread out expensive
+    // wgs84 math over multiple frames.
     int route_size = active_route.size();
-    active_route_node.setInt("route_size", route_size);
     if ( route_size > 0 ) {
         if ( wp_counter >= route_size ) {
             wp_counter = 0;
             dist_valid = true;
         }
-        waypoint_t wp = active_route[wp_counter];
-        // fixme: do we want to do a PropertyNode() lookup here?
-        string wp_str = "wpt/" + std::to_string(wp_counter);
-        PropertyNode wp_node = active_route_node.getChild(wp_str.c_str());
-        wp_node.setDouble("longitude_deg", wp.lon_deg);
-        wp_node.setDouble("latitude_deg", wp.lat_deg);
-
         if ( wp_counter < route_size - 1 ) {
             // compute leg course and distance
+            waypoint_t wp = active_route[wp_counter];
             waypoint_t next = active_route[wp_counter+1];
             double leg_course;
             double rev_course;
@@ -480,3 +471,6 @@ void route_mgr_t::update( float dt ) {
     // dribble active route into property tree
     dribble();
 }
+
+// single global instance of route_mgr
+route_mgr_t route_mgr;
