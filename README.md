@@ -73,7 +73,7 @@ June 2021.
   lab 15-state EKF (and magnetometer version.)  Designed to run
   continuously and ubiquitously.
 
-* [in process] On board HIL sim physics engine reduces the number of
+* [in process] Onboard HIL sim physics engine reduces the number of
   parts to assemble in your house of cards to do HIL testings.
 
 ## Some major bullet point todo list items:
