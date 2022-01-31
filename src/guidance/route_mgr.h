@@ -17,11 +17,7 @@ public:
     waypoint_t get_current_wp();
     waypoint_t get_previous_wp();
     void increment_wp();
-    void set_wp( uint16_t i, waypoint_t wp ) {
-        if ( i < active_route.size() ) {
-            active_route[i] = wp;
-        }
-    }
+    void set_wp( uint16_t i, waypoint_t wp );
     void dribble( bool reset=false );
     void reposition( bool force=false );
     float get_remaining_distance_from_next_waypoint();

@@ -108,6 +108,12 @@ void route_mgr_t::increment_wp() {
     }
 }
 
+void route_mgr_t::set_wp( uint16_t i, waypoint_t wp ) {
+    if ( i < active_route.size() ) {
+        active_route[i] = wp;
+    }
+}
+
 // fixme: need a more representative method name
 void route_mgr_t::dribble( bool reset ) {
     if ( reset ) {
