@@ -34,27 +34,30 @@ June 2021.
     integrated script modules called from anywhere in the code.
     
 * Thread-less design: grand loop structure. (excepting the background
-  service and driver threads that are part of AP_HAL.)
+  service and driver threads that are part of the underlying AP_HAL
+  libraries.)
 
-* Big processor / little processor architecture moves important
-  functionality to the host (big) computer.  Simultaneously enables a
-  much simpler and lighter weight "little" processor.  Dividing the
-  workload between two systems leads to two simpler apps versus one
-  single very complicated monolithic app.
+* [depricating] Big processor / little processor architecture moves
+  important functionality to the host (big) computer.  Simultaneously
+  enables a much simpler and lighter weight "little" processor.
+  Dividing the workload between two systems leads to two simpler apps
+  versus one single very complicated monolithic app.  However, I am
+  actually moving more nad more functionality to the 'little'
+  processor because it is not so little on modern flight controllers.
 
-* Extensive use of python and scripted tasks on the big processor where
-  python is supported.
+* [deprecating] Extensive use of python and scripted tasks on the big
+  processor where python is supported.
 
 * Accel calibration procedure that generates an affine matrix
   (encapsulates rotation, bias, and scale errors in a single step.)
 
-* Dynamic accelerometer temperature calibration. Trusts the EKF's
+* [todo?] Dynamic accelerometer temperature calibration. Trusts the EKF's
   accel bias estimates and fits a model of those estimates vs
   temperature over time.
 
-* Dynamic compass calibration.  Trusts the EKF's attitude estimate and
-  world magnetic model to fit a compass calibration model
-  incrementally over time.
+* [definitely not done, but todo?] Dynamic compass calibration.
+  Trusts the EKF's attitude estimate and world magnetic model to fit a
+  compass calibration model incrementally over time.
 
 * Nested json configuration system with an extension to allow one
   config file to include sub-configuration files.  (Compared to a flat
@@ -69,7 +72,10 @@ June 2021.
 * University of Minnesota, Aerospace Engineering and Mechanics, UAV
   lab 15-state EKF (and magnetometer version.)  Designed to run
   continuously and ubiquitously.
-  
+
+* [in process] On board HIL sim physics engine reduces the number of
+  parts to assemble in your house of cards to do HIL testings.
+
 ## Some major bullet point todo list items:
 
 - need to test drive ekf15_mag with some sort of preliminary mag
