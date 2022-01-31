@@ -16,6 +16,7 @@ def build(bld):
               'src/guidance/*.cpp',
               'src/nav/*.cpp',
               'src/sensors/*.cpp',
+              'src/sim/*.cpp',
               'src/state/*.cpp',
               'src/util/*.cpp' ]
         ),
