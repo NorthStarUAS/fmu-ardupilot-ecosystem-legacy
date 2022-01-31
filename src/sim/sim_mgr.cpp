@@ -26,14 +26,14 @@ void sim_mgr_t::init() {
         }
     }
     
-    printf("A state transition matrix:\n");
-    for ( int i = 0; i < len; i++ ) {
-        printf("  ");
-        for ( int j = 0; j < len; j++ ) {
-            printf("%.3f ", A(i,j));
-        }
-        printf("\n");
-    }
+    printf("A state transition matrix: %d x %d\n", len, len);
+    // for ( int i = 0; i < len; i++ ) {
+    //     printf("  ");
+    //     for ( int j = 0; j < len; j++ ) {
+    //         printf("%.3f ", A(i,j));
+    //     }
+    //     printf("\n");
+    // }
     hal.scheduler->delay(200);
 }
 
