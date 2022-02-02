@@ -18,6 +18,8 @@ June 2021.
 
 ## Demonstrated design ideas
 
+* Full port of the Eigen3 matrix, vector, quaternion library.
+
 * Property tree: a hierarchical data structure composed of nested
   arrays & dicts.
   * Implements a cooperative publish/subscribe system.
@@ -32,10 +34,28 @@ June 2021.
   * Eliminates most initialization order dependencies.
   * Supports a single interface (via the shared property tree) to
     integrated script modules called from anywhere in the code.
-    
-* Thread-less design: grand loop structure. (excepting the background
-  service and driver threads that are part of the underlying AP_HAL
-  libraries.)
+
+* Nested JSON configuration files stored on the SD card (versus the
+  clunky flat eeprom system in ardupilot and px4.)
+* Nested json configuration system with an extension to allow one
+  config file to include sub-configuration files.  (Compared to a flat
+  array of config parameters, configuration can include strings and
+  arrays as well.)
+
+* Threadless design (grand loop structure.)  The underlying arudpilot
+  libraries still use threads extensively.
+
+* Simple message header generation (json definition file) for
+  communicating with host computer and logging.  Supports C++ and
+  python compatible messages.  It is like a mavlink-lite, and very
+  lite.
+
+* University of Minnesota, Aerospace Engineering and Mechanics, UAV
+  lab 15-state EKF (and magnetometer version.)  Designed to run
+  continuously and ubiquitously.
+
+* [in process] Onboard HIL sim physics engine reduces the number of
+  parts to assemble in your house of cards to do HIL testings.
 
 * [depricating] Big processor / little processor architecture moves
   important functionality to the host (big) computer.  Simultaneously
@@ -58,23 +78,6 @@ June 2021.
 * [definitely not done, but todo?] Dynamic compass calibration.
   Trusts the EKF's attitude estimate and world magnetic model to fit a
   compass calibration model incrementally over time.
-
-* Nested json configuration system with an extension to allow one
-  config file to include sub-configuration files.  (Compared to a flat
-  array of config parameters, configuration can include strings and
-  arrays as well.)
-
-* Simple message header generation (json definition file) for
-  communicating with host computer and logging.  Supports C++ and
-  python compatible messages.  It is like a mavlink-lite, and very
-  lite.
-
-* University of Minnesota, Aerospace Engineering and Mechanics, UAV
-  lab 15-state EKF (and magnetometer version.)  Designed to run
-  continuously and ubiquitously.
-
-* [in process] Onboard HIL sim physics engine reduces the number of
-  parts to assemble in your house of cards to do HIL testings.
 
 ## Some major bullet point todo list items:
 
