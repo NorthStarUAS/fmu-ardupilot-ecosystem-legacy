@@ -24,6 +24,7 @@ void sim_mgr_t::init() {
 
     // populate the A state transition matrix
     num_states = sim_node.getLen("parameters");
+    dt = sim_node.getDouble("dt");
     A.resize(num_states, num_states);
     for ( int i = 0; i < num_states; i++ ) {
         for ( int j = 0; j < num_states; j++ ) {
@@ -134,7 +135,7 @@ void sim_mgr_t::to_state_vector() {
                 printf("  %s clipped to: %.3f", field.c_str(), val);
             }
         }
-        state[i] = val;
+        state(i) = val;
     }
 }
 
@@ -151,29 +152,33 @@ void sim_mgr_t::from_state_vector( Eigen::MatrixXf next_state ) {
             continue;
         }
         if ( field == "bax" ) {
-            accel_body[0] = next_state[i];
+            accel_body(0) = next_state(i);
         } else if ( field == "bay" ) {
-            accel_body[1] = next_state[i];
+            accel_body(1) = next_state(i);
         } else if ( field == "baz" ) {
-            accel_body[2] = next_state[i];
+            accel_body(2) = next_state(i);
         } else if ( field == "airspeed" ) {
-            set_airdata( next_state[i] );
+            set_airdata( next_state(i) );
         } else if ( field == "bvx" ) {
-            vel_body[0] = next_state[i];
+            vel_body(0) = next_state(i);
         } else if ( field == "bvy" ) {
-            vel_body[1] = next_state[i];
+            vel_body(1) = next_state(i);
         } else if ( field == "bvz" ) {
-            vel_body[2] = next_state[i];
+            vel_body(2) = next_state(i);
         } else if ( field == "p" ) {
-            p = next_state[i];
+            p = next_state(i);
         } else if ( field == "q" ) {
-            q = next_state[i];
+            q = next_state(i);
         } else if ( field == "r" ) {
-            r = next_state[i];;
+            r = next_state(i);;
         } else {
             printf("Unknown field requested: %s gack!", field.c_str());
         }
     }
+}
+
+inline float sign(float x) {
+    return (x > 0.0) - (x < 0.0);
 }
 
 void sim_mgr_t::update() {
@@ -183,61 +188,72 @@ void sim_mgr_t::update() {
     from_state_vector(next);
         
     // update body frame velocity from accel estimates (* dt)
-            self.bvx += result["bax"] * self.dt
-            self.bvy += result["bay"] * self.dt
-            self.bvz += result["baz"] * self.dt
-            // force bvx to be positive and non-zero (no tail slides here)
-            if self.bvx < 0.1:
-                self.bvx = 0.1
-            // try to clamp alpha/beta from getting crazy
-            if abs(self.bvy / self.bvx) > 0.1:
-                self.bvy = np.sign(self.bvy) * abs(self.bvx) * 0.1
-            if abs(self.bvz / self.bvx) > 0.1:
-                self.bvz = np.sign(self.bvz) * abs(self.bvx) * 0.1
-            // scale to airspeed
-            v = np.array( [self.bvx, self.bvy, self.bvz] )
-            v *= (self.airspeed_mps / np.linalg.norm(v))
-            self.bvx = v[0]
-            self.bvy = v[1]
-            self.bvz = v[2]
-            self.state_mgr.set_body_velocity( v[0], v[1], v[2] )
-            self.alpha = atan2( self.bvz, self.bvx )
-            self.beta = atan2( -self.bvy, self.bvx )
+    vel_body(0) += accel_body[0] * dt;
+    vel_body(1) += accel_body[1] * dt;
+    vel_body(2) += accel_body[2] * dt;
+    
+    // force bvx to be positive and non-zero (no tail slides here)
+    if ( vel_body[0] < 0.1 ) { vel_body[1] = 0.1; }
+    // try to clamp alpha/beta from getting crazy
+    if ( fabs(vel_body[1] / vel_body[0]) > 0.1 ) {
+        vel_body(1) = sign(vel_body[1]) * fabs(vel_body[0]) * 0.1;
+    }
+    if ( fabs(vel_body[2] / vel_body[0]) > 0.1 ) {
+        vel_body(2) = sign(vel_body[2]) * fabs(vel_body[0]) * 0.1;
+    }
+    // scale to airspeed
+    vel_body *= (airspeed_mps / vel_body.norm());
+    alpha = atan2( vel_body[2], vel_body[0] );
+    beta = atan2( -vel_body[1], vel_body[0] );
         
-        // update attitude
-        rot_body = quaternion.eul2quat(self.p * self.dt,
-                                       self.q * self.dt,
-                                       self.r * self.dt)
-        self.ned2body = quaternion.multiply(self.ned2body, rot_body)
-        self.phi_rad, self.the_rad, self.psi_rad = quaternion.quat2eul(self.ned2body)
-        self.state_mgr.set_orientation(self.phi_rad, self.the_rad, self.psi_rad)
+    // update attitude
+    Eigen::Quaternionf rot_body = eul2quat(p * dt, q * dt, r * dt);
+    ned2body = ned2body * rot_body;
+    Eigen::Vector3f eul = quat2eul( ned2body );
+    phi_rad = eul[0];
+    the_rad = eul[1];
+    psi_rad = eul[2];
 
-        self.state_mgr.compute_body_frame_values(compute_body_vel=False)
+    // ned velocity
+    vel_ned = ned2body.inverse() * vel_body;
+    
+    // flow (wind) frame of reference
+    Eigen::Quaternionf body2flow = eul2quat(0.0, -alpha, -beta);
+    Eigen::Quaternionf ned2flow = ned2body * body2flow;
+    vel_flow = ned2flow * vel_ned; // fixme, how is vel_ned set?
+
+    // lift, drag, and weight vector estimates
+
+    // rotate ned gravity vector into body frame
+    Eigen::Vector3f g_ned;
+    g_ned << 0.0, 0.0, GRAVITY_NOM;
+    g_body = ned2body * g_ned;
+
+    // rotate ned gravity vector into flow frame
+    Eigen::Vector3f g_flow = ned2flow * g_ned;
+    Eigen::Vector3f accel_flow = body2flow * accel_body;
         
-        // velocity in ned frame
-        self.vel_ned = quaternion.backTransform( self.ned2body,
-                                                 np.array([self.bvx, self.bvy, self.bvz]) )
-        self.state_mgr.set_ned_velocity( self.vel_ned[0],
-                                         self.vel_ned[1],
-                                         self.vel_ned[2],
-                                         0.0, 0.0, 0.0 )
+    // is my math correct here? (for drag need grav & body_accel in
+    // flight path frame of reference ... I think.
+        
+    drag = (thrust - g_flow[0]) - accel_flow[0];
+    if ( qbar > 10 ) {
+        Cd = drag / qbar;
+    } else {
+        Cd = 0;
+    }
 
-        // update position
-        self.pos_ned += self.vel_ned * self.dt
+    // do I need to think through lift frame of reference here too?
+        
+    lift = -accel_flow[2] - g_flow[2];
+    if ( qbar > 10 ) {
+        Cl = lift / qbar;
+    } else {
+        Cl = 0;
+    }
+    // print(" lift:", self.a_flow[2], self.g_flow[2], self.lift)
+    
 
-        // store data point
-        self.data.append(
-            [ self.time, self.airspeed_mps,
-              self.state_mgr.throttle,
-              self.state_mgr.aileron,
-              self.state_mgr.elevator,
-              self.state_mgr.rudder,
-              self.phi_rad, self.the_rad, self.psi_rad,
-              self.state_mgr.alpha, self.state_mgr.beta,
-              self.p, self.q, self.r] )
-        self.data[-1].extend( self.pos_ned.tolist() )
-        self.data[-1].extend( self.vel_ned.tolist() )
-
-        // update time
-        self.time += self.dt
-                    }
+    // update position
+    pos_ned += vel_ned * dt;
+}

@@ -54,10 +54,14 @@ private:
     int num_states = 0;
     Eigen::MatrixXf A;          // state transition matrix
     Eigen::MatrixXf state;      // state vector
+    float dt = 0.01;
     
     float airspeed_mps = 0.0;
     float qbar = 0.0;
+    float lift = 0.0;
     float drag = 0.0;
+    float Cl = 0.0;
+    float Cd = 0.0;
     
     float throttle = 0.0;
     float thrust = 0.0;
@@ -69,6 +73,7 @@ private:
     Eigen::Vector3f pos_ned;
     Eigen::Vector3f vel_ned;
     Eigen::Vector3f vel_body;
+    Eigen::Vector3f vel_flow;
     
     float phi_rad = 0.0;
     float the_rad = 0.0;
@@ -83,4 +88,7 @@ private:
     float ax = 0.0;
     float ay = 0.0;
     float az = 0.0;
+
+    float alpha = 0.0;
+    float beta = 0.0;
 };
