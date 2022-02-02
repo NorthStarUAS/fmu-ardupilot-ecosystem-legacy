@@ -10,7 +10,7 @@
 #define GRAVITY_0    9.7803730       		/* zeroth coefficient for gravity model */
 #define GRAVITY_1    0.0052891       		/* first coefficient for the gravity model */ 
 #define GRAVITY_2    0.0000059       		/* second coefficient for the gravity model */
-#define GRAVITY_NOM  9.81            		/* nominal gravity */ 
+const double GRAVITY_NOM = 9.81;                // nominal gravity
 #define SCHULER2     1.533421593170545E-06 	/* Schuler Frequency (rad/sec) Squared */
 #define FT2M         0.3048                	/* feet to meters conversion factor */
 #define KTS2ms       0.5144                	/* Knots to meters/sec conversion factor */
