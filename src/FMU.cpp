@@ -17,6 +17,7 @@
 #include "sensors/imu_mgr.h"
 #include "sensors/pilot.h"
 #include "sensors/power.h"
+#include "sim/sim_mgr.h"
 #include "state/state_mgr.h"
 #include "util/ratelimiter.h"
 
@@ -67,6 +68,7 @@ static gps_mgr_t gps_mgr;
 static guidance_mgr_t guidance_mgr;
 static led_t led;
 static power_t power;
+static sim_mgr_t sim;
 static state_mgr_t state_mgr;
 
 static gimbal_mavlink_t gimbal;
@@ -114,6 +116,9 @@ void setup() {
     status_node.setUInt("master_hz", MASTER_HZ);
     status_node.setUInt("baud", TELEMETRY_BAUD);
     status_node.setUInt("serial_number", config_node.getUInt("serial_number"));
+
+    // before pilot (before soft_armed, so stat() will work)
+    sim.init();
     
     // airdata
     airdata.init();
@@ -168,6 +173,8 @@ void loop() {
         // 2. Check for gps updates
         gps_mgr.update();
 
+        sim.update();
+        
         // 3. Estimate location and attitude
         if ( config_nav_node.getString("selected") != "none" ) {
             nav_mgr.update();
