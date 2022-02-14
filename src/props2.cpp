@@ -730,11 +730,15 @@ bool PropertyNode::load_json( const char *file_path, Value *v ) {
 #else
     if ( stat(file_path, &st) < 0 ) {
 #endif
-        printf("Read stat failed: %s - %s\n", file_path, strerror(errno));
+        printf("Read stat failed: %s - %d\n", file_path, errno);
         return false;
     }
     printf("File size: %s: %d\n", file_path, (int)st.st_size);
-    char read_buf[st.st_size];
+    void *read_buf = malloc(st.st_size);
+    if ( read_buf == nullptr ) {
+        printf("unable to malloc enough bytes for read\n");
+        return false;
+    }
 
     // open a file in read mode
 #if defined(ARDUPILOT_BUILD)
@@ -743,18 +747,18 @@ bool PropertyNode::load_json( const char *file_path, Value *v ) {
     const int open_fd = open(file_path, O_RDONLY);
 #endif
     if (open_fd == -1) {
-        printf("Open failed: %s - %s\n", file_path, strerror(errno));
+        printf("Open failed: %s - %d\n", file_path, errno);
         return false;
     }
 
     // read from file
 #if defined(ARDUPILOT_BUILD)
-    ssize_t read_len = AP::FS().read(open_fd, read_buf, sizeof(read_buf));
+    ssize_t read_len = AP::FS().read(open_fd, read_buf, st.st_size);
 #else
-    ssize_t read_len = read(open_fd, read_buf, sizeof(read_buf));
+    ssize_t read_len = read(open_fd, read_buf, st.st_size);
 #endif
     if ( read_len == -1 ) {
-        printf("Read failed: %s - %s\n", file_path, strerror(errno));
+        printf("Read failed: %s - %d\n", file_path, errno);
         return false;
     }
 
@@ -769,11 +773,12 @@ bool PropertyNode::load_json( const char *file_path, Value *v ) {
     // hal.scheduler->delay(100);
 
     Document tmpdoc(&(doc->GetAllocator()));
-    tmpdoc.Parse<kParseCommentsFlag>(read_buf, read_len);
+    tmpdoc.Parse<kParseCommentsFlag>((char *)read_buf, read_len);
     if ( tmpdoc.HasParseError() ){
         printf("json parse err: %d (%s)\n",
                tmpdoc.GetParseError(),
                GetParseError_En(tmpdoc.GetParseError()));
+        free(read_buf);
         return false;
     }
 
@@ -786,6 +791,7 @@ bool PropertyNode::load_json( const char *file_path, Value *v ) {
         v->AddMember(key, newval, doc->GetAllocator());
     }
 
+    free(read_buf);
     return true;
 }
 
