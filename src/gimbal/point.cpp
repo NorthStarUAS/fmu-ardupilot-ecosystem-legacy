@@ -19,9 +19,11 @@ static Eigen::Vector3f lla2ned( Eigen::Vector3d lla, Eigen::Vector3d ref ) {
 }
 */
 
-static void printvec( const char *label, Eigen::Vector3f v ) {
+/*static void printvec( const char *label, Eigen::Vector3f v ) {
     printf("%s %.2f %.2f %.2f\n", label, v(0), v(1), v(2));
 }
+*/
+
 /*
 static void printquat( const char *label, Eigen::Quaternionf q ) {
     printf("%s %.2f %.2f %.2f %.2f\n", label, q.w(), q.x(), q.y(), q.z());
@@ -60,10 +62,10 @@ Eigen::Vector3f pointing_update(Eigen::Vector3d pos_lla, Eigen::Vector3f euler_d
     if (course_deg < 0) { course_deg += 360.0; }
     
     float dist_m = (point_ned.head(2)).norm();
-    printf("(ned) course: %.2f  dist(m): %.2f", course_deg, dist_m);
+    // printf("(ned) course: %.2f  dist(m): %.2f", course_deg, dist_m);
     
     float az_deg = atan2(-point_ned(2), dist_m) * r2d;
-    printf(" (ned) azimuth: %.2f\n", az_deg);
+    // printf(" (ned) azimuth: %.2f\n", az_deg);
     
     // construct body to ned transformation matrix
     Eigen::Quaternionf ned2body = eul2quat(euler_deg(0)*d2r, euler_deg(1)*d2r, euler_deg(2)*d2r);
@@ -80,14 +82,14 @@ Eigen::Vector3f pointing_update(Eigen::Vector3d pos_lla, Eigen::Vector3f euler_d
     point_ned.normalize();
 
     Eigen::Vector3f t = C_N2B * point_ned;
-    printvec("point vector (in body frame)", t);
+    // printvec("point vector (in body frame)", t);
 
     float pan = 90.0 - atan2(t(0), t(1)) * r2d;
-    printf("pan: %.2f\n", pan);
-    float length = t.head(2).norm();
-    printf("length: %.2f\n", length);
-    float tilt = atan2(-t(2), length) * r2d;
-    printf("tilt: %.2f\n", tilt);
+    //printf("pan: %.2f\n", pan);
+    //float length = t.head(2).norm();
+    //printf("length: %.2f\n", length);
+    //float tilt = atan2(-t(2), length) * r2d;
+    //printf("tilt: %.2f\n", tilt);
 
     Eigen::Vector3f result;
     result << pan, az_deg, 0.0;

@@ -101,7 +101,7 @@ void gimbal_mavlink_t::send_heartbeat() {
         }
         set_gimbal_mode();
         set_mount_configure();
-        printf("Sending HB to gimbal.\n");
+        // printf("Sending HB to gimbal.\n");
         mavlink_heartbeat_t heartbeat;
         heartbeat.type 		= MAV_TYPE_ONBOARD_CONTROLLER;
         heartbeat.autopilot 	= MAV_AUTOPILOT_GENERIC;
@@ -112,14 +112,14 @@ void gimbal_mavlink_t::send_heartbeat() {
         mavlink_msg_heartbeat_encode(SYSID_ONBOARD, MAV_COMP_ID_SYSTEM_CONTROL, &message, &heartbeat);
         uint8_t buf[300];
         uint16_t buf_len = mavlink_msg_to_send_buffer(buf, &message);
-        printf("  send buffer len = %d\n", buf_len);
+        // printf("  send buffer len = %d\n", buf_len);
         _port->write((uint8_t *)&buf, buf_len);
         _last_heartbeat = AP_HAL::millis();
     }
 }
 
 void gimbal_mavlink_t::set_imu_rate() {
-    printf("Sending imu rate to gimbal.\n");
+    // printf("Sending imu rate to gimbal.\n");
     mavlink_param_set_t param_set = {0};
     param_set.param_value = 50;       // Onboard parameter value
     param_set.target_system	= _sysid; // System ID
@@ -130,12 +130,12 @@ void gimbal_mavlink_t::set_imu_rate() {
     mavlink_msg_param_set_encode(SYSID_ONBOARD, MAV_COMP_ID_SYSTEM_CONTROL, &message, &param_set);
     uint8_t buf[300];
     uint16_t buf_len = mavlink_msg_to_send_buffer(buf, &message);
-    printf("  send buffer len = %d\n", buf_len);
+    // printf("  send buffer len = %d\n", buf_len);
     _port->write((uint8_t *)&buf, buf_len);
 }
 
 void gimbal_mavlink_t::set_gimbal_mode() {
-    printf("set_gimbal_mode()\n");
+    // printf("set_gimbal_mode()\n");
     uint8_t buf[300];
     uint16_t buf_len = 0;
     mavlink_command_long_t comm = { 0 };
@@ -147,12 +147,12 @@ void gimbal_mavlink_t::set_gimbal_mode() {
     mavlink_message_t message;
     mavlink_msg_command_long_encode(_sysid, MAV_COMP_ID_SYSTEM_CONTROL, &message, &comm);
     buf_len = mavlink_msg_to_send_buffer(buf, &message);
-    printf("  send buffer len = %d\n", buf_len);
+    // printf("  send buffer len = %d\n", buf_len);
     _port->write((uint8_t *)&buf, buf_len);
 }
 
 void gimbal_mavlink_t::set_mount_configure() {
-    printf("set_mount_configure()\n");
+    // printf("set_mount_configure()\n");
     //uint8_t buf[300];
     //uint16_t buf_len = 0;
     mavlink_command_long_t comm = { 0 };
