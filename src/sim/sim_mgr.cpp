@@ -23,16 +23,17 @@ void sim_mgr_t::init() {
     }
 
     // populate the A state transition matrix
-    num_states = sim_node.getLen("parameters");
     dt = sim_node.getDouble("dt");
-    A.resize(num_states, num_states);
-    for ( int i = 0; i < num_states; i++ ) {
-        for ( int j = 0; j < num_states; j++ ) {
-            A(i,j) = sim_node.getDouble("A", i*num_states+j);
+    rows = sim_node.getInt("rows");
+    cols = sim_node.getInt("cols");
+    A.resize(rows, cols);
+    for ( int i = 0; i < rows; i++ ) {
+        for ( int j = 0; j < cols; j++ ) {
+            A(i,j) = sim_node.getDouble("A", i*cols+j);
         }
     }
     
-    printf("A state transition matrix: %d x %d\n", num_states, num_states);
+    printf("A state transition matrix: %d x %d\n", rows, cols);
     // for ( int i = 0; i < num_states; i++ ) {
     //     printf("  ");
     //     for ( int j = 0; j < num_states; j++ ) {
@@ -41,7 +42,7 @@ void sim_mgr_t::init() {
     //     printf("\n");
     // }
 
-    state.resize(num_states, 1);
+    state.resize(cols, 1);
     
     hal.scheduler->delay(200);
 }
@@ -67,7 +68,7 @@ void sim_mgr_t::reset() {
 }
 
 void sim_mgr_t::to_state_vector() {
-    for ( int i = 0; i < num_states; i++ ) {
+    for ( int i = 0; i < cols; i++ ) {
         string param_name = "parameters/" + std::to_string(i);
         PropertyNode param = sim_node.getChild(param_name.c_str());
         if ( param.isNull() ) {
@@ -128,11 +129,11 @@ void sim_mgr_t::to_state_vector() {
             int n = 1;
             if ( val < min - n*std ) {
                 val = min - n*std;
-                printf("  %s clipped to: %.3f", field.c_str(), val);
+                printf("  %s clipped to: %.3f\n", field.c_str(), val);
             }
             if (val > max + n*std ) {
                 val = max + n*std;
-                printf("  %s clipped to: %.3f", field.c_str(), val);
+                printf("  %s clipped to: %.3f\n", field.c_str(), val);
             }
         }
         state(i) = val;
@@ -140,7 +141,7 @@ void sim_mgr_t::to_state_vector() {
 }
 
 void sim_mgr_t::from_state_vector( Eigen::MatrixXf next_state ) {
-    for ( int i = 0; i < num_states; i++ ) {
+    for ( int i = cols-rows; i < cols; i++ ) {
         string param_name = "parameters/" + std::to_string(i);
         PropertyNode param = sim_node.getChild(param_name.c_str());
         if ( param.isNull() ) {
@@ -253,7 +254,6 @@ void sim_mgr_t::update() {
     }
     // print(" lift:", self.a_flow[2], self.g_flow[2], self.lift)
     
-
     // update position
     pos_ned += vel_ned * dt;
 }

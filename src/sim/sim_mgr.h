@@ -51,7 +51,8 @@ private:
     void from_state_vector( Eigen::MatrixXf next_state );
     
     PropertyNode sim_node;
-    int num_states = 0;
+    int rows = 0;
+    int cols = 0;
     Eigen::MatrixXf A;          // state transition matrix
     Eigen::MatrixXf state;      // state vector
     float dt = 0.01;
