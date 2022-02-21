@@ -15,6 +15,7 @@ void led_t::update() {
     if ( AP_HAL::millis() - blinkTimer >= blink_rate ) {
         blinkTimer = AP_HAL::millis();
         blink_state = !blink_state;
+#if defined(HAL_GPIO_A_LED_PIN)
         if ( blink_state and r > 0 ) {
             hal.gpio->write(HAL_GPIO_A_LED_PIN, HAL_GPIO_LED_ON);
         } else {
@@ -25,6 +26,7 @@ void led_t::update() {
         } else {
             hal.gpio->write(HAL_GPIO_B_LED_PIN, HAL_GPIO_LED_OFF);
         }
+#endif
 #if defined(HAL_HAVE_PIXRACER_LED)
         if ( blink_state and b > 0 ) {
             hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_ON);
