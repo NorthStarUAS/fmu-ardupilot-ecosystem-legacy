@@ -19,6 +19,7 @@ class sim_mgr_t {
 public:
     void init();
     void reset();
+    void run_loop();
     void update();
     
 private:
@@ -55,7 +56,8 @@ private:
     int cols = 0;
     Eigen::MatrixXf A;          // state transition matrix
     Eigen::MatrixXf state;      // state vector
-    float dt = 0.01;
+    uint32_t dt_millis = 10;
+    uint32_t sim_millis = 0;
     
     float airspeed_mps = 0.0;
     float qbar = 0.0;

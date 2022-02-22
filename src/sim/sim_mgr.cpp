@@ -23,7 +23,7 @@ void sim_mgr_t::init() {
     }
 
     // populate the A state transition matrix
-    dt = sim_node.getDouble("dt");
+    dt_millis = (uint32_t)(sim_node.getDouble("dt") * 1000 + 0.5); // & round
     rows = sim_node.getInt("rows");
     cols = sim_node.getInt("cols");
     A.resize(rows, cols);
@@ -48,10 +48,10 @@ void sim_mgr_t::init() {
 }
 
 void sim_mgr_t::reset() {
-    float initial_airspeed_mps = 10.0;
+    float initial_airspeed_mps = 15.0;
     set_airdata( initial_airspeed_mps );
     set_throttle( 0.5 );
-    set_flight_surfaces( 0.0, -0.1, 0.0, 0.0 );
+    set_flight_surfaces( 0.0, -0.01, 0.0, 0.0 );
     pos_ned << 0.0, 0.0, 0.0;
     vel_ned << initial_airspeed_mps, 0.0, 0.0;
     vel_body << initial_airspeed_mps, 0.0, 0.0;
@@ -182,13 +182,14 @@ inline float sign(float x) {
     return (x > 0.0) - (x < 0.0);
 }
 
-void sim_mgr_t::update() {
+void sim_mgr_t::run_loop() {
     to_state_vector();
     Eigen::MatrixXf next = A * state;
     //add_noise(next)
     from_state_vector(next);
         
     // update body frame velocity from accel estimates (* dt)
+    float dt = dt_millis / 1000.0;
     vel_body(0) += accel_body[0] * dt;
     vel_body(1) += accel_body[1] * dt;
     vel_body(2) += accel_body[2] * dt;
@@ -256,4 +257,18 @@ void sim_mgr_t::update() {
     
     // update position
     pos_ned += vel_ned * dt;
+}
+
+void sim_mgr_t::update() {
+    uint32_t millis = AP_HAL::millis();
+    
+    if ( millis - sim_millis > 100 ) {
+        // catchup and run an iteration
+        sim_millis = millis - dt_millis;
+    }
+
+    while ( sim_millis < millis ) {
+        run_loop();
+        sim_millis += dt_millis;
+    }
 }
