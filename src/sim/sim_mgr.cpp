@@ -16,6 +16,7 @@ using std::string;
 
 void sim_mgr_t::init() {
     sim_node = PropertyNode("/sim");
+    pilot_node = PropertyNode("/pilot");
     
     const char *file_path = "fdm.json";
     if ( !sim_node.load(file_path) ) {
@@ -23,7 +24,8 @@ void sim_mgr_t::init() {
     }
 
     // populate the A state transition matrix
-    dt_millis = (uint32_t)(sim_node.getDouble("dt") * 1000 + 0.5); // & round
+    dt = sim_node.getDouble("dt");
+    dt_millis = (uint32_t)(dt * 1000 + 0.5); // round to nearest us
     rows = sim_node.getInt("rows");
     cols = sim_node.getInt("cols");
     A.resize(rows, cols);
@@ -189,7 +191,6 @@ void sim_mgr_t::run_loop() {
     from_state_vector(next);
         
     // update body frame velocity from accel estimates (* dt)
-    float dt = dt_millis / 1000.0;
     vel_body(0) += accel_body[0] * dt;
     vel_body(1) += accel_body[1] * dt;
     vel_body(2) += accel_body[2] * dt;
@@ -266,6 +267,12 @@ void sim_mgr_t::update() {
         // catchup and run an iteration
         sim_millis = millis - dt_millis;
     }
+
+    set_throttle( pilot_node.getDouble("throttle") );
+    set_flight_surfaces( pilot_node.getDouble("aileron"),
+                         pilot_node.getDouble("elevator"),
+                         pilot_node.getDouble("rudder"),
+                         pilot_node.getDouble("flaps") );
 
     while ( sim_millis < millis ) {
         run_loop();
