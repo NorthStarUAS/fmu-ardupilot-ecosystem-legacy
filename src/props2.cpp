@@ -804,7 +804,7 @@ static bool rename_file(const char *current_name, const char *new_name) {
 #if defined(ARDUPILOT_BUILD)
     struct stat st;
     if ( AP::FS().stat(current_name, &st) < 0 ) {
-        printf("Read stat failed: %s - %s\n", current_name, strerror(errno));
+        printf("Read stat failed: %s - %d\n", current_name, errno);
         return false;
     }
     printf("%s: size %d mtime %d\n", current_name, (int)st.st_size, (int)st.st_mtim.tv_sec);
@@ -902,7 +902,7 @@ static bool save_json( const char *file_path, Value *v ) {
     const int open_fd = ::open(file_path, O_WRONLY | O_CREAT, 0660);
 #endif
     if (open_fd == -1) {
-        printf("Open %s failed: %s\n", file_path, strerror(errno));
+        printf("Open %s failed: %d\n", file_path, errno);
         return false;
     }
 
