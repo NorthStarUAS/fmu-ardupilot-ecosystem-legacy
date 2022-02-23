@@ -123,6 +123,8 @@ void sim_mgr_t::to_state_vector() {
         } else {
             printf("Unknown field requested: %s gack!", field.c_str());
         }
+	//printf("%d: %.1f ", i, val);
+	//hal.scheduler->delay(50);
         string field_type = param.getString("type");
         if ( field_type == "dependent" ) {
             float min = param.getDouble("min");
@@ -131,20 +133,21 @@ void sim_mgr_t::to_state_vector() {
             int n = 1;
             if ( val < min - n*std ) {
                 val = min - n*std;
-                printf("  %s clipped to: %.3f\n", field.c_str(), val);
+                //printf("  %s clipped to: %.3f\n", field.c_str(), val);
             }
             if (val > max + n*std ) {
                 val = max + n*std;
-                printf("  %s clipped to: %.3f\n", field.c_str(), val);
+                //printf("  %s clipped to: %.3f\n", field.c_str(), val);
             }
         }
         state(i) = val;
     }
+    //printf("\n");
 }
 
 void sim_mgr_t::from_state_vector( Eigen::MatrixXf next_state ) {
-    for ( int i = cols-rows; i < cols; i++ ) {
-        string param_name = "parameters/" + std::to_string(i);
+    for ( int i = 0; i < rows; i++ ) {
+        string param_name = "parameters/" + std::to_string(i + (cols-rows));
         PropertyNode param = sim_node.getChild(param_name.c_str());
         if ( param.isNull() ) {
             continue;
@@ -173,11 +176,13 @@ void sim_mgr_t::from_state_vector( Eigen::MatrixXf next_state ) {
         } else if ( field == "q" ) {
             q = next_state(i);
         } else if ( field == "r" ) {
-            r = next_state(i);;
+            r = next_state(i);
         } else {
             printf("Unknown field requested: %s gack!", field.c_str());
         }
+	//printf("%d: %.1f ", i, next_state(i));
     }
+    //printf("\n");
 }
 
 inline float sign(float x) {
@@ -194,9 +199,11 @@ void sim_mgr_t::run_loop() {
     vel_body(0) += accel_body[0] * dt;
     vel_body(1) += accel_body[1] * dt;
     vel_body(2) += accel_body[2] * dt;
+    //printf("velb: %.1f %.1f %.1f\n", vel_body(0), vel_body(1), vel_body(2));
+    //hal.scheduler->delay(50);
     
     // force bvx to be positive and non-zero (no tail slides here)
-    if ( vel_body[0] < 0.1 ) { vel_body[1] = 0.1; }
+    if ( vel_body[0] < 0.1 ) { vel_body[0] = 0.1; }
     // try to clamp alpha/beta from getting crazy
     if ( fabs(vel_body[1] / vel_body[0]) > 0.1 ) {
         vel_body(1) = sign(vel_body[1]) * fabs(vel_body[0]) * 0.1;
@@ -273,9 +280,13 @@ void sim_mgr_t::update() {
                          pilot_node.getDouble("elevator"),
                          pilot_node.getDouble("rudder"),
                          pilot_node.getDouble("flaps") );
-
+    printf("pilot: %.2f %.2f %.2f ", aileron, elevator, throttle);
     while ( sim_millis < millis ) {
         run_loop();
         sim_millis += dt_millis;
     }
+
+    static const double r2d = 180.0 / M_PI;
+    printf("roll: %.1f  pitch: %.1f ", phi_rad*r2d, the_rad*r2d);
+    printf("p: %.1f  q: %.1f  r: %.1f\n", p*r2d, q*r2d, r*r2d);
 }
