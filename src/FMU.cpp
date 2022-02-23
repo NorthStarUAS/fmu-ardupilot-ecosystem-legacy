@@ -119,6 +119,7 @@ void setup() {
 
     // before pilot (before soft_armed, so stat() will work)
     sim.init();
+    sim.reset();
     
     // airdata
     airdata.init();
