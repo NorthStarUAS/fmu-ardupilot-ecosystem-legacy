@@ -53,6 +53,8 @@ private:
     
     PropertyNode sim_node;
     PropertyNode pilot_node;
+    PropertyNode imu_node;
+    
     int rows = 0;
     int cols = 0;
     Eigen::MatrixXf A;          // state transition matrix
@@ -87,6 +89,8 @@ private:
 
     Eigen::Vector3f accel_body;
     Eigen::Vector3f g_body;
+    Eigen::Vector3f total_accel_body;
+    
     float p = 0.0;
     float q = 0.0;
     float r = 0.0;

@@ -40,6 +40,7 @@ private:
     
     PropertyNode imu_node;
     PropertyNode imu_calib_node;
+    PropertyNode sim_node;
 
 public:
     

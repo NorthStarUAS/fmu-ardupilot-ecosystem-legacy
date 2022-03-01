@@ -17,12 +17,16 @@ using std::string;
 void sim_mgr_t::init() {
     sim_node = PropertyNode("/sim");
     pilot_node = PropertyNode("/pilot");
+    imu_node = PropertyNode("/sensors/imu");
     
     const char *file_path = "fdm.json";
     if ( !sim_node.load(file_path) ) {
         console->printf("FDM file loading failed: %s\n", file_path);
+        return;
     }
 
+    sim_node.setBool("enable", true);
+    
     // populate the A state transition matrix
     dt = sim_node.getDouble("dt");
     dt_millis = (uint32_t)(dt * 1000 + 0.5); // round to nearest us
@@ -239,6 +243,9 @@ void sim_mgr_t::run_loop() {
     g_ned << 0.0, 0.0, GRAVITY_NOM;
     g_body = ned2body * g_ned;
 
+    // total accel (including gravity)
+    total_accel_body = accel_body + g_body;
+    
     // rotate ned gravity vector into flow frame
     Eigen::Vector3f g_flow = ned2flow * g_ned;
     Eigen::Vector3f accel_flow = body2flow * accel_body;
@@ -268,6 +275,10 @@ void sim_mgr_t::run_loop() {
 }
 
 void sim_mgr_t::update() {
+    if ( ! sim_node.getBool("enable") ) {
+        return;
+    }
+    
     uint32_t millis = AP_HAL::millis();
     
     if ( millis - sim_millis > 100 ) {
@@ -289,4 +300,25 @@ void sim_mgr_t::update() {
     static const double r2d = 180.0 / M_PI;
     printf("roll: %.1f  pitch: %.1f ", phi_rad*r2d, the_rad*r2d);
     printf("p: %.1f  q: %.1f  r: %.1f\n", p*r2d, q*r2d, r*r2d);
+    
+    // publish
+    imu_node.setUInt("millis", sim_millis);
+    imu_node.setDouble("timestamp", sim_millis / 1000.0);
+    imu_node.setDouble("ax_raw", total_accel_body(0));
+    imu_node.setDouble("ay_raw", total_accel_body(1));
+    imu_node.setDouble("az_raw", total_accel_body(2));
+    imu_node.setDouble("hx_raw", 1.0);
+    imu_node.setDouble("hy_raw", 0.0);
+    imu_node.setDouble("hz_raw", 0.0);
+    imu_node.setDouble("ax_mps2", total_accel_body(0));
+    imu_node.setDouble("ay_mps2", total_accel_body(1));
+    imu_node.setDouble("az_mps2", total_accel_body(2));
+    imu_node.setDouble("p_rps", p);
+    imu_node.setDouble("q_rps", q);
+    imu_node.setDouble("r_rps", r);
+    imu_node.setDouble("hx", 1.0);
+    imu_node.setDouble("hy", 0.0);
+    imu_node.setDouble("hz", 0.0);
+    imu_node.setDouble("temp_C", 15.0);
+    imu_node.setUInt("gyros_calibrated", 2);
 }
