@@ -86,17 +86,17 @@ void setup() {
     console = hal.console;
     console->begin(57600);
     hal.scheduler->delay(2000); // give the electrons a chance to settle
-    
+
     console->printf("\nRice Creek UAS FMU: Rev %d\n", FIRMWARE_REV);
     console->printf("You are seeing this message on the console interface.\n");
     console->printf("Host communication is on Serial1 @ %d baud (N81) no flow control.\n", HOST_BAUD);
 
-    // load config from sd card
+    // load config from SD card
     config.init();
     if ( !config.load_json_config() ) {
         config.reset_defaults();
     }
-    
+
     // The following code (when enabled) will force setting a specific
     // device serial number when the device boots:
     if ( false ) {
@@ -105,13 +105,13 @@ void setup() {
     config.read_serial_number();
     console->printf("Serial Number: %d\n", config.read_serial_number());
     hal.scheduler->delay(100);
-    
+
     // after config.init()
     config_node = PropertyNode("/config");
     config_nav_node = PropertyNode("/config/nav");
     pilot_node = PropertyNode("/pilot");
     status_node = PropertyNode("/status");
-    
+
     status_node.setUInt("firmware_rev", FIRMWARE_REV);
     status_node.setUInt("master_hz", MASTER_HZ);
     status_node.setUInt("baud", TELEMETRY_BAUD);
@@ -120,17 +120,17 @@ void setup() {
     // before pilot (before soft_armed, so stat() will work)
     sim.init();
     sim.reset();
-    
+
     // airdata
     airdata.init();
-    
+
     // initialize the IMU and calibration matrices
     console->printf("before imu_mgr.init()\n");
     imu_mgr.init();
     imu_mgr.set_strapdown_calibration();
     imu_mgr.set_accel_calibration();
     imu_mgr.set_mag_calibration();
-    
+
     // initialize the pilot interface (RC in, out & mixer)
     pilot.init();
 
@@ -142,7 +142,7 @@ void setup() {
 
     // guidance
     guidance_mgr.init();
-    
+
     // led status
     led.init();
 
@@ -151,7 +151,7 @@ void setup() {
 
     // additional derived/computed/estimated values
     state_mgr.init();
-     
+
     // do these after gps initialization
     comms_mgr.init();
 
@@ -164,10 +164,10 @@ void setup() {
 // main loop
 void loop() {
     const float dt = 1.0 / MASTER_HZ;
-    
+
     if ( maintimer.update() ) {
         status_node.setUInt("main_loop_timer_misses", maintimer.misses);
-        
+
         // 1. Sense motion
         imu_mgr.update();
 
@@ -175,13 +175,13 @@ void loop() {
         gps_mgr.update();
 
         sim.update();
-        
+
         // 3. Estimate location and attitude
         if ( config_nav_node.getString("selected") != "none" ) {
             nav_mgr.update();
         }
 
-        state_mgr.update(1000.0 / MASTER_HZ);
+        state_mgr.update(1000.0 / MASTER_HZ); // fixme should be seconds?
 
         // airdata
         airdata.update();
@@ -191,7 +191,7 @@ void loop() {
 
         // guidance
         guidance_mgr.update(dt);
-        
+
         if ( pilot.read() ) {
             bool ap_state = pilot_node.getBool("ap_enabled");
             static bool last_ap_state = ap_state;
@@ -206,7 +206,7 @@ void loop() {
         pilot.write();
 
         gimbal.update();
-        
+
         // blink the led
         led.do_policy(imu_mgr.gyros_calibrated);
         led.update();

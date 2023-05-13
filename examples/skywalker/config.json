@@ -27,8 +27,8 @@
     "pilot_input": {
         "channel": [
             "master-switch",
-	    "throttle-safety",
-	    "throttle",
+	        "throttle-safety",
+	        "throttle",
             "aileron", 
             "elevator", 
             "rudder", 

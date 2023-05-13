@@ -15,7 +15,6 @@ private:
  public:
     
     void init();               // load config.json from sd card
-    
     uint16_t serial_number = 0;
     uint16_t read_serial_number();
     uint16_t set_serial_number(uint16_t value);
