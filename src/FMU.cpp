@@ -97,10 +97,13 @@ void setup() {
         config.reset_defaults();
     }
 
+    console->printf("default config set\n");
+    hal.scheduler->delay(2000);
+
     // The following code (when enabled) will force setting a specific
     // device serial number when the device boots:
     if ( false ) {
-        config.set_serial_number(117);
+        config.set_serial_number(118);
     }
     config.read_serial_number();
     console->printf("Serial Number: %d\n", config.read_serial_number());

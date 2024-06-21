@@ -279,3 +279,5 @@ capabilities at a very inexpensive price point.
 * ./waf configure --board XYZ
 * ./waf rc-fmu --upload
 
+* Tools/ardupilotwaf/boards.py
+  - add -Wno-error=class-memaccess
