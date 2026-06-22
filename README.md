@@ -1,5 +1,7 @@
 # Rice Creek FMU
 
+NOTICE: This project has moved to Codeberg.org <https://codeberg.org/NorthStarUAS>
+
 This is an Ardupilot/ChibiOS based flight controller firmware that
 serves as the heart of a Rice Creek UAV autopilot.
 
